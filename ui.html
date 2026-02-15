@@ -440,10 +440,9 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
     background: none;
     border: none;
     color: #888;
-    font-size: 20px;
     cursor: pointer;
-    width: 36px;
-    height: 36px;
+    width: 32px;
+    height: 32px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -452,11 +451,16 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
     transition: color 0.15s, background 0.15s;
   }
   .icon-btn:hover { color: #fff; background: #333; }
-  .icon-btn.info {
-    font-size: 17px;
-    font-weight: 700;
-    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-    margin-left: 2px;
+  .icon-btn + .icon-btn { margin-left: 2px; }
+  .icon-btn svg {
+    width: 16px;
+    height: 16px;
+    display: block;
+    stroke: currentColor;
+    fill: none;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
   }
   .hidden { display: none !important; }
 
@@ -520,8 +524,9 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
     background: #2a2a2a;
     border-radius: 8px;
     padding: 10px 14px;
-    margin-bottom: 12px;
     gap: 8px;
+    flex: 1;
+    min-width: 0;
   }
   .filename-row .file-icon { font-size: 16px; flex-shrink: 0; }
   .filename-row input {
@@ -530,7 +535,12 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
   }
   .filename-row .ext { color: #888; font-size: 13px; flex-shrink: 0; }
 
-  .options-row { display: flex; gap: 10px; margin-bottom: 14px; }
+  .export-controls-row {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 14px;
+    align-items: stretch;
+  }
   .option-select { position: relative; }
   .option-select select {
     appearance: none; background: #2a2a2a; border: 1px solid #555;
@@ -541,6 +551,10 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
   .option-select::after {
     content: '▾'; position: absolute; right: 12px; top: 50%;
     transform: translateY(-50%); color: #888; font-size: 10px; pointer-events: none;
+  }
+  .scale-select select {
+    min-width: 88px;
+    height: 100%;
   }
 
   .action-btn {
@@ -559,9 +573,56 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
   .action-btn.active:hover { background: #e0e0e0; }
 
   /* Translate tab */
+  .frame-summary {
+    width: 100%;
+    margin: 0;
+  }
+  .frame-summary summary {
+    list-style: none;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+  }
+  .frame-summary summary::-webkit-details-marker { display: none; }
+  .frame-summary-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 28px;
+    padding: 0 10px;
+    border: 1px solid #3f3f3f;
+    border-radius: 999px;
+    background: #242424;
+    color: #d2d2d2;
+    font-size: 12px;
+    font-weight: 500;
+  }
+  .frame-summary-caret {
+    color: #9ca3af;
+    font-size: 11px;
+    transition: transform 0.15s ease;
+  }
+  .frame-summary[open] .frame-summary-caret { transform: rotate(180deg); }
+  .frame-summary .selected-frames-list {
+    margin-top: 8px;
+    max-height: 140px;
+  }
+
   .section-label {
     font-size: 11px; color: #888; text-transform: uppercase;
     letter-spacing: 0.5px; margin-bottom: 8px;
+  }
+  .lang-config-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 12px;
+    align-items: start;
+    margin-bottom: 14px;
+  }
+  .lang-config-col { min-width: 0; }
+  .source-lang-grid {
+    grid-template-columns: 1fr;
   }
   .lang-grid {
     display: grid;
@@ -570,7 +631,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
     padding: 10px;
   }
   .lang-accordion {
-    margin-bottom: 14px;
+    margin-bottom: 0;
     background: #202020;
     border: 1px solid #3a3a3a;
     border-radius: 8px;
@@ -597,7 +658,14 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
   }
   .lang-accordion-caret {
     color: #9a9a9a;
-    font-size: 11px;
+    width: 12px;
+    height: 12px;
+    display: block;
+    stroke: currentColor;
+    fill: none;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
     transition: transform 0.15s ease;
     flex-shrink: 0;
   }
@@ -618,84 +686,133 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
   .lang-check input { accent-color: #fff; }
   .lang-check.disabled { opacity: 0.5; cursor: default; }
 
-  .output-info {
-    font-size: 12px; color: #999; margin-bottom: 14px;
-  }
-  .helper-note {
-    font-size: 11px;
-    color: #8a8a8a;
-    margin-top: 8px;
-  }
-  .helper-note.hidden { display: none; }
-
-  .progress-area {
-    background: #222;
-    border-radius: 8px;
-    padding: 14px;
-    margin-top: 14px;
-    display: none;
-  }
-  .progress-area.visible { display: block; }
-  .progress-head {
+  .helper-callout {
     display: flex;
-    justify-content: space-between;
     align-items: center;
-    margin-bottom: 6px;
-  }
-  .progress-stage { font-size: 13px; color: #ececec; font-weight: 600; }
-  .progress-percent { font-size: 12px; color: #9ca3af; }
-  .progress-meta { font-size: 11px; color: #9ca3af; margin-bottom: 8px; min-height: 14px; }
-  .progress-steps {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 6px;
+    justify-content: space-between;
+    gap: 10px;
     margin-bottom: 10px;
+    padding: 10px 12px;
+    border-radius: 8px;
+    border: 1px solid #745d1f;
+    background: #2c2413;
+    color: #f4dfa6;
+    font-size: 12px;
   }
-  .step-chip {
-    text-align: center;
+  .helper-link-btn {
+    background: transparent;
+    color: #f7e6bc;
+    border: none;
+    text-decoration: underline;
+    font-size: 12px;
+    cursor: pointer;
+    padding: 0;
+  }
+  @media (max-width: 520px) {
+    .lang-config-row {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .translate-progress-btn {
+    position: relative;
+    overflow: hidden;
+    --progress: 0%;
+  }
+  .translate-progress-btn::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    width: var(--progress);
+    background: #2b70ff;
+    opacity: 0.85;
+    transition: width 0.25s ease;
+    pointer-events: none;
+  }
+  .translate-progress-btn .btn-label {
+    position: relative;
+    z-index: 1;
+  }
+  .action-btn.disabled.translate-progress-btn::before {
+    opacity: 0;
+    width: 0;
+  }
+  .action-btn.translating {
+    color: #fff;
+    background: #273043;
+  }
+
+  .progress-meta-inline {
     font-size: 11px;
-    border-radius: 999px;
-    padding: 4px 6px;
-    background: #2f2f2f;
-    color: #8c8c8c;
-    border: 1px solid #3c3c3c;
-  }
-  .step-chip.active {
-    color: #f3f4f6;
-    background: #3b3b3b;
-    border-color: #6b7280;
-  }
-  .step-chip.completed {
-    color: #d1fae5;
-    background: #193126;
-    border-color: #2f6b4f;
-  }
-  .progress-bar-bg {
-    width: 100%; height: 6px;
-    background: #333; border-radius: 3px; overflow: hidden;
-  }
-  .progress-bar-fill {
-    height: 100%; background: #fff; border-radius: 3px;
-    transition: width 0.3s;
-    width: 0%;
+    color: #9ca3af;
+    margin-top: 8px;
+    min-height: 14px;
   }
 
-  /* Result summary */
-  .result-area {
-    background: #222; border-radius: 8px; padding: 14px;
-    margin-top: 14px; display: none;
+  .completion-section {
+    margin-top: 14px;
+    border-radius: 8px;
+    border: 1px solid #343434;
+    background: #212121;
+    overflow: hidden;
   }
-  .result-area.visible { display: block; }
-  .result-title { font-size: 13px; font-weight: 500; margin-bottom: 6px; }
-  .result-detail { font-size: 12px; color: #999; }
-  .result-errors { font-size: 12px; color: #e88; margin-top: 6px; }
-
-  /* Audit panel */
-  .audit-area {
-    background: #222; border-radius: 8px; padding: 14px;
-    margin-top: 10px; display: none; max-height: 260px; overflow-y: auto;
+  .completion-section summary {
+    list-style: none;
+    cursor: pointer;
+    padding: 11px 12px;
   }
-  .audit-area.visible { display: block; }
+  .completion-section summary::-webkit-details-marker { display: none; }
+  .completion-summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+  }
+  .completion-title {
+    font-size: 13px;
+    font-weight: 600;
+  }
+  .completion-caret {
+    color: #b3b3b3;
+    width: 12px;
+    height: 12px;
+    display: block;
+    stroke: currentColor;
+    fill: none;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    transition: transform 0.15s ease;
+  }
+  .completion-section[open] .completion-caret { transform: rotate(180deg); }
+  .completion-section.success .completion-summary {
+    background: #123424;
+    border: 1px solid #1f6442;
+    border-radius: 8px;
+    padding: 10px 12px;
+  }
+  .completion-section.warning .completion-summary,
+  .completion-section.error .completion-summary {
+    background: #3a1f1f;
+    border: 1px solid #6a2f2f;
+    border-radius: 8px;
+    padding: 10px 12px;
+  }
+  .completion-body {
+    padding: 10px 12px 12px;
+  }
+  .result-detail { font-size: 12px; color: #bcbcbc; }
+  .result-errors {
+    font-size: 12px;
+    color: #f09a9a;
+    margin-top: 8px;
+    white-space: pre-wrap;
+  }
+  .audit-block {
+    margin-top: 10px;
+    max-height: 260px;
+    overflow-y: auto;
+  }
   .audit-title { font-size: 13px; font-weight: 500; margin-bottom: 10px; color: #f5c542; }
   .audit-item {
     background: #2a2a2a; border-radius: 6px; padding: 10px;
@@ -716,9 +833,9 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
   .audit-action-btn:hover { background: #444; color: #fff; }
   .audit-action-btn.done { background: #193126; border-color: #2f6b4f; color: #d1fae5; cursor: default; }
   .audit-actions-global { display: flex; gap: 8px; margin-top: 10px; }
-  .audit-area::-webkit-scrollbar { width: 4px; }
-  .audit-area::-webkit-scrollbar-track { background: transparent; }
-  .audit-area::-webkit-scrollbar-thumb { background: #555; border-radius: 2px; }
+  .audit-block::-webkit-scrollbar { width: 4px; }
+  .audit-block::-webkit-scrollbar-track { background: transparent; }
+  .audit-block::-webkit-scrollbar-thumb { background: #555; border-radius: 2px; }
 
   /* Settings modal */
   .modal-overlay {
@@ -783,9 +900,21 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
   .api-key-row input { flex: 1; }
   .toggle-vis-btn {
     background: #1a1a1a; border: 1px solid #444; border-radius: 6px;
-    color: #888; padding: 8px 10px; cursor: pointer; font-size: 13px;
+    color: #888; padding: 0; cursor: pointer; font-size: 12px;
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 34px; height: 34px; flex: 0 0 34px;
   }
   .toggle-vis-btn:hover { color: #fff; border-color: #888; }
+  .toggle-vis-btn svg {
+    width: 16px;
+    height: 16px;
+    display: block;
+    stroke: currentColor;
+    fill: none;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
   .modal-actions { display: flex; gap: 8px; margin-top: 16px; }
   .modal-actions button {
     flex: 1; padding: 10px; border: none; border-radius: 8px;
@@ -834,31 +963,46 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
 
 <!-- Tab bar -->
 <div class="tab-bar">
-  <button class="tab-btn active" data-tab="export">Export PDF</button>
-  <button class="tab-btn" data-tab="translate">Translate</button>
+  <button class="tab-btn active" data-tab="translate">Translate</button>
+  <button class="tab-btn" data-tab="export">Export PDF</button>
   <div class="spacer"></div>
-  <button class="icon-btn" id="gearBtn" title="Settings">⚙</button>
-  <button class="icon-btn info hidden" id="debugLogBtn" title="Debug Logs">i</button>
+  <button class="icon-btn" id="gearBtn" title="Settings" aria-label="Settings">
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <circle cx="12" cy="12" r="3"></circle>
+      <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33a1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h.08a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v.08a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+    </svg>
+  </button>
+  <button class="icon-btn hidden" id="debugLogBtn" title="Debug Logs" aria-label="Debug Logs">
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M8 8h8"></path>
+      <path d="M9 4h6"></path>
+      <path d="M12 8v12"></path>
+      <path d="M7 12h10"></path>
+      <path d="M7 16h10"></path>
+      <path d="M5 10l-2-2"></path>
+      <path d="M19 10l2-2"></path>
+      <path d="M5 14l-2 2"></path>
+      <path d="M19 14l2 2"></path>
+      <path d="M8 8c0-1.7 1.8-3 4-3s4 1.3 4 3"></path>
+      <path d="M7 12c0-2.2 2.2-4 5-4s5 1.8 5 4v3c0 2.2-2.2 4-5 4s-5-1.8-5-4z"></path>
+    </svg>
+  </button>
 </div>
 
 <!-- Export PDF tab (existing) -->
-<div class="tab-content active" id="tab-export">
+<div class="tab-content" id="tab-export">
   <div class="preview-area" id="previewArea">
     <span class="empty-text" id="emptyText">Nothing selected</span>
     <div class="selected-frames-list" id="framesList" style="display:none;"></div>
   </div>
 
-  <div class="filename-row">
-    <span class="file-icon">📄</span>
-    <input type="text" id="filename" value="Document" placeholder="Filename">
-    <span class="ext">.pdf</span>
-  </div>
-
-  <div class="options-row">
-    <div class="option-select">
-      <select id="format"><option value="pdf">PDF</option></select>
+  <div class="export-controls-row">
+    <div class="filename-row">
+      <span class="file-icon">📄</span>
+      <input type="text" id="filename" value="Document" placeholder="Filename">
+      <span class="ext">.pdf</span>
     </div>
-    <div class="option-select">
+    <div class="option-select scale-select">
       <select id="scale">
         <option value="1">1x</option>
         <option value="2" selected>2x</option>
@@ -872,66 +1016,73 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
 </div>
 
 <!-- Translate tab -->
-<div class="tab-content" id="tab-translate">
+<div class="tab-content active" id="tab-translate">
   <div class="preview-area" id="translatePreviewArea">
     <span class="empty-text" id="translateEmptyText">Nothing selected</span>
     <div class="selected-frames-list" id="translateFramesList" style="display:none;"></div>
   </div>
 
-  <div class="section-label">Source Language</div>
-  <div class="options-row">
-    <div class="option-select">
-      <select id="sourceLang">
-        <option value="en" selected>English</option>
-      </select>
+  <div class="lang-config-row">
+    <div class="lang-config-col">
+      <div class="section-label">Source Language</div>
+      <details class="lang-accordion" id="sourceLangAccordion">
+        <summary>
+          <span class="lang-accordion-title" id="sourceLangLabel">English</span>
+          <svg class="lang-accordion-caret" viewBox="0 0 12 12" aria-hidden="true">
+            <path d="M2.5 4.5L6 8l3.5-3.5"></path>
+          </svg>
+        </summary>
+        <div class="lang-grid source-lang-grid">
+          <label class="lang-check"><input type="radio" name="sourceLangOption" value="en" checked> English</label>
+        </div>
+      </details>
+      <input type="hidden" id="sourceLang" value="en">
+    </div>
+    <div class="lang-config-col">
+      <div class="section-label">Target Languages</div>
+      <details class="lang-accordion" id="langAccordion">
+        <summary>
+          <span class="lang-accordion-title" id="langAccordionLabel">Customize target languages</span>
+          <svg class="lang-accordion-caret" viewBox="0 0 12 12" aria-hidden="true">
+            <path d="M2.5 4.5L6 8l3.5-3.5"></path>
+          </svg>
+        </summary>
+        <div class="lang-grid" id="langGrid">
+          <label class="lang-check"><input type="checkbox" value="fr" checked> French</label>
+          <label class="lang-check"><input type="checkbox" value="de" checked> German</label>
+          <label class="lang-check"><input type="checkbox" value="es" checked> Spanish</label>
+          <label class="lang-check"><input type="checkbox" value="it" checked> Italian</label>
+          <label class="lang-check"><input type="checkbox" value="tr" checked> Turkish</label>
+          <label class="lang-check"><input type="checkbox" value="ar"> Arabic</label>
+        </div>
+      </details>
     </div>
   </div>
 
-  <div class="section-label">Target Languages</div>
-  <details class="lang-accordion" id="langAccordion">
-    <summary>
-      <span class="lang-accordion-title" id="langAccordionLabel">Customize target languages</span>
-      <span class="lang-accordion-caret">▾</span>
+  <div class="helper-callout hidden" id="translateApiHint">
+    <span>API key is required for Translate.</span>
+    <button type="button" class="helper-link-btn" id="openSettingsLink">Open Settings</button>
+  </div>
+
+  <button class="action-btn disabled translate-progress-btn" id="translateBtn">Select frames to translate</button>
+  <div class="progress-meta-inline hidden" id="progressMetaInline"></div>
+
+  <details class="completion-section" id="completionSection" style="display:none;">
+    <summary class="completion-summary" id="completionSummary">
+      <span class="completion-title" id="resultTitle"></span>
+      <svg class="completion-caret" viewBox="0 0 12 12" aria-hidden="true">
+        <path d="M2.5 4.5L6 8l3.5-3.5"></path>
+      </svg>
     </summary>
-    <div class="lang-grid" id="langGrid">
-      <label class="lang-check"><input type="checkbox" value="fr" checked> French</label>
-      <label class="lang-check"><input type="checkbox" value="de" checked> German</label>
-      <label class="lang-check"><input type="checkbox" value="es" checked> Spanish</label>
-      <label class="lang-check"><input type="checkbox" value="it" checked> Italian</label>
-      <label class="lang-check"><input type="checkbox" value="tr" checked> Turkish</label>
-      <label class="lang-check"><input type="checkbox" value="ar"> Arabic</label>
+    <div class="completion-body">
+      <div class="result-detail" id="resultDetail"></div>
+      <div class="result-errors" id="resultErrors"></div>
+      <div class="audit-block" id="auditBlock">
+        <div class="audit-title" id="auditTitle"></div>
+        <div id="auditList"></div>
+      </div>
     </div>
   </details>
-
-  <div class="output-info" id="outputInfo">Select frames to see output count</div>
-
-  <button class="action-btn disabled" id="translateBtn">Select frames to translate</button>
-  <div class="helper-note" id="translateApiHint">Add API key in Settings to enable Translate.</div>
-
-  <div class="progress-area" id="progressArea">
-    <div class="progress-head">
-      <div class="progress-stage" id="progressStage">Preparing...</div>
-      <div class="progress-percent" id="progressPercent">0%</div>
-    </div>
-    <div class="progress-meta" id="progressMeta"></div>
-    <div class="progress-steps" id="progressSteps">
-      <div class="step-chip" data-stage="extract">1. Extract</div>
-      <div class="step-chip" data-stage="translate">2. Translate</div>
-      <div class="step-chip" data-stage="apply">3. Apply</div>
-    </div>
-    <div class="progress-bar-bg"><div class="progress-bar-fill" id="progressFill"></div></div>
-  </div>
-
-  <div class="result-area" id="resultArea">
-    <div class="result-title" id="resultTitle"></div>
-    <div class="result-detail" id="resultDetail"></div>
-    <div class="result-errors" id="resultErrors"></div>
-  </div>
-
-  <div class="audit-area" id="auditArea">
-    <div class="audit-title" id="auditTitle"></div>
-    <div id="auditList"></div>
-  </div>
 </div>
 
 <!-- Settings modal -->
@@ -954,7 +1105,9 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
       <div class="field-label">Gemini API Key</div>
       <div class="api-key-row">
         <input type="password" class="field-input" id="settingsGeminiKey" placeholder="Enter Gemini API key">
-        <button class="toggle-vis-btn" id="toggleGeminiKey">👁</button>
+        <button class="toggle-vis-btn" id="toggleGeminiKey" type="button" aria-label="Show Gemini API key">
+          <span class="toggle-vis-icon" aria-hidden="true"></span>
+        </button>
       </div>
     </div>
 
@@ -962,15 +1115,27 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
       <div class="field-label">OpenAI API Key</div>
       <div class="api-key-row">
         <input type="password" class="field-input" id="settingsOpenaiKey" placeholder="Enter OpenAI API key">
-        <button class="toggle-vis-btn" id="toggleOpenaiKey">👁</button>
+        <button class="toggle-vis-btn" id="toggleOpenaiKey" type="button" aria-label="Show OpenAI API key">
+          <span class="toggle-vis-icon" aria-hidden="true"></span>
+        </button>
       </div>
     </div>
 
     <div class="field-group">
-      <div class="field-label">Model</div>
-      <select class="field-select" id="settingsModel">
-        <option value="gemini-3-flash-preview">gemini-3-flash-preview</option>
+      <div class="field-label">Translation Model</div>
+      <div class="field-help">Gemini 2.5 Flash Lite (fixed)</div>
+    </div>
+
+    <div class="field-group" id="quotaProfileGroup">
+      <div class="field-label">Gemini Quota Tier</div>
+      <select class="field-select" id="settingsQuotaProfile">
+        <option value="auto">Auto (safe default)</option>
+        <option value="free">Free Tier</option>
+        <option value="tier1">Paid Tier 1</option>
+        <option value="tier2">Paid Tier 2</option>
+        <option value="tier3">Paid Tier 3</option>
       </select>
+      <div class="field-help">Used only for API pacing/concurrency tuning. Set this to your actual Gemini quota tier for best speed and fewer rate-limit errors.</div>
     </div>
 
     <div class="field-group">
@@ -1009,8 +1174,9 @@ const { jsPDF } = window.jspdf;
 let selectedFrames = [];
 let frameImages = [];
 let frameLinks = [];
-let currentSettings = { provider: 'gemini', model: 'gemini-3-flash-preview', apiKeyGemini: '', apiKeyOpenai: '', debugMode: false };
+let currentSettings = { provider: 'gemini', model: 'gemini-2.5-flash-lite', apiKeyGemini: '', apiKeyOpenai: '', debugMode: false, quotaProfile: 'auto' };
 let isTranslating = false;
+let translateButtonDone = false;
 let lastApiErrors = [];
 const API_REQUEST_TIMEOUT_MS = 120000;
 const TRANSLATION_BATCH_SIZE = 120;
@@ -1019,9 +1185,24 @@ const TRANSLATION_MAX_RETRIES = 2;
 const RETRY_BASE_DELAY_MS = 1200;
 const RETRY_JITTER_MS = 500;
 const ADAPTIVE_RECOVERY_STREAK = 3;
+const TOKEN_APPROX_CHARS_PER_TOKEN = 4;
+const GEMINI_FLASH_LITE_INPUT_TOKEN_LIMIT = 1048576;
+const GEMINI_FLASH_LITE_OUTPUT_TOKEN_LIMIT = 65536;
+const GEMINI_QUOTA_PROFILES = ['auto', 'free', 'tier1', 'tier2', 'tier3'];
+const GEMINI_FLASH_LITE_RATE_LIMITS_BY_TIER = {
+  free: { rpm: 15, tpm: 250000, rpd: 1000 },
+  tier1: { rpm: 4000, tpm: 4000000, rpd: null },
+  tier2: { rpm: 10000, tpm: 10000000, rpd: null },
+  tier3: { rpm: 30000, tpm: 30000000, rpd: null },
+};
 let translationRunSeq = 0;
 const MAX_DEBUG_LOG_ENTRIES = 1200;
 const debugLogEntries = [];
+
+function normalizeQuotaProfile(value) {
+  const raw = typeof value === 'string' ? value.toLowerCase() : '';
+  return GEMINI_QUOTA_PROFILES.includes(raw) ? raw : 'auto';
+}
 
 function getErrorMessage(error) {
   if (error instanceof Error) return error.message;
@@ -1033,14 +1214,18 @@ function isDebugModeEnabled() {
 }
 
 function normalizeSettings(settings) {
-  const fallback = { provider: 'gemini', model: 'gemini-3-flash-preview', apiKeyGemini: '', apiKeyOpenai: '', debugMode: false };
+  const fallback = { provider: 'gemini', model: 'gemini-2.5-flash-lite', apiKeyGemini: '', apiKeyOpenai: '', debugMode: false, quotaProfile: 'auto', targetLanguages: ['fr', 'de', 'es', 'it', 'tr'] };
   if (!settings || typeof settings !== 'object') return fallback;
   const provider = typeof settings.provider === 'string' ? settings.provider : fallback.provider;
-  const model = typeof settings.model === 'string' ? settings.model : fallback.model;
+  const model = (PROVIDERS?.[provider]?.models || [fallback.model])[0];
   const apiKeyGemini = typeof settings.apiKeyGemini === 'string' ? settings.apiKeyGemini : fallback.apiKeyGemini;
   const apiKeyOpenai = typeof settings.apiKeyOpenai === 'string' ? settings.apiKeyOpenai : fallback.apiKeyOpenai;
   const debugMode = settings.debugMode === true;
-  return { provider, model, apiKeyGemini, apiKeyOpenai, debugMode };
+  const quotaProfile = normalizeQuotaProfile(settings.quotaProfile);
+  const targetLanguages = Array.isArray(settings.targetLanguages)
+    ? settings.targetLanguages.filter(value => typeof value === 'string')
+    : fallback.targetLanguages;
+  return { provider, model, apiKeyGemini, apiKeyOpenai, debugMode, quotaProfile, targetLanguages };
 }
 
 function getDebugPayload(args) {
@@ -1119,7 +1304,8 @@ function isRetryableErrorText(text) {
     isTimeoutErrorText(value) ||
     /429|rate limit|too many requests/i.test(value) ||
     /5\d\d/.test(value) ||
-    /network|fetch|failed to fetch|connection/i.test(value)
+    /network|fetch|failed to fetch|connection/i.test(value) ||
+    /incomplete translations|invalid payload|no response from|unexpected end of json|json/i.test(value)
   );
 }
 
@@ -1281,6 +1467,83 @@ function chunkArray(items, size) {
   return chunks;
 }
 
+function getTranslationTuning({ providerKey, model, languageCount, quotaProfile }) {
+  const safeLangCount = Math.max(1, Number(languageCount) || 1);
+  let batchSize = TRANSLATION_BATCH_SIZE;
+  let concurrency = Math.max(1, Math.min(MAX_DYNAMIC_CONCURRENCY, safeLangCount));
+  let requestIntervalMs = 0;
+  let modelLimits = null;
+  let profile = 'default';
+
+  const isGeminiLite = (
+    providerKey === 'gemini' &&
+    /gemini-2\.5-flash-lite/i.test(String(model || ''))
+  );
+  if (isGeminiLite) {
+    const resolvedTier = normalizeQuotaProfile(quotaProfile) === 'auto'
+      ? 'free'
+      : normalizeQuotaProfile(quotaProfile);
+    const limits = GEMINI_FLASH_LITE_RATE_LIMITS_BY_TIER[resolvedTier] || GEMINI_FLASH_LITE_RATE_LIMITS_BY_TIER.free;
+    profile = `gemini-2.5-flash-lite-${resolvedTier}`;
+    requestIntervalMs = Math.ceil(60000 / Math.max(1, limits.rpm));
+    // RPM-derived practical parallelism cap; paid tiers effectively hit MAX_DYNAMIC_CONCURRENCY.
+    const rpmConcurrencyCap = Math.max(1, Math.ceil(limits.rpm / 60));
+    concurrency = Math.max(1, Math.min(MAX_DYNAMIC_CONCURRENCY, safeLangCount, rpmConcurrencyCap));
+    modelLimits = {
+      inputTokenLimit: GEMINI_FLASH_LITE_INPUT_TOKEN_LIMIT,
+      outputTokenLimit: GEMINI_FLASH_LITE_OUTPUT_TOKEN_LIMIT,
+      selectedTier: resolvedTier,
+      selectedProfile: normalizeQuotaProfile(quotaProfile),
+      rpm: limits.rpm,
+      tpm: limits.tpm,
+      rpd: limits.rpd,
+    };
+    if (resolvedTier !== 'free') {
+      // Paid tiers have very high RPM; pacing adds overhead with no practical benefit here.
+      requestIntervalMs = 0;
+    }
+  }
+
+  return { batchSize, concurrency, requestIntervalMs, modelLimits, profile };
+}
+
+function createRequestStartLimiter(intervalMs) {
+  if (!intervalMs || intervalMs <= 0) {
+    return async function noopLimiter() {};
+  }
+  let nextAllowedAt = 0;
+  return async function waitForStartSlot() {
+    const now = Date.now();
+    const waitMs = Math.max(0, nextAllowedAt - now);
+    if (waitMs > 0) await sleep(waitMs);
+    nextAllowedAt = Math.max(Date.now(), nextAllowedAt) + intervalMs;
+  };
+}
+
+function estimateOutputTokensForGeminiBatch(texts) {
+  if (!Array.isArray(texts) || texts.length === 0) return 1024;
+  let totalOutputChars = 0;
+  for (const t of texts) {
+    const mappingKeyLen = typeof t.mappingKey === 'string' ? t.mappingKey.length : 12;
+    const sourceCharCount = Number(t.charCount) || 0;
+    const translationBudgetChars = Math.ceil(sourceCharCount * 1.3);
+    // JSON response overhead: keys, quotes, commas, brackets.
+    totalOutputChars += mappingKeyLen + translationBudgetChars + 40;
+  }
+  const estimated = Math.ceil(totalOutputChars / TOKEN_APPROX_CHARS_PER_TOKEN);
+  return Math.max(1024, estimated + 256);
+}
+
+function getGeminiMaxOutputTokensForBatch(texts) {
+  const estimated = estimateOutputTokensForGeminiBatch(texts);
+  // Keep a generous buffer over the estimate to avoid clipping structured JSON output.
+  const buffered = Math.ceil(estimated * 2);
+  return Math.min(
+    GEMINI_FLASH_LITE_OUTPUT_TOKEN_LIMIT,
+    Math.max(4096, buffered)
+  );
+}
+
 async function runWithConcurrency(items, concurrency, worker, onItemDone, onItemStart) {
   if (!Array.isArray(items) || items.length === 0) return;
 
@@ -1369,11 +1632,17 @@ function normalizeTranslations(rawTranslations, batch, providerName, langName) {
 const PROVIDERS = {
   gemini: {
     name: 'Gemini',
-    models: ['gemini-3-flash-preview'],
+    models: ['gemini-2.5-flash-lite'],
     async translate(apiKey, model, texts, targetLang) {
       const LANG_NAMES = { fr: 'French', de: 'German', es: 'Spanish', it: 'Italian', tr: 'Turkish', ar: 'Arabic' };
       const langName = LANG_NAMES[targetLang] || targetLang;
-      uiLog('Gemini translate request', { langName, model, textCount: texts.length });
+      const maxOutputTokens = getGeminiMaxOutputTokensForBatch(texts);
+      uiLog('Gemini translate request', {
+        langName,
+        model,
+        textCount: texts.length,
+        maxOutputTokens,
+      });
 
       const prompt = `You are a professional translator and localization expert.
 
@@ -1398,6 +1667,7 @@ Respond with ONLY a valid JSON array, no markdown, no explanation:
         generationConfig: {
           responseMimeType: 'application/json',
           temperature: 0.3,
+          maxOutputTokens,
         },
       };
 
@@ -1477,26 +1747,22 @@ const translateEmptyText = document.getElementById('translateEmptyText');
 const translateFramesList = document.getElementById('translateFramesList');
 const translateBtn = document.getElementById('translateBtn');
 const debugLogBtn = document.getElementById('debugLogBtn');
-const outputInfo = document.getElementById('outputInfo');
 const translateApiHint = document.getElementById('translateApiHint');
+const openSettingsLink = document.getElementById('openSettingsLink');
+const sourceLangInput = document.getElementById('sourceLang');
+const sourceLangLabel = document.getElementById('sourceLangLabel');
 const langAccordionLabel = document.getElementById('langAccordionLabel');
-const progressArea = document.getElementById('progressArea');
-const progressStage = document.getElementById('progressStage');
-const progressMeta = document.getElementById('progressMeta');
-const progressPercent = document.getElementById('progressPercent');
-const progressSteps = document.getElementById('progressSteps');
-const progressFill = document.getElementById('progressFill');
-const resultArea = document.getElementById('resultArea');
-const auditArea = document.getElementById('auditArea');
+const progressMetaInline = document.getElementById('progressMetaInline');
+const completionSection = document.getElementById('completionSection');
 const auditTitle = document.getElementById('auditTitle');
 const auditList = document.getElementById('auditList');
+const auditBlock = document.getElementById('auditBlock');
 const debugLogsModal = document.getElementById('debugLogsModal');
 const debugLogsOutput = document.getElementById('debugLogsOutput');
 const debugLogsCloseBtn = document.getElementById('debugLogsCloseBtn');
 const debugLogsCopyBtn = document.getElementById('debugLogsCopyBtn');
 const debugLogsClearBtn = document.getElementById('debugLogsClearBtn');
 
-const PROGRESS_STAGE_ORDER = ['extract', 'translate', 'apply'];
 const EXTRACT_STAGE_START = 5;
 const EXTRACT_STAGE_END = 20;
 const TRANSLATE_STAGE_START = 22;
@@ -1507,22 +1773,17 @@ const LANGUAGE_NAMES = { fr: 'French', de: 'German', es: 'Spanish', it: 'Italian
 
 function setProgress(stage, percent, stageLabel, metaText) {
   const clamped = Math.max(0, Math.min(100, Math.round(percent)));
-  progressFill.style.width = `${clamped}%`;
-  progressPercent.textContent = `${clamped}%`;
-  progressStage.textContent = stageLabel;
-  progressMeta.textContent = metaText || '';
+  void stage;
+  translateBtn.style.setProperty('--progress', `${clamped}%`);
+  setTranslateButtonText(`${stageLabel} ${clamped}%`);
+  translateBtn.className = 'action-btn disabled translate-progress-btn translating';
+  progressMetaInline.textContent = metaText || '';
+  progressMetaInline.classList.remove('hidden');
+}
 
-  const stageIndex = PROGRESS_STAGE_ORDER.indexOf(stage);
-  progressSteps.querySelectorAll('.step-chip').forEach(chip => {
-    chip.classList.remove('active', 'completed');
-    const chipStage = chip.getAttribute('data-stage');
-    const chipIndex = PROGRESS_STAGE_ORDER.indexOf(chipStage);
-    if (chipIndex < stageIndex) {
-      chip.classList.add('completed');
-    } else if (chipIndex === stageIndex) {
-      chip.classList.add('active');
-    }
-  });
+function setTranslateButtonText(label) {
+  const safeLabel = String(label);
+  translateBtn.innerHTML = `<span class="btn-label">${safeLabel}</span>`;
 }
 
 function formatDebugLogEntry(entry) {
@@ -1607,6 +1868,14 @@ function updateLangAccordionLabel() {
   langAccordionLabel.textContent = `Customize target languages (${selected.length}): ${preview}${suffix}`;
 }
 
+function updateSourceLangLabel() {
+  const checked = document.querySelector('input[name="sourceLangOption"]:checked');
+  const value = checked ? checked.value : 'en';
+  const label = checked ? checked.parentElement.textContent.trim() : 'English';
+  sourceLangInput.value = value;
+  sourceLangLabel.textContent = label;
+}
+
 // ── Tabs ──
 document.querySelectorAll('.tab-btn').forEach(btn => {
   btn.addEventListener('click', () => {
@@ -1642,7 +1911,8 @@ debugLogsCopyBtn.addEventListener('click', async () => {
 });
 
 // ── Frames list rendering (shared) ──
-function renderFramesList(container, frames) {
+function renderFramesList(container, frames, options = {}) {
+  const showSize = options.showSize !== false;
   const frameIconSvg = `
     <svg class="frame-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
       <rect x="3.5" y="7.5" width="17" height="1" fill="#888888"></rect>
@@ -1655,7 +1925,7 @@ function renderFramesList(container, frames) {
     `<div class="frame-item">
       ${frameIconSvg}
       <span class="frame-name">${f.name}</span>
-      <span class="frame-size">${f.width} × ${f.height}</span>
+      ${showSize ? `<span class="frame-size">${f.width} × ${f.height}</span>` : ''}
     </div>`
   ).join('');
 }
@@ -1673,12 +1943,34 @@ function updateExportUI() {
     previewArea.classList.add('has-selection');
     exportBtn.textContent = `Export ${selectedFrames.length} frame${selectedFrames.length > 1 ? 's' : ''}`;
     exportBtn.className = 'action-btn active';
-    renderFramesList(framesList, selectedFrames);
+    renderFramesList(framesList, selectedFrames, { showSize: true });
   }
 }
 
 function getSelectedLangs() {
   return Array.from(document.querySelectorAll('#langGrid input:checked')).map(cb => cb.value);
+}
+
+function applySavedTargetLanguages(savedLanguages) {
+  if (!Array.isArray(savedLanguages)) return;
+  const valid = new Set(savedLanguages.filter(value => typeof value === 'string'));
+  if (valid.size === 0) return;
+
+  const checkboxes = Array.from(document.querySelectorAll('#langGrid input'));
+  let checkedCount = 0;
+  for (const cb of checkboxes) {
+    cb.checked = valid.has(cb.value);
+    if (cb.checked) checkedCount += 1;
+  }
+
+  if (checkedCount === 0 && checkboxes.length > 0) {
+    checkboxes[0].checked = true;
+  }
+}
+
+function getTranslateActionLabel(frameCount, langCount) {
+  const outputFrames = frameCount * langCount;
+  return `Translate \u2192 ${outputFrames} frame${outputFrames > 1 ? 's' : ''}`;
 }
 
 function updateTranslateUI() {
@@ -1688,37 +1980,70 @@ function updateTranslateUI() {
   updateDebugUI();
   translateApiHint.classList.toggle('hidden', hasApiKey);
   if (selectedFrames.length === 0) {
+    translateButtonDone = false;
     translateEmptyText.style.display = '';
     translateFramesList.style.display = 'none';
     translatePreviewArea.classList.remove('has-selection');
-    translateBtn.textContent = 'Select frames to translate';
-    translateBtn.className = 'action-btn disabled';
-    outputInfo.textContent = 'Select frames to see output count';
+    setTranslateButtonText('Select frames to translate');
+    translateBtn.className = 'action-btn disabled translate-progress-btn';
+    translateBtn.style.setProperty('--progress', '0%');
+    progressMetaInline.classList.add('hidden');
   } else {
     translateEmptyText.style.display = 'none';
     translateFramesList.style.display = '';
     translatePreviewArea.classList.add('has-selection');
-    renderFramesList(translateFramesList, selectedFrames);
+    renderFramesList(translateFramesList, selectedFrames, { showSize: true });
 
     if (!hasApiKey) {
-      translateBtn.textContent = 'Add API key in Settings';
-      translateBtn.className = 'action-btn disabled';
-      outputInfo.textContent = 'Add API key to enable Translate';
+      translateButtonDone = false;
+      setTranslateButtonText('Add API key in Settings');
+      translateBtn.className = 'action-btn disabled translate-progress-btn';
+      translateBtn.style.setProperty('--progress', '0%');
+      progressMetaInline.classList.add('hidden');
     } else if (langs.length === 0) {
-      translateBtn.textContent = 'Select at least one language';
-      translateBtn.className = 'action-btn disabled';
-      outputInfo.textContent = 'No languages selected';
+      translateButtonDone = false;
+      setTranslateButtonText('Select at least one language');
+      translateBtn.className = 'action-btn disabled translate-progress-btn';
+      translateBtn.style.setProperty('--progress', '0%');
+      progressMetaInline.classList.add('hidden');
     } else {
-      const total = selectedFrames.length * langs.length;
-      translateBtn.textContent = `Translate ${selectedFrames.length} frame${selectedFrames.length > 1 ? 's' : ''} → ${langs.length} language${langs.length > 1 ? 's' : ''}`;
-      translateBtn.className = isTranslating ? 'action-btn disabled' : 'action-btn active';
-      outputInfo.textContent = `Output: ${total} frames (${selectedFrames.length} × ${langs.length} languages)`;
+      const defaultLabel = getTranslateActionLabel(selectedFrames.length, langs.length);
+      if (isTranslating) {
+        translateBtn.className = 'action-btn disabled translate-progress-btn translating';
+      } else if (translateButtonDone) {
+        setTranslateButtonText('Done \u2713');
+        translateBtn.className = 'action-btn active translate-progress-btn';
+        translateBtn.style.setProperty('--progress', '0%');
+        progressMetaInline.classList.add('hidden');
+      } else {
+        setTranslateButtonText(defaultLabel);
+        translateBtn.className = 'action-btn active translate-progress-btn';
+        translateBtn.style.setProperty('--progress', '0%');
+        progressMetaInline.classList.add('hidden');
+      }
     }
   }
 }
 
 document.querySelectorAll('#langGrid input').forEach(cb => {
-  cb.addEventListener('change', updateTranslateUI);
+  cb.addEventListener('change', () => {
+    if (!isTranslating) {
+      translateButtonDone = false;
+      
+    }
+    updateTranslateUI();
+  });
+});
+
+document.querySelectorAll('input[name="sourceLangOption"]').forEach(radio => {
+  radio.addEventListener('change', () => {
+    updateSourceLangLabel();
+  });
+});
+updateSourceLangLabel();
+openSettingsLink.addEventListener('click', () => {
+  parent.postMessage({ pluginMessage: { type: 'get-settings' } }, '*');
+  document.getElementById('settingsModal').classList.add('visible');
 });
 
 // ── Message handling ──
@@ -1726,6 +2051,22 @@ onmessage = (event) => {
   const msg = event.data.pluginMessage;
   if (msg.type === 'selection-update') {
     selectedFrames = msg.frames;
+    const stats = (msg.selectionStats && typeof msg.selectionStats === 'object') ? msg.selectionStats : null;
+    if (selectedFrames.length > 1 && stats) {
+      const textNodeCount = Number(stats.textNodeCount) || 0;
+      const totalCharCount = Number(stats.totalCharCount) || 0;
+      const truncatedNodeCount = Number(stats.truncatedNodeCount) || 0;
+      uiLog('Selection text estimate', {
+        frameCount: selectedFrames.length,
+        textNodeCount,
+        totalCharCount,
+        truncatedNodeCount,
+      });
+    }
+    if (!isTranslating) {
+      translateButtonDone = false;
+      
+    }
     updateExportUI();
     updateTranslateUI();
   } else if (msg.type === 'export-data') {
@@ -1820,8 +2161,6 @@ function generatePDF() {
 }
 
 // ── Settings modal ──
-const GEMINI_MODELS = ['gemini-3-flash-preview'];
-const OPENAI_MODELS = ['gpt-5.2', 'gpt-5-mini'];
 
 document.getElementById('gearBtn').addEventListener('click', () => {
   parent.postMessage({ pluginMessage: { type: 'get-settings' } }, '*');
@@ -1839,41 +2178,72 @@ function populateSettingsModal() {
   document.getElementById('settingsProvider').value = prov;
   document.getElementById('settingsGeminiKey').value = currentSettings.apiKeyGemini || '';
   document.getElementById('settingsOpenaiKey').value = currentSettings.apiKeyOpenai || '';
+  document.getElementById('settingsQuotaProfile').value = normalizeQuotaProfile(currentSettings.quotaProfile);
+  applySavedTargetLanguages(currentSettings.targetLanguages);
   document.getElementById('settingsDebugMode').checked = currentSettings.debugMode === true;
   updateProviderUI(prov);
-  const allowedModels = PROVIDERS[prov].models;
-  const selectedModel = allowedModels.includes(currentSettings.model) ? currentSettings.model : allowedModels[0];
-  currentSettings.model = selectedModel;
-  document.getElementById('settingsModel').value = selectedModel;
+  currentSettings.model = (PROVIDERS[prov]?.models || ['gemini-2.5-flash-lite'])[0];
 }
 
 function updateProviderUI(provider) {
   document.getElementById('geminiKeyGroup').style.display = provider === 'gemini' ? '' : 'none';
   document.getElementById('openaiKeyGroup').style.display = provider === 'openai' ? '' : 'none';
-  const modelSelect = document.getElementById('settingsModel');
-  const models = PROVIDERS[provider]?.models || [];
-  modelSelect.innerHTML = models.map(m => `<option value="${m}">${m}</option>`).join('');
+  document.getElementById('quotaProfileGroup').style.display = provider === 'gemini' ? '' : 'none';
+  currentSettings.model = (PROVIDERS[provider]?.models || ['gemini-2.5-flash-lite'])[0];
 }
 
 document.getElementById('settingsProvider').addEventListener('change', (e) => {
   updateProviderUI(e.target.value);
 });
 
-document.getElementById('toggleGeminiKey').addEventListener('click', () => {
-  const inp = document.getElementById('settingsGeminiKey');
-  inp.type = inp.type === 'password' ? 'text' : 'password';
-});
-document.getElementById('toggleOpenaiKey').addEventListener('click', () => {
-  const inp = document.getElementById('settingsOpenaiKey');
-  inp.type = inp.type === 'password' ? 'text' : 'password';
-});
+function getVisibilityIconSvg(isVisible) {
+  if (isVisible) {
+    return `
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M4 4l16 16"></path>
+        <path d="M10.6 10.6a2 2 0 0 0 2.8 2.8"></path>
+        <path d="M9.8 5.2A10.2 10.2 0 0 1 12 5c5 0 8.4 3.3 9.7 7-0.5 1.3-1.3 2.6-2.4 3.7"></path>
+        <path d="M6.7 6.7C4.9 8 3.7 9.8 3 12c1.3 3.7 4.7 7 9 7 1.5 0 2.9-0.4 4.1-1"></path>
+      </svg>
+    `;
+  }
+  return `
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z"></path>
+      <circle cx="12" cy="12" r="3"></circle>
+    </svg>
+  `;
+}
+
+function setKeyVisibilityButtonState(button, input, label) {
+  const isVisible = input.type === 'text';
+  const icon = button.querySelector('.toggle-vis-icon');
+  if (icon) icon.innerHTML = getVisibilityIconSvg(isVisible);
+  button.setAttribute('aria-label', `${isVisible ? 'Hide' : 'Show'} ${label}`);
+}
+
+function bindKeyVisibilityToggle(buttonId, inputId, label) {
+  const button = document.getElementById(buttonId);
+  const input = document.getElementById(inputId);
+  setKeyVisibilityButtonState(button, input, label);
+  button.addEventListener('click', () => {
+    input.type = input.type === 'password' ? 'text' : 'password';
+    setKeyVisibilityButtonState(button, input, label);
+  });
+}
+
+bindKeyVisibilityToggle('toggleGeminiKey', 'settingsGeminiKey', 'Gemini API key');
+bindKeyVisibilityToggle('toggleOpenaiKey', 'settingsOpenaiKey', 'OpenAI API key');
 
 document.getElementById('settingsSaveBtn').addEventListener('click', () => {
+  const provider = document.getElementById('settingsProvider').value;
   currentSettings = normalizeSettings({
-    provider: document.getElementById('settingsProvider').value,
-    model: document.getElementById('settingsModel').value,
+    provider,
+    model: (PROVIDERS[provider]?.models || ['gemini-2.5-flash-lite'])[0],
     apiKeyGemini: document.getElementById('settingsGeminiKey').value,
     apiKeyOpenai: document.getElementById('settingsOpenaiKey').value,
+    quotaProfile: document.getElementById('settingsQuotaProfile').value,
+    targetLanguages: getSelectedLangs(),
     debugMode: document.getElementById('settingsDebugMode').checked,
   });
   parent.postMessage({ pluginMessage: { type: 'save-settings', settings: currentSettings } }, '*');
@@ -1890,14 +2260,13 @@ translateBtn.addEventListener('click', () => {
   const apiKey = getActiveApiKey();
   if (!apiKey) {
     uiWarn('Translate blocked: missing API key', { provider: currentSettings.provider });
-    resultArea.classList.add('visible');
-    document.getElementById('resultTitle').textContent = '⚠️ No API Key';
-    document.getElementById('resultDetail').textContent = 'Please add your API key in Settings (⚙)';
-    document.getElementById('resultErrors').textContent = '';
     return;
   }
 
-  auditArea.classList.remove('visible');
+  completionSection.style.display = 'none';
+  completionSection.open = true;
+  completionSection.className = 'completion-section';
+  translateButtonDone = false;
   isTranslating = true;
   uiLog('Translate started', {
     selectedFrames: selectedFrames.length,
@@ -1905,8 +2274,8 @@ translateBtn.addEventListener('click', () => {
     provider: currentSettings.provider,
     model: currentSettings.model,
   });
-  resultArea.classList.remove('visible');
-  progressArea.classList.add('visible');
+  progressMetaInline.classList.remove('hidden');
+  progressMetaInline.textContent = 'Preparing translation pipeline';
   setProgress('extract', EXTRACT_STAGE_START, 'Extracting Text Layers', 'Reading selected frames and building mapping keys');
   updateTranslateUI();
 
@@ -1918,13 +2287,9 @@ async function handleTextData(nodes, frameCount) {
     pendingTextNodes = nodes;
     lastApiErrors = [];
     const langs = getSelectedLangs();
-    const dynamicConcurrency = Math.max(1, Math.min(MAX_DYNAMIC_CONCURRENCY, langs.length));
     const translateProgressSpan = TRANSLATE_STAGE_END - TRANSLATE_STAGE_START;
     const runId = `run-${Date.now().toString(36)}-${++translationRunSeq}`;
     const pipelineStartMs = Date.now();
-    let adaptiveConcurrencyLimit = dynamicConcurrency;
-    let adaptiveInFlightRequests = 0;
-    let adaptiveSuccessStreak = 0;
 
     const provider = PROVIDERS[currentSettings.provider];
     if (!provider) {
@@ -1933,6 +2298,18 @@ async function handleTextData(nodes, frameCount) {
 
     const apiKey = getActiveApiKey();
     const model = currentSettings.model;
+    const tuning = getTranslationTuning({
+      providerKey: currentSettings.provider,
+      model,
+      languageCount: langs.length,
+      quotaProfile: currentSettings.quotaProfile,
+    });
+    const dynamicConcurrency = tuning.concurrency;
+    const translationBatchSize = tuning.batchSize;
+    const waitForApiStartSlot = createRequestStartLimiter(tuning.requestIntervalMs);
+    let adaptiveConcurrencyLimit = dynamicConcurrency;
+    let adaptiveInFlightRequests = 0;
+    let adaptiveSuccessStreak = 0;
 
     const frameGroups = {};
     for (const node of nodes) {
@@ -1951,7 +2328,21 @@ async function handleTextData(nodes, frameCount) {
       groupedFrames: Object.keys(frameGroups).length,
       languages: langs,
       dynamicConcurrency,
-      batchSize: TRANSLATION_BATCH_SIZE,
+      batchSize: translationBatchSize,
+      tuningProfile: tuning.profile,
+      requestIntervalMs: tuning.requestIntervalMs,
+    });
+    uiLog('Translation tuning applied', {
+      runId,
+      provider: currentSettings.provider,
+      model,
+      nodeCount: nodes.length,
+      languageCount: langs.length,
+      batchSize: translationBatchSize,
+      initialConcurrency: dynamicConcurrency,
+      requestIntervalMs: tuning.requestIntervalMs,
+      modelLimits: tuning.modelLimits,
+      tuningProfile: tuning.profile,
     });
 
     const sourceFrameCount = Math.max(Number(frameCount) || 0, Object.keys(frameGroups).length);
@@ -2016,7 +2407,7 @@ async function handleTextData(nodes, frameCount) {
     for (const lang of langs) {
       const langName = LANGUAGE_NAMES[lang] || lang;
       const pooledNodes = languageNodePool.get(lang) || [];
-      const batches = chunkArray(pooledNodes, TRANSLATION_BATCH_SIZE);
+      const batches = chunkArray(pooledNodes, translationBatchSize);
       for (let batchIndex = 0; batchIndex < batches.length; batchIndex++) {
         apiTasks.push({
           taskId: apiTasks.length + 1,
@@ -2029,17 +2420,21 @@ async function handleTextData(nodes, frameCount) {
       }
     }
 
+    const dispatchMeta = tuning.requestIntervalMs > 0
+      ? `${apiTasks.length} API batch(es), concurrency ${dynamicConcurrency}, batch ${translationBatchSize}, interval ${Math.round(tuning.requestIntervalMs / 1000)}s`
+      : `${apiTasks.length} API batch(es), concurrency ${dynamicConcurrency}, batch ${translationBatchSize}`;
     setProgress(
       'translate',
       TRANSLATE_STAGE_START,
       'Dispatching Translation Requests',
-      `${apiTasks.length} API batch(es), concurrency ${dynamicConcurrency}`
+      dispatchMeta
     );
     uiLog('Dispatching API tasks', {
       runId,
       totalTasks: apiTasks.length,
       dynamicConcurrency,
       adaptiveConcurrencyLimit,
+      requestIntervalMs: tuning.requestIntervalMs,
     });
 
     if (apiTasks.length > 0) {
@@ -2057,15 +2452,18 @@ async function handleTextData(nodes, frameCount) {
           const maxAttempts = TRANSLATION_MAX_RETRIES + 1;
           let attemptsUsed = 0;
           let result = null;
+          let terminalBatchError = null;
 
           for (let attempt = 1; attempt <= maxAttempts; attempt++) {
             if (hardQuotaError) {
-              throw hardQuotaError;
+              terminalBatchError = hardQuotaError;
+              break;
             }
             attemptsUsed = attempt;
             while (adaptiveInFlightRequests >= adaptiveConcurrencyLimit) {
               await sleep(25);
             }
+            await waitForApiStartSlot();
             adaptiveInFlightRequests += 1;
 
             let shouldRetry = false;
@@ -2144,7 +2542,7 @@ async function handleTextData(nodes, frameCount) {
                   adaptiveConcurrencyLimit,
                 });
               } else {
-                throw error;
+                terminalBatchError = error;
               }
             } finally {
               adaptiveInFlightRequests = Math.max(0, adaptiveInFlightRequests - 1);
@@ -2155,11 +2553,12 @@ async function handleTextData(nodes, frameCount) {
               await sleep(retryDelayMs);
               continue;
             }
-            if (caughtError) throw caughtError;
+            if (terminalBatchError) break;
+            if (caughtError) break;
           }
 
           try {
-            if (!result) throw new Error('No translation result after retries');
+            if (!result) throw terminalBatchError || new Error('No translation result after retries');
             for (const item of result) {
               const frameId = getFrameIdFromMappingKey(item.mappingKey);
               if (!frameId) continue;
@@ -2273,6 +2672,7 @@ async function handleTextData(nodes, frameCount) {
         totalTasks: apiTasks.length,
         targetConcurrency: dynamicConcurrency,
         maxObservedInFlight,
+        requestIntervalMs: tuning.requestIntervalMs,
         finalAdaptiveConcurrencyLimit: adaptiveConcurrencyLimit,
         elapsedMs: apiStageElapsedMs,
       });
@@ -2324,9 +2724,12 @@ async function handleTextData(nodes, frameCount) {
     lastApiErrors = apiErrors;
 
     if (apiErrors.length > 0 && allTranslations.every(t => t.nodes.length === 0)) {
+      setProgress('translate', 100, 'Translation Failed', 'No translated output could be created');
       isTranslating = false;
-      progressArea.classList.remove('visible');
-      resultArea.classList.add('visible');
+      translateButtonDone = false;
+      completionSection.style.display = '';
+      completionSection.open = true;
+      completionSection.className = 'completion-section error';
       document.getElementById('resultTitle').textContent = '❌ Translation Failed';
       document.getElementById('resultDetail').textContent = 'No translated frames were created. Resolve the API issue and retry.';
       const visibleErrors = apiErrors.slice(0, 3);
@@ -2334,6 +2737,7 @@ async function handleTextData(nodes, frameCount) {
         visibleErrors.push(`...and ${apiErrors.length - visibleErrors.length} more issue(s).`);
       }
       document.getElementById('resultErrors').textContent = visibleErrors.join('\n\n');
+      auditBlock.style.display = 'none';
       updateTranslateUI();
       return;
     }
@@ -2342,12 +2746,16 @@ async function handleTextData(nodes, frameCount) {
   } catch (e) {
     const userError = getUserErrorMessage(e);
     uiError('Translation pipeline failed', { error: userError, rawError: getErrorMessage(e) });
-    isTranslating = false;
     setProgress('translate', 100, 'Translation Failed', getUserErrorSummary(e));
-    resultArea.classList.add('visible');
+    isTranslating = false;
+    translateButtonDone = false;
+    completionSection.style.display = '';
+    completionSection.open = true;
+    completionSection.className = 'completion-section error';
     document.getElementById('resultTitle').textContent = '❌ Translation Failed';
     document.getElementById('resultDetail').textContent = '';
     document.getElementById('resultErrors').textContent = userError;
+    auditBlock.style.display = 'none';
     updateTranslateUI();
     lastApiErrors = [];
   }
@@ -2355,11 +2763,11 @@ async function handleTextData(nodes, frameCount) {
 
 function renderAuditPanel(overflows) {
   if (!overflows || overflows.length === 0) {
-    auditArea.classList.remove('visible');
+    auditBlock.style.display = 'none';
     auditList.innerHTML = '';
     return;
   }
-  auditArea.classList.add('visible');
+  auditBlock.style.display = '';
   auditTitle.textContent = `⚠️ ${overflows.length} overflow issue${overflows.length > 1 ? 's' : ''} found`;
   auditList.innerHTML = '';
 
@@ -2433,20 +2841,30 @@ function handleTranslationComplete(created, errors, overflows) {
     apiErrorCount: lastApiErrors.length,
     overflowCount: Array.isArray(overflows) ? overflows.length : 0,
   });
-  isTranslating = false;
   setProgress('apply', 100, 'Translation Complete', 'All selected languages processed');
-  resultArea.classList.add('visible');
+
+  isTranslating = false;
+  translateButtonDone = true;
+  completionSection.style.display = '';
+  completionSection.open = true;
   updateTranslateUI();
 
   const applyErrors = Array.isArray(errors) ? errors.length : 0;
   const apiErrorCount = lastApiErrors.length;
   const overflowCount = Array.isArray(overflows) ? overflows.length : 0;
+  uiLog('Phase 2 overflow detection summary', {
+    phase2Active: true,
+    overflowCount,
+    status: overflowCount > 0 ? 'issues-found' : 'no-overflow',
+  });
 
   if (applyErrors === 0 && apiErrorCount === 0 && overflowCount === 0) {
+    completionSection.className = 'completion-section success';
     document.getElementById('resultTitle').textContent = `✅ Translation Complete`;
     document.getElementById('resultDetail').textContent = `${created} frames created successfully`;
     document.getElementById('resultErrors').textContent = '';
   } else {
+    completionSection.className = 'completion-section warning';
     const hasOnlyOverflows = applyErrors === 0 && apiErrorCount === 0 && overflowCount > 0;
     document.getElementById('resultTitle').textContent = hasOnlyOverflows
       ? `✅ Translation Complete`

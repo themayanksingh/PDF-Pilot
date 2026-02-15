@@ -66,6 +66,8 @@ interface SettingsPayload {
   model?: string;
   apiKeyGemini?: string;
   apiKeyOpenai?: string;
+  quotaProfile?: string;
+  targetLanguages?: string[];
   debugMode?: boolean;
 }
 
@@ -113,11 +115,17 @@ function asBoolean(value: unknown): boolean | null {
 function parseSettingsPayload(value: unknown): SettingsPayload {
   const obj = asObject(value);
   if (!obj) return {};
+  let targetLanguages: string[] | undefined;
+  if (Array.isArray(obj.targetLanguages)) {
+    targetLanguages = obj.targetLanguages.filter(item => typeof item === 'string') as string[];
+  }
   return {
     provider: asString(obj.provider) || undefined,
     model: asString(obj.model) || undefined,
     apiKeyGemini: asString(obj.apiKeyGemini) || undefined,
     apiKeyOpenai: asString(obj.apiKeyOpenai) || undefined,
+    quotaProfile: asString(obj.quotaProfile) || undefined,
+    targetLanguages,
     debugMode: asBoolean(obj.debugMode) ?? undefined,
   };
 }
@@ -163,6 +171,27 @@ function getSelectedFrames(): { id: string; name: string; width: number; height:
       width: Math.round(node.width),
       height: Math.round(node.height),
     }));
+}
+
+function getSelectionTextStats(frames: FrameNode[]): {
+  textNodeCount: number;
+  totalCharCount: number;
+  truncatedNodeCount: number;
+} {
+  let textNodeCount = 0;
+  let totalCharCount = 0;
+  let truncatedNodeCount = 0;
+
+  for (const frame of frames) {
+    const textNodes = extractTextNodes(frame);
+    textNodeCount += textNodes.length;
+    for (const textNode of textNodes) {
+      totalCharCount += textNode.charCount;
+      if (textNode.truncated) truncatedNodeCount += 1;
+    }
+  }
+
+  return { textNodeCount, totalCharCount, truncatedNodeCount };
 }
 
 function getNodePath(node: BaseNode, rootFrame: BaseNode): string {
@@ -360,7 +389,16 @@ function extractLinks(frame: SceneNode): LinkInfo[] {
 }
 
 function sendSelection() {
-  figma.ui.postMessage({ type: 'selection-update', frames: getSelectedFrames() });
+  const selectedFrameNodes = figma.currentPage.selection.filter(isAllowedSelectionNode);
+  const frames = getSelectedFrames();
+  const selectionStats = getSelectionTextStats(selectedFrameNodes);
+  figma.ui.postMessage({ type: 'selection-update', frames, selectionStats });
+  pluginLog('Selection stats updated', {
+    frameCount: frames.length,
+    textNodeCount: selectionStats.textNodeCount,
+    totalCharCount: selectionStats.totalCharCount,
+    truncatedNodeCount: selectionStats.truncatedNodeCount,
+  });
 }
 
 figma.on('selectionchange', sendSelection);
@@ -415,11 +453,13 @@ figma.ui.onmessage = async (rawMsg: unknown) => {
     const model = await figma.clientStorage.getAsync('ai-model');
     const apiKeyGemini = await figma.clientStorage.getAsync('api-key-gemini');
     const apiKeyOpenai = await figma.clientStorage.getAsync('api-key-openai');
+    const quotaProfile = await figma.clientStorage.getAsync('quota-profile');
+    const targetLanguages = await figma.clientStorage.getAsync('target-languages');
     const debugMode = await figma.clientStorage.getAsync('debug-mode');
     pluginDebugMode = debugMode === true;
     figma.ui.postMessage({
       type: 'settings-loaded',
-      settings: { provider, model, apiKeyGemini, apiKeyOpenai, debugMode: pluginDebugMode },
+      settings: { provider, model, apiKeyGemini, apiKeyOpenai, quotaProfile, targetLanguages, debugMode: pluginDebugMode },
     });
   }
 
@@ -428,9 +468,11 @@ figma.ui.onmessage = async (rawMsg: unknown) => {
     const debugMode = settings.debugMode === true;
     pluginDebugMode = debugMode;
     await figma.clientStorage.setAsync('ai-provider', settings.provider || 'gemini');
-    await figma.clientStorage.setAsync('ai-model', settings.model || 'gemini-3-flash-preview');
+    await figma.clientStorage.setAsync('ai-model', settings.model || 'gemini-2.5-flash-lite');
     await figma.clientStorage.setAsync('api-key-gemini', settings.apiKeyGemini || '');
     await figma.clientStorage.setAsync('api-key-openai', settings.apiKeyOpenai || '');
+    await figma.clientStorage.setAsync('quota-profile', settings.quotaProfile || 'auto');
+    await figma.clientStorage.setAsync('target-languages', Array.isArray(settings.targetLanguages) ? settings.targetLanguages : []);
     await figma.clientStorage.setAsync('debug-mode', debugMode);
     figma.ui.postMessage({ type: 'settings-saved' });
     figma.notify('Settings saved ✅');
@@ -468,6 +510,8 @@ figma.ui.onmessage = async (rawMsg: unknown) => {
     const errors: { mappingKey: string; error: string }[] = [];
     const overflows: OverflowInfo[] = [];
     let totalFramesCreated = 0;
+    let totalOverflowScannedNodes = 0;
+    let clonesWithOverflow = 0;
     try {
       const loadedFontKeys = new Set<string>();
       const getFontKey = (font: FontName) => `${font.family}::${font.style}`;
@@ -601,12 +645,15 @@ figma.ui.onmessage = async (rawMsg: unknown) => {
         );
 
         const cloneFrameName = sourceFrame.name;
+        let scannedInClone = 0;
+        let foundInClone = 0;
         const detectOverflows = (node: SceneNode, rootClone: SceneNode): void => {
           if (!node.visible) return;
           if (node.type === 'TEXT') {
             const path = getNodePath(node, rootClone);
             const mappingKey = `${translation.sourceFrameId}::${path}`;
             if (appliedMappingKeys.has(mappingKey)) {
+              scannedInClone++;
               const overflow = checkOverflow(
                 node as TextNode,
                 mappingKey,
@@ -614,7 +661,10 @@ figma.ui.onmessage = async (rawMsg: unknown) => {
                 cloneFrameName,
                 clone.id
               );
-              if (overflow) overflows.push(overflow);
+              if (overflow) {
+                overflows.push(overflow);
+                foundInClone++;
+              }
             }
           }
           if ('children' in node) {
@@ -624,6 +674,16 @@ figma.ui.onmessage = async (rawMsg: unknown) => {
           }
         };
         detectOverflows(clone as SceneNode, clone as SceneNode);
+        totalOverflowScannedNodes += scannedInClone;
+        if (foundInClone > 0) clonesWithOverflow++;
+        pluginLog('Overflow scan completed for clone', {
+          language: translation.language,
+          sourceFrameId: translation.sourceFrameId,
+          cloneFrameId: clone.id,
+          scannedTextNodes: scannedInClone,
+          overflowCount: foundInClone,
+          status: foundInClone > 0 ? 'issues-found' : 'no-overflow',
+        });
 
         completedTranslationUnits++;
         figma.ui.postMessage({
@@ -640,9 +700,18 @@ figma.ui.onmessage = async (rawMsg: unknown) => {
       pluginError('Apply translations crashed', { error: message });
     }
 
+    pluginLog('Phase 2 overflow detection summary', {
+      phase2Active: true,
+      created: totalFramesCreated,
+      scannedTextNodes: totalOverflowScannedNodes,
+      overflowCount: overflows.length,
+      clonesWithOverflow,
+      clonesWithoutOverflow: Math.max(0, totalFramesCreated - clonesWithOverflow),
+      status: overflows.length > 0 ? 'issues-found' : 'no-overflow',
+    });
     figma.ui.postMessage({ type: 'translation-complete', created: totalFramesCreated, errors, overflows });
     figma.notify(errors.length > 0 ? 'Translation completed with issues ⚠️' : 'Translation complete! ✅');
-    pluginLog('Apply translations finished', { created: totalFramesCreated, errorCount: errors.length });
+    pluginLog('Apply translations finished', { created: totalFramesCreated, errorCount: errors.length, overflowCount: overflows.length });
   }
 
   if (type === 'decrease-font') {

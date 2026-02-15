@@ -26,12 +26,24 @@ Figma plugin for:
 ## AI Providers and Models
 
 - Gemini:
-  - `gemini-3-flash-preview`
+  - `gemini-2.5-flash-lite`
 - OpenAI:
   - `gpt-5.2`
   - `gpt-5-mini`
 
 API keys are only required for the `Translate` workflow.
+
+### Gemini Tier-Aware Tuning
+
+In Settings, `Gemini Quota Tier` controls request pacing/concurrency:
+
+- `Auto (safe default)` (uses free-tier-safe pacing)
+- `Free Tier` (15 RPM / 250,000 TPM / 1,000 RPD)
+- `Paid Tier 1` (4,000 RPM / 4,000,000 TPM)
+- `Paid Tier 2` (10,000 RPM / 10,000,000 TPM)
+- `Paid Tier 3` (30,000 RPM / 30,000,000 TPM)
+
+These values are from Gemini API official rate-limit docs.
 
 ## Project Structure
 

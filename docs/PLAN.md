@@ -199,7 +199,7 @@ Current UI lives here as-is.
 │  API Key:                           │
 │  [••••••••••••••••••••••] [👁]      │
 │                                     │
-│  Model: [gemini-3-flash-preview ▼] │
+│  Model: [gemini-2.5-flash-lite ▼] │
 │                                     │
 │  [Save]                   [Cancel]  │
 └─────────────────────────────────────┘
@@ -257,8 +257,8 @@ const ProviderInterface = {
 ```javascript
 const GeminiProvider = {
   name: 'Gemini',
-  models: ['gemini-3-flash-preview'],
-  defaultModel: 'gemini-3-flash-preview',
+  models: ['gemini-2.5-flash-lite'],
+  defaultModel: 'gemini-2.5-flash-lite',
   endpoint: 'https://generativelanguage.googleapis.com/v1beta/models/',
   translate: async function(apiKey, model, texts, targetLang, constraints) {
     // Implementation
@@ -282,7 +282,7 @@ API keys and provider selection stored via `figma.clientStorage`:
 ```javascript
 {
   "ai-provider": "gemini",
-  "ai-model": "gemini-3-flash-preview",
+  "ai-model": "gemini-2.5-flash-lite",
   "api-key-gemini": "encrypted-or-plain-key",
   "api-key-openai": "encrypted-or-plain-key"
 }
