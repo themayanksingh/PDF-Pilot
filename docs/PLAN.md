@@ -415,12 +415,13 @@ To detect this:
 - [x] Basic progress indicator
 
 ### Phase 2: Overflow Detection & Review
-- [ ] Implement overflow detection logic
-- [ ] Audit summary panel in UI
-- [ ] User actions: Decrease Font / Expand Layer / Ignore
-- [ ] Re-translate flagged items with tighter constraints
-- [ ] Add Arabic as target language
-- [ ] Add RTL support (text alignment + layout direction checks)
+- [x] Implement overflow detection logic
+- [x] Audit summary panel in UI
+- [x] User actions: Decrease Font / Expand Layer / Ignore
+- [x] Focus-on-click to navigate to overflowing node
+- [x] Add Arabic as target language
+- [ ] Re-translate flagged items with tighter constraints (deferred to Phase 3)
+- [ ] Add RTL support (text alignment + layout direction checks) (deferred — Arabic translates but no auto-RTL flip)
 
 ### Phase 3: Constraint-Aware Translation
 - [ ] Send character budgets and spatial constraints in prompt

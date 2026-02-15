@@ -81,6 +81,22 @@ interface TranslationPayload {
   nodes: TranslationNodePayload[];
 }
 
+interface OverflowInfo {
+  mappingKey: string;
+  nodeId: string;
+  nodeName: string;
+  language: string;
+  frameName: string;
+  cloneFrameId: string;
+  overflowX: number;
+  overflowY: number;
+  currentWidth: number;
+  currentHeight: number;
+  containerWidth: number;
+  containerHeight: number;
+  textAutoResize: string;
+}
+
 function asObject(value: unknown): Record<string, unknown> | null {
   if (!value || typeof value !== 'object') return null;
   return value as Record<string, unknown>;
@@ -197,6 +213,82 @@ function extractTextNodes(frame: SceneNode): TextNodeInfo[] {
 
   traverse(frame);
   return nodes;
+}
+
+function findOverflowContainer(textNode: TextNode): SceneNode | null {
+  let current: BaseNode | null = textNode.parent;
+  let fallbackContainer: SceneNode | null = null;
+  while (current && current.type !== 'PAGE') {
+    if (current.type === 'FRAME' || current.type === 'COMPONENT' || current.type === 'INSTANCE') {
+      if (!fallbackContainer) fallbackContainer = current as SceneNode;
+      const maybeClipsContent = current as SceneNode & { clipsContent?: boolean };
+      if (maybeClipsContent.clipsContent) return current as SceneNode;
+    }
+    current = current.parent;
+  }
+  return fallbackContainer;
+}
+
+function checkOverflow(textNode: TextNode, mappingKey: string, language: string, frameName: string, cloneFrameId: string): OverflowInfo | null {
+  const container = findOverflowContainer(textNode);
+  if (!container) return null;
+
+  let effectiveWidth = textNode.width;
+  let effectiveHeight = textNode.height;
+  const originalResize = textNode.textAutoResize;
+  const originalWidth = textNode.width;
+  const originalHeight = textNode.height;
+  const usesTemporaryMeasure = originalResize === 'NONE';
+
+  try {
+    // For NONE resize mode, text clips without growing — measure true size safely
+    if (usesTemporaryMeasure) {
+      textNode.textAutoResize = 'HEIGHT';
+      effectiveHeight = textNode.height;
+      effectiveWidth = originalWidth;
+    }
+
+    const containerRight = container.absoluteTransform[0][2] + container.width;
+    const containerBottom = container.absoluteTransform[1][2] + container.height;
+    const nodeRight = textNode.absoluteTransform[0][2] + effectiveWidth;
+    const nodeBottom = textNode.absoluteTransform[1][2] + effectiveHeight;
+
+    const overflowX = Math.round(Math.max(0, nodeRight - containerRight));
+    const overflowY = Math.round(Math.max(0, nodeBottom - containerBottom));
+
+    if (overflowX > 0 || overflowY > 0) {
+      return {
+        mappingKey,
+        nodeId: textNode.id,
+        nodeName: textNode.name,
+        language,
+        frameName,
+        cloneFrameId,
+        overflowX,
+        overflowY,
+        currentWidth: Math.round(effectiveWidth),
+        currentHeight: Math.round(effectiveHeight),
+        containerWidth: Math.round(container.width),
+        containerHeight: Math.round(container.height),
+        textAutoResize: originalResize,
+      };
+    }
+    return null;
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error);
+    pluginWarn('Overflow check failed', { mappingKey, nodeId: textNode.id, error: message });
+    return null;
+  } finally {
+    if (usesTemporaryMeasure) {
+      try {
+        textNode.textAutoResize = originalResize;
+        textNode.resize(originalWidth, originalHeight);
+      } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : String(error);
+        pluginWarn('Overflow measure restore failed', { mappingKey, nodeId: textNode.id, error: message });
+      }
+    }
+  }
 }
 
 function extractLinks(frame: SceneNode): LinkInfo[] {
@@ -374,6 +466,7 @@ figma.ui.onmessage = async (rawMsg: unknown) => {
 
   if (type === 'apply-translations') {
     const errors: { mappingKey: string; error: string }[] = [];
+    const overflows: OverflowInfo[] = [];
     let totalFramesCreated = 0;
     try {
       const loadedFontKeys = new Set<string>();
@@ -500,6 +593,38 @@ figma.ui.onmessage = async (rawMsg: unknown) => {
           }
         }
 
+        // Overflow detection for this clone
+        const appliedMappingKeys = new Set(
+          translation.nodes
+            .filter(n => n.mappingKey.includes('::'))
+            .map(n => n.mappingKey)
+        );
+
+        const cloneFrameName = sourceFrame.name;
+        const detectOverflows = (node: SceneNode, rootClone: SceneNode): void => {
+          if (!node.visible) return;
+          if (node.type === 'TEXT') {
+            const path = getNodePath(node, rootClone);
+            const mappingKey = `${translation.sourceFrameId}::${path}`;
+            if (appliedMappingKeys.has(mappingKey)) {
+              const overflow = checkOverflow(
+                node as TextNode,
+                mappingKey,
+                translation.language,
+                cloneFrameName,
+                clone.id
+              );
+              if (overflow) overflows.push(overflow);
+            }
+          }
+          if ('children' in node) {
+            for (const child of (node as FrameNode).children) {
+              detectOverflows(child, rootClone);
+            }
+          }
+        };
+        detectOverflows(clone as SceneNode, clone as SceneNode);
+
         completedTranslationUnits++;
         figma.ui.postMessage({
           type: 'translation-apply-progress',
@@ -515,8 +640,82 @@ figma.ui.onmessage = async (rawMsg: unknown) => {
       pluginError('Apply translations crashed', { error: message });
     }
 
-    figma.ui.postMessage({ type: 'translation-complete', created: totalFramesCreated, errors });
+    figma.ui.postMessage({ type: 'translation-complete', created: totalFramesCreated, errors, overflows });
     figma.notify(errors.length > 0 ? 'Translation completed with issues ⚠️' : 'Translation complete! ✅');
     pluginLog('Apply translations finished', { created: totalFramesCreated, errorCount: errors.length });
+  }
+
+  if (type === 'decrease-font') {
+    const nodeId = asString(msg?.nodeId);
+    if (!nodeId) return;
+    const node = await figma.getNodeByIdAsync(nodeId);
+    if (!node || node.type !== 'TEXT') return;
+    const textNode = node as TextNode;
+    try {
+      const fontName = textNode.fontName;
+      if (fontName === figma.mixed) {
+        const segments = textNode.getStyledTextSegments(['fontName', 'fontSize']);
+        for (const seg of segments) {
+          await figma.loadFontAsync(seg.fontName as FontName);
+          const currentSize = seg.fontSize as number;
+          if (currentSize > 6) {
+            textNode.setRangeFontSize(seg.start, seg.end, currentSize - 1);
+          }
+        }
+      } else {
+        await figma.loadFontAsync(fontName);
+        const currentSize = textNode.fontSize as number;
+        if (currentSize > 6) {
+          textNode.fontSize = currentSize - 1;
+        }
+      }
+      figma.ui.postMessage({ type: 'audit-action-done', action: 'decrease-font', nodeId });
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : String(e);
+      figma.ui.postMessage({ type: 'audit-action-error', action: 'decrease-font', nodeId, error: message });
+    }
+  }
+
+  if (type === 'expand-layer') {
+    const nodeId = asString(msg?.nodeId);
+    if (!nodeId) return;
+    const node = await figma.getNodeByIdAsync(nodeId);
+    if (!node || node.type !== 'TEXT') return;
+    const textNode = node as TextNode;
+    try {
+      const fontName = textNode.fontName;
+      if (fontName === figma.mixed) {
+        const segments = textNode.getStyledTextSegments(['fontName']);
+        const seen = new Set<string>();
+        for (const seg of segments) {
+          const fn = seg.fontName as FontName;
+          const key = `${fn.family}::${fn.style}`;
+          if (!seen.has(key)) {
+            await figma.loadFontAsync(fn);
+            seen.add(key);
+          }
+        }
+      } else {
+        await figma.loadFontAsync(fontName);
+      }
+      if (textNode.textAutoResize === 'NONE') {
+        textNode.textAutoResize = 'HEIGHT';
+      } else {
+        textNode.resize(textNode.width + 40, textNode.height);
+      }
+      figma.ui.postMessage({ type: 'audit-action-done', action: 'expand-layer', nodeId });
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : String(e);
+      figma.ui.postMessage({ type: 'audit-action-error', action: 'expand-layer', nodeId, error: message });
+    }
+  }
+
+  if (type === 'focus-node') {
+    const nodeId = asString(msg?.nodeId);
+    if (!nodeId) return;
+    const node = await figma.getNodeByIdAsync(nodeId);
+    if (!node) return;
+    figma.viewport.scrollAndZoomIntoView([node as SceneNode]);
+    figma.currentPage.selection = [node as SceneNode];
   }
 };

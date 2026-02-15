@@ -690,6 +690,36 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
   .result-detail { font-size: 12px; color: #999; }
   .result-errors { font-size: 12px; color: #e88; margin-top: 6px; }
 
+  /* Audit panel */
+  .audit-area {
+    background: #222; border-radius: 8px; padding: 14px;
+    margin-top: 10px; display: none; max-height: 260px; overflow-y: auto;
+  }
+  .audit-area.visible { display: block; }
+  .audit-title { font-size: 13px; font-weight: 500; margin-bottom: 10px; color: #f5c542; }
+  .audit-item {
+    background: #2a2a2a; border-radius: 6px; padding: 10px;
+    margin-bottom: 8px; border-left: 3px solid #f5c542;
+  }
+  .audit-item-header {
+    font-size: 12px; font-weight: 500; color: #ddd; margin-bottom: 4px;
+    cursor: pointer;
+  }
+  .audit-item-header:hover { color: #fff; text-decoration: underline; }
+  .audit-item-detail { font-size: 11px; color: #999; margin-bottom: 8px; }
+  .audit-actions { display: flex; gap: 6px; }
+  .audit-action-btn {
+    padding: 5px 10px; border: 1px solid #555; border-radius: 5px;
+    background: #333; color: #ccc; font-size: 11px; cursor: pointer;
+    font-family: inherit; transition: background 0.1s;
+  }
+  .audit-action-btn:hover { background: #444; color: #fff; }
+  .audit-action-btn.done { background: #193126; border-color: #2f6b4f; color: #d1fae5; cursor: default; }
+  .audit-actions-global { display: flex; gap: 8px; margin-top: 10px; }
+  .audit-area::-webkit-scrollbar { width: 4px; }
+  .audit-area::-webkit-scrollbar-track { background: transparent; }
+  .audit-area::-webkit-scrollbar-thumb { background: #555; border-radius: 2px; }
+
   /* Settings modal */
   .modal-overlay {
     position: fixed; inset: 0;
@@ -869,6 +899,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
       <label class="lang-check"><input type="checkbox" value="es" checked> Spanish</label>
       <label class="lang-check"><input type="checkbox" value="it" checked> Italian</label>
       <label class="lang-check"><input type="checkbox" value="tr" checked> Turkish</label>
+      <label class="lang-check"><input type="checkbox" value="ar"> Arabic</label>
     </div>
   </details>
 
@@ -895,6 +926,11 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
     <div class="result-title" id="resultTitle"></div>
     <div class="result-detail" id="resultDetail"></div>
     <div class="result-errors" id="resultErrors"></div>
+  </div>
+
+  <div class="audit-area" id="auditArea">
+    <div class="audit-title" id="auditTitle"></div>
+    <div id="auditList"></div>
   </div>
 </div>
 
@@ -976,7 +1012,7 @@ let frameLinks = [];
 let currentSettings = { provider: 'gemini', model: 'gemini-3-flash-preview', apiKeyGemini: '', apiKeyOpenai: '', debugMode: false };
 let isTranslating = false;
 let lastApiErrors = [];
-const API_REQUEST_TIMEOUT_MS = 180000;
+const API_REQUEST_TIMEOUT_MS = 120000;
 const TRANSLATION_BATCH_SIZE = 120;
 const MAX_DYNAMIC_CONCURRENCY = 10;
 const TRANSLATION_MAX_RETRIES = 2;
@@ -1335,7 +1371,7 @@ const PROVIDERS = {
     name: 'Gemini',
     models: ['gemini-3-flash-preview'],
     async translate(apiKey, model, texts, targetLang) {
-      const LANG_NAMES = { fr: 'French', de: 'German', es: 'Spanish', it: 'Italian', tr: 'Turkish' };
+      const LANG_NAMES = { fr: 'French', de: 'German', es: 'Spanish', it: 'Italian', tr: 'Turkish', ar: 'Arabic' };
       const langName = LANG_NAMES[targetLang] || targetLang;
       uiLog('Gemini translate request', { langName, model, textCount: texts.length });
 
@@ -1389,7 +1425,7 @@ Respond with ONLY a valid JSON array, no markdown, no explanation:
     name: 'OpenAI',
     models: ['gpt-5.2', 'gpt-5-mini'],
     async translate(apiKey, model, texts, targetLang) {
-      const LANG_NAMES = { fr: 'French', de: 'German', es: 'Spanish', it: 'Italian', tr: 'Turkish' };
+      const LANG_NAMES = { fr: 'French', de: 'German', es: 'Spanish', it: 'Italian', tr: 'Turkish', ar: 'Arabic' };
       const langName = LANG_NAMES[targetLang] || targetLang;
       uiLog('OpenAI translate request', { langName, model, textCount: texts.length });
 
@@ -1451,6 +1487,9 @@ const progressPercent = document.getElementById('progressPercent');
 const progressSteps = document.getElementById('progressSteps');
 const progressFill = document.getElementById('progressFill');
 const resultArea = document.getElementById('resultArea');
+const auditArea = document.getElementById('auditArea');
+const auditTitle = document.getElementById('auditTitle');
+const auditList = document.getElementById('auditList');
 const debugLogsModal = document.getElementById('debugLogsModal');
 const debugLogsOutput = document.getElementById('debugLogsOutput');
 const debugLogsCloseBtn = document.getElementById('debugLogsCloseBtn');
@@ -1464,7 +1503,7 @@ const TRANSLATE_STAGE_START = 22;
 const TRANSLATE_STAGE_END = 85;
 const APPLY_STAGE_START = 90;
 const APPLY_STAGE_END = 99;
-const LANGUAGE_NAMES = { fr: 'French', de: 'German', es: 'Spanish', it: 'Italian', tr: 'Turkish' };
+const LANGUAGE_NAMES = { fr: 'French', de: 'German', es: 'Spanish', it: 'Italian', tr: 'Turkish', ar: 'Arabic' };
 
 function setProgress(stage, percent, stageLabel, metaText) {
   const clamped = Math.max(0, Math.min(100, Math.round(percent)));
@@ -1734,7 +1773,13 @@ onmessage = (event) => {
       : 'Writing translated text and preserving design';
     setProgress('apply', pct, label, meta);
   } else if (msg.type === 'translation-complete') {
-    handleTranslationComplete(msg.created, msg.errors);
+    handleTranslationComplete(msg.created, msg.errors, msg.overflows);
+  } else if (msg.type === 'audit-action-done') {
+    const btn = document.querySelector(`.audit-action-btn[data-node-id="${msg.nodeId}"][data-action="${msg.action}"]`);
+    if (btn) { btn.textContent = '✓ Done'; btn.classList.add('done'); btn.disabled = true; }
+  } else if (msg.type === 'audit-action-error') {
+    const btn = document.querySelector(`.audit-action-btn[data-node-id="${msg.nodeId}"][data-action="${msg.action}"]`);
+    if (btn) { btn.textContent = 'Failed'; btn.style.color = '#e88'; }
   }
 };
 
@@ -1852,6 +1897,7 @@ translateBtn.addEventListener('click', () => {
     return;
   }
 
+  auditArea.classList.remove('visible');
   isTranslating = true;
   uiLog('Translate started', {
     selectedFrames: selectedFrames.length,
@@ -2307,11 +2353,85 @@ async function handleTextData(nodes, frameCount) {
   }
 }
 
-function handleTranslationComplete(created, errors) {
+function renderAuditPanel(overflows) {
+  if (!overflows || overflows.length === 0) {
+    auditArea.classList.remove('visible');
+    auditList.innerHTML = '';
+    return;
+  }
+  auditArea.classList.add('visible');
+  auditTitle.textContent = `⚠️ ${overflows.length} overflow issue${overflows.length > 1 ? 's' : ''} found`;
+  auditList.innerHTML = '';
+
+  const postAuditAction = (action, nodeId) => {
+    parent.postMessage({ pluginMessage: { type: action, nodeId } }, '*');
+  };
+
+  const createActionButton = (label, action, nodeId) => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'audit-action-btn';
+    btn.dataset.nodeId = nodeId;
+    btn.dataset.action = action;
+    btn.textContent = label;
+    if (action === 'ignore') {
+      btn.addEventListener('click', () => {
+        btn.textContent = '✓ Ignored';
+        btn.classList.add('done');
+        btn.disabled = true;
+      });
+    } else {
+      btn.addEventListener('click', () => postAuditAction(action, nodeId));
+    }
+    return btn;
+  };
+
+  overflows.forEach((entry, index) => {
+    const nodeId = String(entry.nodeId || '');
+    const nodeName = String(entry.nodeName || 'Unnamed layer');
+    const language = String(entry.language || 'Unknown');
+    const overflowX = Number(entry.overflowX) || 0;
+    const overflowY = Number(entry.overflowY) || 0;
+    const textAutoResize = String(entry.textAutoResize || 'UNKNOWN');
+
+    const overflowDesc = [];
+    if (overflowX > 0) overflowDesc.push(`${overflowX}px width`);
+    if (overflowY > 0) overflowDesc.push(`${overflowY}px height`);
+    if (overflowDesc.length === 0) overflowDesc.push('0px');
+
+    const item = document.createElement('div');
+    item.className = 'audit-item';
+    item.dataset.index = String(index);
+
+    const header = document.createElement('div');
+    header.className = 'audit-item-header';
+    header.dataset.nodeId = nodeId;
+    header.textContent = `"${nodeName}" (${language})`;
+    header.addEventListener('click', () => postAuditAction('focus-node', nodeId));
+
+    const detail = document.createElement('div');
+    detail.className = 'audit-item-detail';
+    detail.textContent = `Overflows by ${overflowDesc.join(' & ')} · resize: ${textAutoResize}`;
+
+    const actions = document.createElement('div');
+    actions.className = 'audit-actions';
+    actions.appendChild(createActionButton('Decrease Font', 'decrease-font', nodeId));
+    actions.appendChild(createActionButton('Expand Layer', 'expand-layer', nodeId));
+    actions.appendChild(createActionButton('Ignore', 'ignore', nodeId));
+
+    item.appendChild(header);
+    item.appendChild(detail);
+    item.appendChild(actions);
+    auditList.appendChild(item);
+  });
+}
+
+function handleTranslationComplete(created, errors, overflows) {
   uiLog('Translation apply completed', {
     created,
     applyErrorCount: Array.isArray(errors) ? errors.length : 0,
     apiErrorCount: lastApiErrors.length,
+    overflowCount: Array.isArray(overflows) ? overflows.length : 0,
   });
   isTranslating = false;
   setProgress('apply', 100, 'Translation Complete', 'All selected languages processed');
@@ -2320,14 +2440,20 @@ function handleTranslationComplete(created, errors) {
 
   const applyErrors = Array.isArray(errors) ? errors.length : 0;
   const apiErrorCount = lastApiErrors.length;
+  const overflowCount = Array.isArray(overflows) ? overflows.length : 0;
 
-  if (applyErrors === 0 && apiErrorCount === 0) {
+  if (applyErrors === 0 && apiErrorCount === 0 && overflowCount === 0) {
     document.getElementById('resultTitle').textContent = `✅ Translation Complete`;
     document.getElementById('resultDetail').textContent = `${created} frames created successfully`;
     document.getElementById('resultErrors').textContent = '';
   } else {
-    document.getElementById('resultTitle').textContent = `⚠️ Translation Complete (with issues)`;
-    document.getElementById('resultDetail').textContent = `${created} frames created`;
+    const hasOnlyOverflows = applyErrors === 0 && apiErrorCount === 0 && overflowCount > 0;
+    document.getElementById('resultTitle').textContent = hasOnlyOverflows
+      ? `✅ Translation Complete`
+      : `⚠️ Translation Complete (with issues)`;
+    const detailParts = [`${created} frames created`];
+    if (overflowCount > 0) detailParts.push(`${overflowCount} overflow(s) to review`);
+    document.getElementById('resultDetail').textContent = detailParts.join(' · ');
     const details = [];
     if (apiErrorCount > 0) {
       details.push(`${apiErrorCount} translation API issue(s) — affected text was kept in source language.`);
@@ -2342,6 +2468,8 @@ function handleTranslationComplete(created, errors) {
     }
     document.getElementById('resultErrors').textContent = details.join('\n\n');
   }
+
+  renderAuditPanel(overflows);
   lastApiErrors = [];
 }
 
