@@ -14,19 +14,21 @@ Figma plugin for:
 
 ### Translate (AI)
 - Select one or more `Frame` / `Component` / `Instance` nodes
-- Choose target languages (FR/DE/ES/IT/TR)
+- Choose target languages (FR/DE/ES/IT/TR/AR)
 - Calls AI provider from plugin UI and applies translations to duplicated designs
 - Uses stable mapping keys (`sourceFrameId::nodePath`) so text maps correctly after duplication
 - Loads required fonts before text replacement (including mixed font ranges)
 - Skips `TRUNCATE` text nodes and keeps source text for those nodes
-- Shows completion summary with:
+- Shows in-button progress while translating
+- Shows a combined completion + audit section with:
   - translation API issues
   - text/font apply issues
+  - overflow audit actions (Phase 2)
 
 ## AI Providers and Models
 
 - Gemini:
-  - `gemini-2.5-flash-lite`
+  - `gemini-2.5-flash-lite` (fixed in UI)
 - OpenAI:
   - `gpt-5.2`
   - `gpt-5-mini`
@@ -84,7 +86,7 @@ npm run lint
 1. Select nodes in Figma.
 2. Open plugin.
 3. Go to `Export PDF`.
-4. Choose scale and filename.
+4. Set filename and scale (`2x` default).
 5. Export.
 
 ### Translate
@@ -92,7 +94,7 @@ npm run lint
 2. Open plugin.
 3. Click `⚙` and save provider + API key.
 4. Go to `Translate`.
-5. Pick target languages.
+5. Set source language and pick target languages.
 6. Click Translate.
 
 ## Network Access

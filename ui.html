@@ -523,7 +523,8 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
     align-items: center;
     background: #2a2a2a;
     border-radius: 8px;
-    padding: 10px 14px;
+    min-height: 40px;
+    padding: 0 14px;
     gap: 8px;
     flex: 1;
     min-width: 0;
@@ -544,13 +545,32 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
   .option-select { position: relative; }
   .option-select select {
     appearance: none; background: #2a2a2a; border: 1px solid #555;
-    border-radius: 8px; color: #fff; padding: 8px 32px 8px 14px;
+    border-radius: 6px; color: #fff; padding: 0 34px 0 14px;
+    min-height: 40px;
     font-size: 13px; font-family: inherit; cursor: pointer; outline: none;
   }
-  .option-select select:hover { border-color: #888; }
+  .option-select select:hover { border-color: #666; }
+  .option-select select:focus {
+    border-color: #7a7a7a;
+  }
   .option-select::after {
-    content: '▾'; position: absolute; right: 12px; top: 50%;
-    transform: translateY(-50%); color: #888; font-size: 10px; pointer-events: none;
+    display: none;
+  }
+  .select-caret {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    width: 12px;
+    height: 12px;
+    transform: translateY(-50%);
+    color: #9a9a9a;
+    pointer-events: none;
+    display: block;
+    stroke: currentColor;
+    fill: none;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
   }
   .scale-select select {
     min-width: 88px;
@@ -561,7 +581,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
     width: 100%;
     padding: 12px;
     border: none;
-    border-radius: 8px;
+    border-radius: 6px;
     font-size: 14px;
     font-family: inherit;
     font-weight: 500;
@@ -634,7 +654,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
     margin-bottom: 0;
     background: #202020;
     border: 1px solid #3a3a3a;
-    border-radius: 8px;
+    border-radius: 6px;
     overflow: hidden;
   }
   .lang-accordion summary {
@@ -642,15 +662,21 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
     display: flex;
     align-items: center;
     justify-content: space-between;
-    height: 36px;
-    padding: 0 12px;
+    min-height: 40px;
+    padding: 0 14px;
     cursor: pointer;
     user-select: none;
-    font-size: 12px;
+    font-size: 13px;
     color: #cfcfcf;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+  }
+  .lang-accordion:hover {
+    border-color: #666;
+  }
+  .lang-accordion:focus-within {
+    border-color: #7a7a7a;
   }
   .lang-accordion summary::-webkit-details-marker { display: none; }
   .lang-accordion[open] summary {
@@ -1009,6 +1035,9 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
         <option value="3">3x</option>
         <option value="4">4x</option>
       </select>
+      <svg class="select-caret" viewBox="0 0 12 12" aria-hidden="true">
+        <path d="M2.5 4.5L6 8l3.5-3.5"></path>
+      </svg>
     </div>
   </div>
 
@@ -1859,13 +1888,13 @@ function hasActiveApiKey() {
 function updateLangAccordionLabel() {
   const selected = getSelectedLangs();
   if (selected.length === 0) {
-    langAccordionLabel.textContent = 'Customize target languages (none selected)';
+    langAccordionLabel.textContent = 'No languages selected';
     return;
   }
   const names = selected.map(code => LANGUAGE_NAMES[code] || code.toUpperCase());
   const preview = names.slice(0, 2).join(', ');
   const suffix = names.length > 2 ? ` +${names.length - 2}` : '';
-  langAccordionLabel.textContent = `Customize target languages (${selected.length}): ${preview}${suffix}`;
+  langAccordionLabel.textContent = `${selected.length} selected: ${preview}${suffix}`;
 }
 
 function updateSourceLangLabel() {
