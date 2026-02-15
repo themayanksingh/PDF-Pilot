@@ -1,7 +1,7 @@
 {
-  "name": "Frame-to-PDF",
+  "name": "pdf-pilot",
   "version": "1.0.0",
-  "description": "Your Figma Plugin",
+  "description": "PDF Pilot - Figma export and translation plugin",
   "main": "code.js",
   "scripts": {
     "build": "tsc -p tsconfig.json",

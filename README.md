@@ -1,40 +1,90 @@
-Below are the steps to get your plugin running. You can also find instructions at:
+# PDF Pilot
 
-  https://www.figma.com/plugin-docs/plugin-quickstart-guide/
+Figma plugin for:
+- exporting selected designs to PDF
+- translating selected designs with AI
+- duplicating and localizing output by language
 
-This plugin template uses Typescript and NPM, two standard tools in creating JavaScript applications.
+## Features
 
-First, download Node.js which comes with NPM. This will allow you to install TypeScript and other
-libraries. You can find the download link here:
+### Export PDF
+- Select one or more `Frame` / `Component` / `Instance` nodes
+- Export to PDF from the `Export PDF` tab
+- Preserves URL links detected in text and node reactions
 
-  https://nodejs.org/en/download/
+### Translate (AI)
+- Select one or more `Frame` / `Component` / `Instance` nodes
+- Choose target languages (FR/DE/ES/IT/TR)
+- Calls AI provider from plugin UI and applies translations to duplicated designs
+- Uses stable mapping keys (`sourceFrameId::nodePath`) so text maps correctly after duplication
+- Loads required fonts before text replacement (including mixed font ranges)
+- Skips `TRUNCATE` text nodes and keeps source text for those nodes
+- Shows completion summary with:
+  - translation API issues
+  - text/font apply issues
 
-Next, install TypeScript using the command:
+## AI Providers and Models
 
-  npm install -g typescript
+- Gemini:
+  - `gemini-3-flash-preview`
+- OpenAI:
+  - `gpt-5.2`
+  - `gpt-5-mini`
 
-Finally, in the directory of your plugin, get the latest type definitions for the plugin API by running:
+API keys are only required for the `Translate` workflow.
 
-  npm install --save-dev @figma/plugin-typings
+## Project Structure
 
-If you are familiar with JavaScript, TypeScript will look very familiar. In fact, valid JavaScript code
-is already valid Typescript code.
+- `code.ts`: Figma plugin sandbox logic (selection, extraction, duplication, apply)
+- `ui.html`: plugin UI, tabs, provider calls, settings modal
+- `manifest.json`: plugin metadata and `networkAccess.allowedDomains`
+- `docs/PLAN.md`: translation implementation plan
 
-TypeScript adds type annotations to variables. This allows code editors such as Visual Studio Code
-to provide information about the Figma API while you are writing code, as well as help catch bugs
-you previously didn't notice.
+## Setup
 
-For more information, visit https://www.typescriptlang.org/
+1. Install dependencies:
+```bash
+npm install
+```
 
-Using TypeScript requires a compiler to convert TypeScript (code.ts) into JavaScript (code.js)
-for the browser to run.
+2. Build:
+```bash
+npm run build
+```
 
-We recommend writing TypeScript code using Visual Studio code:
+3. (Optional) Watch mode during development:
+```bash
+npm run watch
+```
 
-1. Download Visual Studio Code if you haven't already: https://code.visualstudio.com/.
-2. Open this directory in Visual Studio Code.
-3. Compile TypeScript to JavaScript: Run the "Terminal > Run Build Task..." menu item,
-    then select "npm: watch". You will have to do this again every time
-    you reopen Visual Studio Code.
+4. Load plugin in Figma from this directory.
 
-That's it! Visual Studio Code will regenerate the JavaScript file every time you save.
+## Dev Checks
+
+```bash
+npm run build
+npm run lint
+```
+
+## Usage
+
+### Export PDF
+1. Select nodes in Figma.
+2. Open plugin.
+3. Go to `Export PDF`.
+4. Choose scale and filename.
+5. Export.
+
+### Translate
+1. Select nodes in Figma.
+2. Open plugin.
+3. Click `⚙` and save provider + API key.
+4. Go to `Translate`.
+5. Pick target languages.
+6. Click Translate.
+
+## Network Access
+
+Manifest currently allows:
+- `https://generativelanguage.googleapis.com`
+- `https://api.openai.com`

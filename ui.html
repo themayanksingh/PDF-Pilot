@@ -398,7 +398,6 @@ function(t){var e=function(){return void 0===this.internal.vFS&&(this.internal.v
    * MIT License
    */
 function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,o,s,c,u=e,l=[[0,3,0,1,0,0,0],[0,3,0,1,2,2,0],[0,3,0,17,2,0,1],[0,3,5,5,4,1,0],[0,3,21,21,4,0,1],[0,3,5,5,4,2,0]],h=[[2,0,1,1,0,1,0],[2,0,1,1,0,2,0],[2,0,2,1,3,2,0],[2,0,2,33,3,1,1]],f={L:0,R:1,EN:2,AN:3,N:4,B:5,S:6},d={0:0,5:1,6:2,7:3,32:4,251:5,254:6,255:7},p=["(",")","(","<",">","<","[","]","[","{","}","{","«","»","«","‹","›","‹","⁅","⁆","⁅","⁽","⁾","⁽","₍","₎","₍","≤","≥","≤","〈","〉","〈","﹙","﹚","﹙","﹛","﹜","﹛","﹝","﹞","﹝","﹤","﹥","﹤"],g=new RegExp(/^([1-4|9]|1[0-9]|2[0-9]|3[0168]|4[04589]|5[012]|7[78]|159|16[0-9]|17[0-2]|21[569]|22[03489]|250)$/),m=!1,v=0;this.__bidiEngine__={};var b=function(t){var e=t.charCodeAt(),r=e>>8,n=d[r];return void 0!==n?u[256*n+(255&e)]:252===r||253===r?"AL":g.test(r)?"L":8===r?"R":"N"},y=function(t){for(var e,r=0;r<t.length;r++){if("L"===(e=b(t.charAt(r))))return!1;if("R"===e)return!0}return!1},w=function(t,e,o,s){var c,u,l,h,f=e[s];switch(f){case"L":case"R":m=!1;break;case"N":case"AN":break;case"EN":m&&(f="AN");break;case"AL":m=!0,f="R";break;case"WS":f="N";break;case"CS":s<1||s+1>=e.length||"EN"!==(c=o[s-1])&&"AN"!==c||"EN"!==(u=e[s+1])&&"AN"!==u?f="N":m&&(u="AN"),f=u===c?u:"N";break;case"ES":f="EN"===(c=s>0?o[s-1]:"B")&&s+1<e.length&&"EN"===e[s+1]?"EN":"N";break;case"ET":if(s>0&&"EN"===o[s-1]){f="EN";break}if(m){f="N";break}for(l=s+1,h=e.length;l<h&&"ET"===e[l];)l++;f=l<h&&"EN"===e[l]?"EN":"N";break;case"NSM":if(i&&!a){for(h=e.length,l=s+1;l<h&&"NSM"===e[l];)l++;if(l<h){var d=t[s],p=d>=1425&&d<=2303||64286===d;if(c=e[l],p&&("R"===c||"AL"===c)){f="R";break}}}f=s<1||"B"===(c=e[s-1])?"N":o[s-1];break;case"B":m=!1,r=!0,f=v;break;case"S":n=!0,f="N";break;case"LRE":case"RLE":case"LRO":case"RLO":case"PDF":m=!1;break;case"BN":f="N"}return f},N=function(t,e,r){var n=t.split("");return r&&L(n,r,{hiLevel:v}),n.reverse(),e&&e.reverse(),n.join("")},L=function(t,e,i){var a,o,s,c,u,d=-1,p=t.length,g=0,y=[],N=v?h:l,L=[];for(m=!1,r=!1,n=!1,o=0;o<p;o++)L[o]=b(t[o]);for(s=0;s<p;s++){if(u=g,y[s]=w(t,L,y,s),a=240&(g=N[u][f[y[s]]]),g&=15,e[s]=c=N[g][5],a>0)if(16===a){for(o=d;o<s;o++)e[o]=1;d=-1}else d=-1;if(N[g][6])-1===d&&(d=s);else if(d>-1){for(o=d;o<s;o++)e[o]=c;d=-1}"B"===L[s]&&(e[s]=0),i.hiLevel|=c}n&&function(t,e,r){for(var n=0;n<r;n++)if("S"===t[n]){e[n]=v;for(var i=n-1;i>=0&&"WS"===t[i];i--)e[i]=v}}(L,e,p)},A=function(t,e,n,i,a){if(!(a.hiLevel<t)){if(1===t&&1===v&&!r)return e.reverse(),void(n&&n.reverse());for(var o,s,c,u,l=e.length,h=0;h<l;){if(i[h]>=t){for(c=h+1;c<l&&i[c]>=t;)c++;for(u=h,s=c-1;u<s;u++,s--)o=e[u],e[u]=e[s],e[s]=o,n&&(o=n[u],n[u]=n[s],n[s]=o);h=c}h++}}},x=function(t,e,r){var n=t.split(""),i={hiLevel:v};return r||(r=[]),L(n,r,i),function(t,e,r){if(0!==r.hiLevel&&c)for(var n,i=0;i<t.length;i++)1===e[i]&&(n=p.indexOf(t[i]))>=0&&(t[i]=p[n+1])}(n,r,i),A(2,n,e,r,i),A(1,n,e,r,i),n.join("")};return this.__bidiEngine__.doBidiReorder=function(t,e,r){if(function(t,e){if(e)for(var r=0;r<t.length;r++)e[r]=r;void 0===a&&(a=y(t)),void 0===s&&(s=y(t))}(t,e),i||!o||s)if(i&&o&&a^s)v=a?1:0,t=N(t,e,r);else if(!i&&o&&s)v=a?1:0,t=x(t,e,r),t=N(t,e);else if(!i||a||o||s){if(i&&!o&&a^s)t=N(t,e),a?(v=0,t=x(t,e,r)):(v=1,t=x(t,e,r),t=N(t,e));else if(i&&a&&!o&&s)v=1,t=x(t,e,r),t=N(t,e);else if(!i&&!o&&a^s){var n=c;a?(v=1,t=x(t,e,r),v=0,c=!1,t=x(t,e,r),c=n):(v=0,t=x(t,e,r),t=N(t,e),v=1,c=!1,t=x(t,e,r),c=n,t=N(t,e))}}else v=0,t=x(t,e,r);else v=a?1:0,t=x(t,e,r);return t},this.__bidiEngine__.setOptions=function(t){t&&(i=t.isInputVisual,o=t.isOutputVisual,a=t.isInputRtl,s=t.isOutputRtl,c=t.isSymmetricSwapping)},this.__bidiEngine__.setOptions(t),this.__bidiEngine__};var e=["BN","BN","BN","BN","BN","BN","BN","BN","BN","S","B","S","WS","B","BN","BN","BN","BN","BN","BN","BN","BN","BN","BN","BN","BN","BN","BN","B","B","B","S","WS","N","N","ET","ET","ET","N","N","N","N","N","ES","CS","ES","CS","CS","EN","EN","EN","EN","EN","EN","EN","EN","EN","EN","CS","N","N","N","N","N","N","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","N","N","N","N","N","N","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","N","N","N","N","BN","BN","BN","BN","BN","BN","B","BN","BN","BN","BN","BN","BN","BN","BN","BN","BN","BN","BN","BN","BN","BN","BN","BN","BN","BN","BN","BN","BN","BN","BN","BN","BN","CS","N","ET","ET","ET","ET","N","N","N","N","L","N","N","BN","N","N","ET","ET","EN","EN","N","L","N","N","N","EN","L","N","N","N","N","N","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","N","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","N","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","N","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","N","N","L","L","L","L","L","L","L","N","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","N","L","N","N","N","N","N","ET","N","NSM","NSM","NSM","NSM","NSM","NSM","NSM","NSM","NSM","NSM","NSM","NSM","NSM","NSM","NSM","NSM","NSM","NSM","NSM","NSM","NSM","NSM","NSM","NSM","NSM","NSM","NSM","NSM","NSM","NSM","NSM","NSM","NSM","NSM","NSM","NSM","NSM","NSM","NSM","NSM","NSM","NSM","NSM","NSM","NSM","R","NSM","R","NSM","NSM","R","NSM","NSM","R","NSM","N","N","N","N","N","N","N","N","R","R","R","R","R","R","R","R","R","R","R","R","R","R","R","R","R","R","R","R","R","R","R","R","R","R","R","N","N","N","N","N","R","R","R","R","R","N","N","N","N","N","N","N","N","N","N","N","AN","AN","AN","AN","AN","AN","N","N","AL","ET","ET","AL","CS","AL","N","N","NSM","NSM","NSM","NSM","NSM","NSM","NSM","NSM","NSM","NSM","NSM","AL","AL","N","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","NSM","NSM","NSM","NSM","NSM","NSM","NSM","NSM","NSM","NSM","NSM","NSM","NSM","NSM","NSM","NSM","NSM","NSM","NSM","NSM","NSM","AN","AN","AN","AN","AN","AN","AN","AN","AN","AN","ET","AN","AN","AL","AL","AL","NSM","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","NSM","NSM","NSM","NSM","NSM","NSM","NSM","AN","N","NSM","NSM","NSM","NSM","NSM","NSM","AL","AL","NSM","NSM","N","NSM","NSM","NSM","NSM","AL","AL","EN","EN","EN","EN","EN","EN","EN","EN","EN","EN","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","N","AL","AL","NSM","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","NSM","NSM","NSM","NSM","NSM","NSM","NSM","NSM","NSM","NSM","NSM","NSM","NSM","NSM","NSM","NSM","NSM","NSM","NSM","NSM","NSM","NSM","NSM","NSM","NSM","NSM","NSM","N","N","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","NSM","NSM","NSM","NSM","NSM","NSM","NSM","NSM","NSM","NSM","NSM","AL","N","N","N","N","N","N","N","N","N","N","N","N","N","N","R","R","R","R","R","R","R","R","R","R","R","R","R","R","R","R","R","R","R","R","R","R","R","R","R","R","R","R","R","R","R","R","R","R","R","R","R","R","R","R","R","R","R","NSM","NSM","NSM","NSM","NSM","NSM","NSM","NSM","NSM","R","R","N","N","N","N","R","N","N","N","N","N","WS","WS","WS","WS","WS","WS","WS","WS","WS","WS","WS","BN","BN","BN","L","R","N","N","N","N","N","N","N","N","N","N","N","N","N","N","N","N","N","N","N","N","N","N","N","N","WS","B","LRE","RLE","PDF","LRO","RLO","CS","ET","ET","ET","ET","ET","N","N","N","N","N","N","N","N","N","N","N","N","N","N","N","CS","N","N","N","N","N","N","N","N","N","N","N","N","N","N","N","N","N","N","N","N","N","N","N","N","N","N","WS","BN","BN","BN","BN","BN","N","LRI","RLI","FSI","PDI","BN","BN","BN","BN","BN","BN","EN","L","N","N","EN","EN","EN","EN","EN","EN","ES","ES","N","N","N","L","EN","EN","EN","EN","EN","EN","EN","EN","EN","EN","ES","ES","N","N","N","N","L","L","L","L","L","L","L","L","L","L","L","L","L","N","N","N","ET","ET","ET","ET","ET","ET","ET","ET","ET","ET","ET","ET","ET","ET","ET","ET","ET","ET","ET","ET","ET","ET","ET","ET","ET","ET","ET","ET","ET","ET","ET","N","N","N","N","N","N","N","N","N","N","N","N","N","N","N","N","N","NSM","NSM","NSM","NSM","NSM","NSM","NSM","NSM","NSM","NSM","NSM","NSM","NSM","NSM","NSM","NSM","NSM","NSM","NSM","NSM","NSM","NSM","NSM","NSM","NSM","NSM","NSM","NSM","NSM","NSM","NSM","NSM","NSM","N","N","N","N","N","N","N","N","N","N","N","N","N","N","N","L","L","L","L","L","L","L","N","N","N","N","N","N","N","N","N","N","N","N","L","L","L","L","L","N","N","N","N","N","R","NSM","R","R","R","R","R","R","R","R","R","R","ES","R","R","R","R","R","R","R","R","R","R","R","R","R","N","R","R","R","R","R","N","R","N","R","R","N","R","R","N","R","R","R","R","R","R","R","R","R","R","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","N","N","N","N","N","N","N","N","N","N","N","N","N","N","N","N","N","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","NSM","NSM","NSM","NSM","NSM","NSM","NSM","NSM","NSM","NSM","NSM","NSM","NSM","NSM","NSM","NSM","N","N","N","N","N","N","N","N","N","N","N","N","N","N","N","N","NSM","NSM","NSM","NSM","NSM","NSM","NSM","NSM","NSM","NSM","NSM","NSM","NSM","NSM","NSM","NSM","N","N","N","N","N","N","N","N","N","N","N","N","N","N","N","N","N","N","N","N","N","N","N","N","N","N","N","N","N","N","N","N","CS","N","CS","N","N","CS","N","N","N","N","N","N","N","N","N","ET","N","N","ES","ES","N","N","N","N","N","ET","ET","N","N","N","N","N","AL","AL","AL","AL","AL","N","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","N","N","BN","N","N","N","ET","ET","ET","N","N","N","N","N","ES","CS","ES","CS","CS","EN","EN","EN","EN","EN","EN","EN","EN","EN","EN","CS","N","N","N","N","N","N","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","N","N","N","N","N","N","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","N","N","N","N","N","N","N","N","N","N","N","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","N","N","N","L","L","L","L","L","L","N","N","L","L","L","L","L","L","N","N","L","L","L","L","L","L","N","N","L","L","L","N","N","N","ET","ET","N","N","N","ET","ET","N","N","N","N","N","N","N","N","N","N","N","N","N","N","N","N","N","N","N","N","N","N","N","N","N"],r=new t.__bidiEngine__({isInputVisual:!0});t.API.events.push(["postProcessText",function(t){var e=t.text,n=(t.x,t.y,t.options||{}),i=(t.mutex,n.lang,[]);if(n.isInputVisual="boolean"!=typeof n.isInputVisual||n.isInputVisual,r.setOptions(n),"[object Array]"===Object.prototype.toString.call(e)){var a=0;for(i=[],a=0;a<e.length;a+=1)"[object Array]"===Object.prototype.toString.call(e[a])?i.push([r.doBidiReorder(e[a][0]),e[a][1],e[a][2]]):i.push([r.doBidiReorder(e[a])]);t.text=i}else t.text=r.doBidiReorder(e);r.setOptions({isInputVisual:!0})}])}(M),M.API.TTFFont=function(){function t(t){var e;if(this.rawData=t,e=this.contents=new Te(t),this.contents.pos=4,"ttcf"===e.readString(4))throw new Error("TTCF not supported.");e.pos=0,this.parse(),this.subset=new ar(this),this.registerTTF()}return t.open=function(e){return new t(e)},t.prototype.parse=function(){return this.directory=new Ue(this.contents),this.head=new We(this),this.name=new Ze(this),this.cmap=new Ge(this),this.toUnicode={},this.hhea=new Ye(this),this.maxp=new $e(this),this.hmtx=new Qe(this),this.post=new Xe(this),this.os2=new Je(this),this.loca=new ir(this),this.glyf=new er(this),this.ascender=this.os2.exists&&this.os2.ascender||this.hhea.ascender,this.decender=this.os2.exists&&this.os2.decender||this.hhea.decender,this.lineGap=this.os2.exists&&this.os2.lineGap||this.hhea.lineGap,this.bbox=[this.head.xMin,this.head.yMin,this.head.xMax,this.head.yMax]},t.prototype.registerTTF=function(){var t,e,r,n,i;if(this.scaleFactor=1e3/this.head.unitsPerEm,this.bbox=function(){var e,r,n,i;for(i=[],e=0,r=(n=this.bbox).length;e<r;e++)t=n[e],i.push(Math.round(t*this.scaleFactor));return i}.call(this),this.stemV=0,this.post.exists?(r=255&(n=this.post.italic_angle),0!=(32768&(e=n>>16))&&(e=-(1+(65535^e))),this.italicAngle=+(e+"."+r)):this.italicAngle=0,this.ascender=Math.round(this.ascender*this.scaleFactor),this.decender=Math.round(this.decender*this.scaleFactor),this.lineGap=Math.round(this.lineGap*this.scaleFactor),this.capHeight=this.os2.exists&&this.os2.capHeight||this.ascender,this.xHeight=this.os2.exists&&this.os2.xHeight||0,this.familyClass=(this.os2.exists&&this.os2.familyClass||0)>>8,this.isSerif=1===(i=this.familyClass)||2===i||3===i||4===i||5===i||7===i,this.isScript=10===this.familyClass,this.flags=0,this.post.isFixedPitch&&(this.flags|=1),this.isSerif&&(this.flags|=2),this.isScript&&(this.flags|=8),0!==this.italicAngle&&(this.flags|=64),this.flags|=32,!this.cmap.unicode)throw new Error("No unicode cmap for font")},t.prototype.characterToGlyph=function(t){var e;return(null!=(e=this.cmap.unicode)?e.codeMap[t]:void 0)||0},t.prototype.widthOfGlyph=function(t){var e;return e=1e3/this.head.unitsPerEm,this.hmtx.forGlyph(t).advance*e},t.prototype.widthOfString=function(t,e,r){var n,i,a,o;for(a=0,i=0,o=(t=""+t).length;0<=o?i<o:i>o;i=0<=o?++i:--i)n=t.charCodeAt(i),a+=this.widthOfGlyph(this.characterToGlyph(n))+r*(1e3/e)||0;return a*(e/1e3)},t.prototype.lineHeight=function(t,e){var r;return null==e&&(e=!1),r=e?this.lineGap:0,(this.ascender+r-this.decender)/1e3*t},t}();var Re,Te=function(){function t(t){this.data=null!=t?t:[],this.pos=0,this.length=this.data.length}return t.prototype.readByte=function(){return this.data[this.pos++]},t.prototype.writeByte=function(t){return this.data[this.pos++]=t},t.prototype.readUInt32=function(){return 16777216*this.readByte()+(this.readByte()<<16)+(this.readByte()<<8)+this.readByte()},t.prototype.writeUInt32=function(t){return this.writeByte(t>>>24&255),this.writeByte(t>>16&255),this.writeByte(t>>8&255),this.writeByte(255&t)},t.prototype.readInt32=function(){var t;return(t=this.readUInt32())>=2147483648?t-4294967296:t},t.prototype.writeInt32=function(t){return t<0&&(t+=4294967296),this.writeUInt32(t)},t.prototype.readUInt16=function(){return this.readByte()<<8|this.readByte()},t.prototype.writeUInt16=function(t){return this.writeByte(t>>8&255),this.writeByte(255&t)},t.prototype.readInt16=function(){var t;return(t=this.readUInt16())>=32768?t-65536:t},t.prototype.writeInt16=function(t){return t<0&&(t+=65536),this.writeUInt16(t)},t.prototype.readString=function(t){var e,r;for(r=[],e=0;0<=t?e<t:e>t;e=0<=t?++e:--e)r[e]=String.fromCharCode(this.readByte());return r.join("")},t.prototype.writeString=function(t){var e,r,n;for(n=[],e=0,r=t.length;0<=r?e<r:e>r;e=0<=r?++e:--e)n.push(this.writeByte(t.charCodeAt(e)));return n},t.prototype.readShort=function(){return this.readInt16()},t.prototype.writeShort=function(t){return this.writeInt16(t)},t.prototype.readLongLong=function(){var t,e,r,n,i,a,o,s;return t=this.readByte(),e=this.readByte(),r=this.readByte(),n=this.readByte(),i=this.readByte(),a=this.readByte(),o=this.readByte(),s=this.readByte(),128&t?-1*(72057594037927940*(255^t)+281474976710656*(255^e)+1099511627776*(255^r)+4294967296*(255^n)+16777216*(255^i)+65536*(255^a)+256*(255^o)+(255^s)+1):72057594037927940*t+281474976710656*e+1099511627776*r+4294967296*n+16777216*i+65536*a+256*o+s},t.prototype.writeLongLong=function(t){var e,r;return e=Math.floor(t/4294967296),r=4294967295&t,this.writeByte(e>>24&255),this.writeByte(e>>16&255),this.writeByte(e>>8&255),this.writeByte(255&e),this.writeByte(r>>24&255),this.writeByte(r>>16&255),this.writeByte(r>>8&255),this.writeByte(255&r)},t.prototype.readInt=function(){return this.readInt32()},t.prototype.writeInt=function(t){return this.writeInt32(t)},t.prototype.read=function(t){var e,r;for(e=[],r=0;0<=t?r<t:r>t;r=0<=t?++r:--r)e.push(this.readByte());return e},t.prototype.write=function(t){var e,r,n,i;for(i=[],r=0,n=t.length;r<n;r++)e=t[r],i.push(this.writeByte(e));return i},t}(),Ue=function(){var t;function e(t){var e,r,n;for(this.scalarType=t.readInt(),this.tableCount=t.readShort(),this.searchRange=t.readShort(),this.entrySelector=t.readShort(),this.rangeShift=t.readShort(),this.tables={},r=0,n=this.tableCount;0<=n?r<n:r>n;r=0<=n?++r:--r)e={tag:t.readString(4),checksum:t.readInt(),offset:t.readInt(),length:t.readInt()},this.tables[e.tag]=e}return e.prototype.encode=function(e){var r,n,i,a,o,s,c,u,l,h,f,d,p;for(p in f=Object.keys(e).length,s=Math.log(2),l=16*Math.floor(Math.log(f)/s),a=Math.floor(l/s),u=16*f-l,(n=new Te).writeInt(this.scalarType),n.writeShort(f),n.writeShort(l),n.writeShort(a),n.writeShort(u),i=16*f,c=n.pos+i,o=null,d=[],e)for(h=e[p],n.writeString(p),n.writeInt(t(h)),n.writeInt(c),n.writeInt(h.length),d=d.concat(h),"head"===p&&(o=c),c+=h.length;c%4;)d.push(0),c++;return n.write(d),r=2981146554-t(n.data),n.pos=o+8,n.writeUInt32(r),n.data},t=function(t){var e,r,n,i;for(t=tr.call(t);t.length%4;)t.push(0);for(n=new Te(t),r=0,e=0,i=t.length;e<i;e=e+=4)r+=n.readUInt32();return 4294967295&r},e}(),ze={}.hasOwnProperty,He=function(t,e){for(var r in e)ze.call(e,r)&&(t[r]=e[r]);function n(){this.constructor=t}return n.prototype=e.prototype,t.prototype=new n,t.__super__=e.prototype,t},We=function(t){function e(){return e.__super__.constructor.apply(this,arguments)}return He(e,t),e.prototype.tag="head",e.prototype.parse=function(t){return t.pos=this.offset,this.version=t.readInt(),this.revision=t.readInt(),this.checkSumAdjustment=t.readInt(),this.magicNumber=t.readInt(),this.flags=t.readShort(),this.unitsPerEm=t.readShort(),this.created=t.readLongLong(),this.modified=t.readLongLong(),this.xMin=t.readShort(),this.yMin=t.readShort(),this.xMax=t.readShort(),this.yMax=t.readShort(),this.macStyle=t.readShort(),this.lowestRecPPEM=t.readShort(),this.fontDirectionHint=t.readShort(),this.indexToLocFormat=t.readShort(),this.glyphDataFormat=t.readShort()},e.prototype.encode=function(t){var e;return(e=new Te).writeInt(this.version),e.writeInt(this.revision),e.writeInt(this.checkSumAdjustment),e.writeInt(this.magicNumber),e.writeShort(this.flags),e.writeShort(this.unitsPerEm),e.writeLongLong(this.created),e.writeLongLong(this.modified),e.writeShort(this.xMin),e.writeShort(this.yMin),e.writeShort(this.xMax),e.writeShort(this.yMax),e.writeShort(this.macStyle),e.writeShort(this.lowestRecPPEM),e.writeShort(this.fontDirectionHint),e.writeShort(t),e.writeShort(this.glyphDataFormat),e.data},e}(Re=function(){function t(t){var e;this.file=t,e=this.file.directory.tables[this.tag],this.exists=!!e,e&&(this.offset=e.offset,this.length=e.length,this.parse(this.file.contents))}return t.prototype.parse=function(){},t.prototype.encode=function(){},t.prototype.raw=function(){return this.exists?(this.file.contents.pos=this.offset,this.file.contents.read(this.length)):null},t}()),Ve=function(){function t(t,e){var r,n,i,a,o,s,c,u,l,h,f,d,p,g,m,v,b;switch(this.platformID=t.readUInt16(),this.encodingID=t.readShort(),this.offset=e+t.readInt(),l=t.pos,t.pos=this.offset,this.format=t.readUInt16(),this.length=t.readUInt16(),this.language=t.readUInt16(),this.isUnicode=3===this.platformID&&1===this.encodingID&&4===this.format||0===this.platformID&&4===this.format,this.codeMap={},this.format){case 0:for(s=0;s<256;++s)this.codeMap[s]=t.readByte();break;case 4:for(f=t.readUInt16(),h=f/2,t.pos+=6,i=function(){var e,r;for(r=[],s=e=0;0<=h?e<h:e>h;s=0<=h?++e:--e)r.push(t.readUInt16());return r}(),t.pos+=2,p=function(){var e,r;for(r=[],s=e=0;0<=h?e<h:e>h;s=0<=h?++e:--e)r.push(t.readUInt16());return r}(),c=function(){var e,r;for(r=[],s=e=0;0<=h?e<h:e>h;s=0<=h?++e:--e)r.push(t.readUInt16());return r}(),u=function(){var e,r;for(r=[],s=e=0;0<=h?e<h:e>h;s=0<=h?++e:--e)r.push(t.readUInt16());return r}(),n=(this.length-t.pos+this.offset)/2,o=function(){var e,r;for(r=[],s=e=0;0<=n?e<n:e>n;s=0<=n?++e:--e)r.push(t.readUInt16());return r}(),s=m=0,b=i.length;m<b;s=++m)for(g=i[s],r=v=d=p[s];d<=g?v<=g:v>=g;r=d<=g?++v:--v)0===u[s]?a=r+c[s]:0!==(a=o[u[s]/2+(r-d)-(h-s)]||0)&&(a+=c[s]),this.codeMap[r]=65535&a}t.pos=l}return t.encode=function(t,e){var r,n,i,a,o,s,c,u,l,h,f,d,p,g,m,v,b,y,w,N,L,A,x,S,_,P,k,F,I,C,j,O,B,M,E,q,D,R,T,U,z,H,W,V,G,Y;switch(F=new Te,a=Object.keys(t).sort((function(t,e){return t-e})),e){case"macroman":for(p=0,g=function(){var t=[];for(d=0;d<256;++d)t.push(0);return t}(),v={0:0},i={},I=0,B=a.length;I<B;I++)null==v[W=t[n=a[I]]]&&(v[W]=++p),i[n]={old:t[n],new:v[t[n]]},g[n]=v[t[n]];return F.writeUInt16(1),F.writeUInt16(0),F.writeUInt32(12),F.writeUInt16(0),F.writeUInt16(262),F.writeUInt16(0),F.write(g),{charMap:i,subtable:F.data,maxGlyphID:p+1};case"unicode":for(P=[],l=[],b=0,v={},r={},m=c=null,C=0,M=a.length;C<M;C++)null==v[w=t[n=a[C]]]&&(v[w]=++b),r[n]={old:w,new:v[w]},o=v[w]-n,null!=m&&o===c||(m&&l.push(m),P.push(n),c=o),m=n;for(m&&l.push(m),l.push(65535),P.push(65535),S=2*(x=P.length),A=2*Math.pow(Math.log(x)/Math.LN2,2),h=Math.log(A/2)/Math.LN2,L=2*x-A,s=[],N=[],f=[],d=j=0,E=P.length;j<E;d=++j){if(_=P[d],u=l[d],65535===_){s.push(0),N.push(0);break}if(_-(k=r[_].new)>=32768)for(s.push(0),N.push(2*(f.length+x-d)),n=O=_;_<=u?O<=u:O>=u;n=_<=u?++O:--O)f.push(r[n].new);else s.push(k-_),N.push(0)}for(F.writeUInt16(3),F.writeUInt16(1),F.writeUInt32(12),F.writeUInt16(4),F.writeUInt16(16+8*x+2*f.length),F.writeUInt16(0),F.writeUInt16(S),F.writeUInt16(A),F.writeUInt16(h),F.writeUInt16(L),z=0,q=l.length;z<q;z++)n=l[z],F.writeUInt16(n);for(F.writeUInt16(0),H=0,D=P.length;H<D;H++)n=P[H],F.writeUInt16(n);for(V=0,R=s.length;V<R;V++)o=s[V],F.writeUInt16(o);for(G=0,T=N.length;G<T;G++)y=N[G],F.writeUInt16(y);for(Y=0,U=f.length;Y<U;Y++)p=f[Y],F.writeUInt16(p);return{charMap:r,subtable:F.data,maxGlyphID:b+1}}},t}(),Ge=function(t){function e(){return e.__super__.constructor.apply(this,arguments)}return He(e,t),e.prototype.tag="cmap",e.prototype.parse=function(t){var e,r,n;for(t.pos=this.offset,this.version=t.readUInt16(),n=t.readUInt16(),this.tables=[],this.unicode=null,r=0;0<=n?r<n:r>n;r=0<=n?++r:--r)e=new Ve(t,this.offset),this.tables.push(e),e.isUnicode&&null==this.unicode&&(this.unicode=e);return!0},e.encode=function(t,e){var r,n;return null==e&&(e="macroman"),r=Ve.encode(t,e),(n=new Te).writeUInt16(0),n.writeUInt16(1),r.table=n.data.concat(r.subtable),r},e}(Re),Ye=function(t){function e(){return e.__super__.constructor.apply(this,arguments)}return He(e,t),e.prototype.tag="hhea",e.prototype.parse=function(t){return t.pos=this.offset,this.version=t.readInt(),this.ascender=t.readShort(),this.decender=t.readShort(),this.lineGap=t.readShort(),this.advanceWidthMax=t.readShort(),this.minLeftSideBearing=t.readShort(),this.minRightSideBearing=t.readShort(),this.xMaxExtent=t.readShort(),this.caretSlopeRise=t.readShort(),this.caretSlopeRun=t.readShort(),this.caretOffset=t.readShort(),t.pos+=8,this.metricDataFormat=t.readShort(),this.numberOfMetrics=t.readUInt16()},e}(Re),Je=function(t){function e(){return e.__super__.constructor.apply(this,arguments)}return He(e,t),e.prototype.tag="OS/2",e.prototype.parse=function(t){if(t.pos=this.offset,this.version=t.readUInt16(),this.averageCharWidth=t.readShort(),this.weightClass=t.readUInt16(),this.widthClass=t.readUInt16(),this.type=t.readShort(),this.ySubscriptXSize=t.readShort(),this.ySubscriptYSize=t.readShort(),this.ySubscriptXOffset=t.readShort(),this.ySubscriptYOffset=t.readShort(),this.ySuperscriptXSize=t.readShort(),this.ySuperscriptYSize=t.readShort(),this.ySuperscriptXOffset=t.readShort(),this.ySuperscriptYOffset=t.readShort(),this.yStrikeoutSize=t.readShort(),this.yStrikeoutPosition=t.readShort(),this.familyClass=t.readShort(),this.panose=function(){var e,r;for(r=[],e=0;e<10;++e)r.push(t.readByte());return r}(),this.charRange=function(){var e,r;for(r=[],e=0;e<4;++e)r.push(t.readInt());return r}(),this.vendorID=t.readString(4),this.selection=t.readShort(),this.firstCharIndex=t.readShort(),this.lastCharIndex=t.readShort(),this.version>0&&(this.ascent=t.readShort(),this.descent=t.readShort(),this.lineGap=t.readShort(),this.winAscent=t.readShort(),this.winDescent=t.readShort(),this.codePageRange=function(){var e,r;for(r=[],e=0;e<2;e=++e)r.push(t.readInt());return r}(),this.version>1))return this.xHeight=t.readShort(),this.capHeight=t.readShort(),this.defaultChar=t.readShort(),this.breakChar=t.readShort(),this.maxContext=t.readShort()},e}(Re),Xe=function(t){function e(){return e.__super__.constructor.apply(this,arguments)}return He(e,t),e.prototype.tag="post",e.prototype.parse=function(t){var e,r,n;switch(t.pos=this.offset,this.format=t.readInt(),this.italicAngle=t.readInt(),this.underlinePosition=t.readShort(),this.underlineThickness=t.readShort(),this.isFixedPitch=t.readInt(),this.minMemType42=t.readInt(),this.maxMemType42=t.readInt(),this.minMemType1=t.readInt(),this.maxMemType1=t.readInt(),this.format){case 65536:break;case 131072:var i;for(r=t.readUInt16(),this.glyphNameIndex=[],i=0;0<=r?i<r:i>r;i=0<=r?++i:--i)this.glyphNameIndex.push(t.readUInt16());for(this.names=[],n=[];t.pos<this.offset+this.length;)e=t.readByte(),n.push(this.names.push(t.readString(e)));return n;case 151552:return r=t.readUInt16(),this.offsets=t.read(r);case 196608:break;case 262144:return this.map=function(){var e,r,n;for(n=[],i=e=0,r=this.file.maxp.numGlyphs;0<=r?e<r:e>r;i=0<=r?++e:--e)n.push(t.readUInt32());return n}.call(this)}},e}(Re),Ke=function(t,e){this.raw=t,this.length=t.length,this.platformID=e.platformID,this.encodingID=e.encodingID,this.languageID=e.languageID},Ze=function(t){function e(){return e.__super__.constructor.apply(this,arguments)}return He(e,t),e.prototype.tag="name",e.prototype.parse=function(t){var e,r,n,i,a,o,s,c,u,l,h;for(t.pos=this.offset,t.readShort(),e=t.readShort(),o=t.readShort(),r=[],i=0;0<=e?i<e:i>e;i=0<=e?++i:--i)r.push({platformID:t.readShort(),encodingID:t.readShort(),languageID:t.readShort(),nameID:t.readShort(),length:t.readShort(),offset:this.offset+o+t.readShort()});for(s={},i=u=0,l=r.length;u<l;i=++u)n=r[i],t.pos=n.offset,c=t.readString(n.length),a=new Ke(c,n),null==s[h=n.nameID]&&(s[h]=[]),s[n.nameID].push(a);this.strings=s,this.copyright=s[0],this.fontFamily=s[1],this.fontSubfamily=s[2],this.uniqueSubfamily=s[3],this.fontName=s[4],this.version=s[5];try{this.postscriptName=s[6][0].raw.replace(/[\x00-\x19\x80-\xff]/g,"")}catch(t){this.postscriptName=s[4][0].raw.replace(/[\x00-\x19\x80-\xff]/g,"")}return this.trademark=s[7],this.manufacturer=s[8],this.designer=s[9],this.description=s[10],this.vendorUrl=s[11],this.designerUrl=s[12],this.license=s[13],this.licenseUrl=s[14],this.preferredFamily=s[15],this.preferredSubfamily=s[17],this.compatibleFull=s[18],this.sampleText=s[19]},e}(Re),$e=function(t){function e(){return e.__super__.constructor.apply(this,arguments)}return He(e,t),e.prototype.tag="maxp",e.prototype.parse=function(t){return t.pos=this.offset,this.version=t.readInt(),this.numGlyphs=t.readUInt16(),this.maxPoints=t.readUInt16(),this.maxContours=t.readUInt16(),this.maxCompositePoints=t.readUInt16(),this.maxComponentContours=t.readUInt16(),this.maxZones=t.readUInt16(),this.maxTwilightPoints=t.readUInt16(),this.maxStorage=t.readUInt16(),this.maxFunctionDefs=t.readUInt16(),this.maxInstructionDefs=t.readUInt16(),this.maxStackElements=t.readUInt16(),this.maxSizeOfInstructions=t.readUInt16(),this.maxComponentElements=t.readUInt16(),this.maxComponentDepth=t.readUInt16()},e}(Re),Qe=function(t){function e(){return e.__super__.constructor.apply(this,arguments)}return He(e,t),e.prototype.tag="hmtx",e.prototype.parse=function(t){var e,r,n,i,a,o,s;for(t.pos=this.offset,this.metrics=[],e=0,o=this.file.hhea.numberOfMetrics;0<=o?e<o:e>o;e=0<=o?++e:--e)this.metrics.push({advance:t.readUInt16(),lsb:t.readInt16()});for(n=this.file.maxp.numGlyphs-this.file.hhea.numberOfMetrics,this.leftSideBearings=function(){var r,i;for(i=[],e=r=0;0<=n?r<n:r>n;e=0<=n?++r:--r)i.push(t.readInt16());return i}(),this.widths=function(){var t,e,r,n;for(n=[],t=0,e=(r=this.metrics).length;t<e;t++)i=r[t],n.push(i.advance);return n}.call(this),r=this.widths[this.widths.length-1],s=[],e=a=0;0<=n?a<n:a>n;e=0<=n?++a:--a)s.push(this.widths.push(r));return s},e.prototype.forGlyph=function(t){return t in this.metrics?this.metrics[t]:{advance:this.metrics[this.metrics.length-1].advance,lsb:this.leftSideBearings[t-this.metrics.length]}},e}(Re),tr=[].slice,er=function(t){function e(){return e.__super__.constructor.apply(this,arguments)}return He(e,t),e.prototype.tag="glyf",e.prototype.parse=function(){return this.cache={}},e.prototype.glyphFor=function(t){var e,r,n,i,a,o,s,c,u,l;return t in this.cache?this.cache[t]:(i=this.file.loca,e=this.file.contents,r=i.indexOf(t),0===(n=i.lengthOf(t))?this.cache[t]=null:(e.pos=this.offset+r,a=(o=new Te(e.read(n))).readShort(),c=o.readShort(),l=o.readShort(),s=o.readShort(),u=o.readShort(),this.cache[t]=-1===a?new nr(o,c,l,s,u):new rr(o,a,c,l,s,u),this.cache[t]))},e.prototype.encode=function(t,e,r){var n,i,a,o,s;for(a=[],i=[],o=0,s=e.length;o<s;o++)n=t[e[o]],i.push(a.length),n&&(a=a.concat(n.encode(r)));return i.push(a.length),{table:a,offsets:i}},e}(Re),rr=function(){function t(t,e,r,n,i,a){this.raw=t,this.numberOfContours=e,this.xMin=r,this.yMin=n,this.xMax=i,this.yMax=a,this.compound=!1}return t.prototype.encode=function(){return this.raw.data},t}(),nr=function(){function t(t,e,r,n,i){var a,o;for(this.raw=t,this.xMin=e,this.yMin=r,this.xMax=n,this.yMax=i,this.compound=!0,this.glyphIDs=[],this.glyphOffsets=[],a=this.raw;o=a.readShort(),this.glyphOffsets.push(a.pos),this.glyphIDs.push(a.readUInt16()),32&o;)a.pos+=1&o?4:2,128&o?a.pos+=8:64&o?a.pos+=4:8&o&&(a.pos+=2)}return 1,8,32,64,128,t.prototype.encode=function(){var t,e,r;for(e=new Te(tr.call(this.raw.data)),t=0,r=this.glyphIDs.length;t<r;++t)e.pos=this.glyphOffsets[t];return e.data},t}(),ir=function(t){function e(){return e.__super__.constructor.apply(this,arguments)}return He(e,t),e.prototype.tag="loca",e.prototype.parse=function(t){var e,r;return t.pos=this.offset,e=this.file.head.indexToLocFormat,this.offsets=0===e?function(){var e,n;for(n=[],r=0,e=this.length;r<e;r+=2)n.push(2*t.readUInt16());return n}.call(this):function(){var e,n;for(n=[],r=0,e=this.length;r<e;r+=4)n.push(t.readUInt32());return n}.call(this)},e.prototype.indexOf=function(t){return this.offsets[t]},e.prototype.lengthOf=function(t){return this.offsets[t+1]-this.offsets[t]},e.prototype.encode=function(t,e){for(var r=new Uint32Array(this.offsets.length),n=0,i=0,a=0;a<r.length;++a)if(r[a]=n,i<e.length&&e[i]==a){++i,r[a]=n;var o=this.offsets[a],s=this.offsets[a+1]-o;s>0&&(n+=s)}for(var c=new Array(4*r.length),u=0;u<r.length;++u)c[4*u+3]=255&r[u],c[4*u+2]=(65280&r[u])>>8,c[4*u+1]=(16711680&r[u])>>16,c[4*u]=(4278190080&r[u])>>24;return c},e}(Re),ar=function(){function t(t){this.font=t,this.subset={},this.unicodes={},this.next=33}return t.prototype.generateCmap=function(){var t,e,r,n,i;for(e in n=this.font.cmap.tables[0].codeMap,t={},i=this.subset)r=i[e],t[e]=n[r];return t},t.prototype.glyphsFor=function(t){var e,r,n,i,a,o,s;for(n={},a=0,o=t.length;a<o;a++)n[i=t[a]]=this.font.glyf.glyphFor(i);for(i in e=[],n)(null!=(r=n[i])?r.compound:void 0)&&e.push.apply(e,r.glyphIDs);if(e.length>0)for(i in s=this.glyphsFor(e))r=s[i],n[i]=r;return n},t.prototype.encode=function(t,e){var r,n,i,a,o,s,c,u,l,h,f,d,p,g,m;for(n in r=Ge.encode(this.generateCmap(),"unicode"),a=this.glyphsFor(t),f={0:0},m=r.charMap)f[(s=m[n]).old]=s.new;for(d in h=r.maxGlyphID,a)d in f||(f[d]=h++);return u=function(t){var e,r;for(e in r={},t)r[t[e]]=e;return r}(f),l=Object.keys(u).sort((function(t,e){return t-e})),p=function(){var t,e,r;for(r=[],t=0,e=l.length;t<e;t++)o=l[t],r.push(u[o]);return r}(),i=this.font.glyf.encode(a,p,f),c=this.font.loca.encode(i.offsets,p),g={cmap:this.font.cmap.raw(),glyf:i.table,loca:c,hmtx:this.font.hmtx.raw(),hhea:this.font.hhea.raw(),maxp:this.font.maxp.raw(),post:this.font.post.raw(),name:this.font.name.raw(),head:this.font.head.encode(e)},this.font.os2.exists&&(g["OS/2"]=this.font.os2.raw()),this.font.directory.encode(g)},t}();M.API.PDFObject=function(){var t;function e(){}return t=function(t,e){return(Array(e+1).join("0")+t).slice(-e)},e.convert=function(r){var n,i,a,o;if(Array.isArray(r))return"["+function(){var t,i,a;for(a=[],t=0,i=r.length;t<i;t++)n=r[t],a.push(e.convert(n));return a}().join(" ")+"]";if("string"==typeof r)return"/"+r;if(null!=r?r.isString:void 0)return"("+r+")";if(r instanceof Date)return"(D:"+t(r.getUTCFullYear(),4)+t(r.getUTCMonth(),2)+t(r.getUTCDate(),2)+t(r.getUTCHours(),2)+t(r.getUTCMinutes(),2)+t(r.getUTCSeconds(),2)+"Z)";if("[object Object]"==={}.toString.call(r)){for(i in a=["<<"],r)o=r[i],a.push("/"+i+" "+e.convert(o));return a.push(">>"),a.join("\n")}return""+r},e}(),t.AcroForm=xt,t.AcroFormAppearance=Lt,t.AcroFormButton=gt,t.AcroFormCheckBox=yt,t.AcroFormChoiceField=ht,t.AcroFormComboBox=dt,t.AcroFormEditBox=pt,t.AcroFormListBox=ft,t.AcroFormPasswordField=Nt,t.AcroFormPushButton=mt,t.AcroFormRadioButton=vt,t.AcroFormTextField=wt,t.GState=C,t.ShadingPattern=O,t.TilingPattern=B,t.default=M,t.jsPDF=M,Object.defineProperty(t,"__esModule",{value:!0})}));
-//# sourceMappingURL=jspdf.umd.min.js.map
 </script>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -406,15 +405,70 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
     background: #1a1a1a;
     color: #fff;
-    padding: 16px;
+    padding: 0;
     font-size: 13px;
+    overflow-x: hidden;
   }
 
+  /* Tab bar */
+  .tab-bar {
+    display: flex;
+    align-items: center;
+    border-bottom: 1px solid #333;
+    padding: 0 12px;
+    background: #1a1a1a;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+  .tab-btn {
+    padding: 10px 16px;
+    background: none;
+    border: none;
+    color: #888;
+    font-size: 13px;
+    font-family: inherit;
+    font-weight: 500;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: color 0.15s, border-color 0.15s;
+  }
+  .tab-btn:hover { color: #ccc; }
+  .tab-btn.active { color: #fff; border-bottom-color: #fff; }
+  .tab-bar .spacer { flex: 1; }
+  .icon-btn {
+    background: none;
+    border: none;
+    color: #888;
+    font-size: 20px;
+    cursor: pointer;
+    width: 36px;
+    height: 36px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    border-radius: 6px;
+    transition: color 0.15s, background 0.15s;
+  }
+  .icon-btn:hover { color: #fff; background: #333; }
+  .icon-btn.info {
+    font-size: 17px;
+    font-weight: 700;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    margin-left: 2px;
+  }
+  .hidden { display: none !important; }
+
+  .tab-content { display: none; padding: 16px; }
+  .tab-content.active { display: block; }
+
+  /* Shared styles */
   .preview-area {
     background: #222;
     border: 1.5px dashed #555;
     border-radius: 8px;
-    min-height: 160px;
+    min-height: 120px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -423,18 +477,12 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
     flex-direction: column;
     gap: 8px;
   }
-  .preview-area.has-selection {
-    border-style: solid;
-    border-color: #666;
-  }
-  .preview-area .empty-text {
-    color: #777;
-    font-size: 14px;
-  }
+  .preview-area.has-selection { border-style: solid; border-color: #666; }
+  .preview-area .empty-text { color: #777; font-size: 14px; }
 
   .selected-frames-list {
     width: 100%;
-    max-height: 140px;
+    max-height: 120px;
     overflow-y: auto;
     display: flex;
     flex-direction: column;
@@ -453,9 +501,8 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
   .frame-item .frame-icon {
     width: 14px;
     height: 14px;
-    border: 1.5px solid #888;
-    border-radius: 2px;
     flex-shrink: 0;
+    opacity: 0.9;
   }
   .frame-item .frame-name {
     flex: 1;
@@ -464,9 +511,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
     text-overflow: ellipsis;
   }
   .frame-item .frame-size {
-    color: #999;
-    font-size: 11px;
-    flex-shrink: 0;
+    color: #999; font-size: 11px; flex-shrink: 0;
   }
 
   .filename-row {
@@ -478,60 +523,27 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
     margin-bottom: 12px;
     gap: 8px;
   }
-  .filename-row .file-icon {
-    font-size: 16px;
-    flex-shrink: 0;
-  }
+  .filename-row .file-icon { font-size: 16px; flex-shrink: 0; }
   .filename-row input {
-    flex: 1;
-    background: transparent;
-    border: none;
-    outline: none;
-    color: #ccc;
-    font-size: 13px;
-    font-family: inherit;
+    flex: 1; background: transparent; border: none; outline: none;
+    color: #ccc; font-size: 13px; font-family: inherit;
   }
-  .filename-row .ext {
-    color: #888;
-    font-size: 13px;
-    flex-shrink: 0;
-  }
+  .filename-row .ext { color: #888; font-size: 13px; flex-shrink: 0; }
 
-  .options-row {
-    display: flex;
-    gap: 10px;
-    margin-bottom: 14px;
-  }
-  .option-select {
-    position: relative;
-  }
+  .options-row { display: flex; gap: 10px; margin-bottom: 14px; }
+  .option-select { position: relative; }
   .option-select select {
-    appearance: none;
-    background: #2a2a2a;
-    border: 1px solid #555;
-    border-radius: 8px;
-    color: #fff;
-    padding: 8px 32px 8px 14px;
-    font-size: 13px;
-    font-family: inherit;
-    cursor: pointer;
-    outline: none;
+    appearance: none; background: #2a2a2a; border: 1px solid #555;
+    border-radius: 8px; color: #fff; padding: 8px 32px 8px 14px;
+    font-size: 13px; font-family: inherit; cursor: pointer; outline: none;
   }
-  .option-select select:hover {
-    border-color: #888;
-  }
+  .option-select select:hover { border-color: #888; }
   .option-select::after {
-    content: '▾';
-    position: absolute;
-    right: 12px;
-    top: 50%;
-    transform: translateY(-50%);
-    color: #888;
-    font-size: 10px;
-    pointer-events: none;
+    content: '▾'; position: absolute; right: 12px; top: 50%;
+    transform: translateY(-50%); color: #888; font-size: 10px; pointer-events: none;
   }
 
-  .export-btn {
+  .action-btn {
     width: 100%;
     padding: 12px;
     border: none;
@@ -542,17 +554,245 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
     cursor: pointer;
     transition: background 0.15s;
   }
-  .export-btn.disabled {
-    background: #333;
-    color: #777;
-    cursor: default;
+  .action-btn.disabled { background: #333; color: #777; cursor: default; }
+  .action-btn.active { background: #fff; color: #000; }
+  .action-btn.active:hover { background: #e0e0e0; }
+
+  /* Translate tab */
+  .section-label {
+    font-size: 11px; color: #888; text-transform: uppercase;
+    letter-spacing: 0.5px; margin-bottom: 8px;
   }
-  .export-btn.active {
-    background: #fff;
-    color: #000;
+  .lang-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+    padding: 10px;
   }
-  .export-btn.active:hover {
-    background: #e0e0e0;
+  .lang-accordion {
+    margin-bottom: 14px;
+    background: #202020;
+    border: 1px solid #3a3a3a;
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  .lang-accordion summary {
+    list-style: none;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 36px;
+    padding: 0 12px;
+    cursor: pointer;
+    user-select: none;
+    font-size: 12px;
+    color: #cfcfcf;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .lang-accordion summary::-webkit-details-marker { display: none; }
+  .lang-accordion[open] summary {
+    border-bottom: 1px solid #333;
+  }
+  .lang-accordion-caret {
+    color: #9a9a9a;
+    font-size: 11px;
+    transition: transform 0.15s ease;
+    flex-shrink: 0;
+  }
+  .lang-accordion[open] .lang-accordion-caret {
+    transform: rotate(180deg);
+  }
+  .lang-accordion-title {
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .lang-check {
+    display: flex; align-items: center; gap: 8px;
+    padding: 8px 10px; background: #2a2a2a; border-radius: 6px;
+    cursor: pointer; font-size: 12px; color: #ccc;
+    transition: background 0.1s;
+  }
+  .lang-check:hover { background: #333; }
+  .lang-check input { accent-color: #fff; }
+  .lang-check.disabled { opacity: 0.5; cursor: default; }
+
+  .output-info {
+    font-size: 12px; color: #999; margin-bottom: 14px;
+  }
+  .helper-note {
+    font-size: 11px;
+    color: #8a8a8a;
+    margin-top: 8px;
+  }
+  .helper-note.hidden { display: none; }
+
+  .progress-area {
+    background: #222;
+    border-radius: 8px;
+    padding: 14px;
+    margin-top: 14px;
+    display: none;
+  }
+  .progress-area.visible { display: block; }
+  .progress-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+  }
+  .progress-stage { font-size: 13px; color: #ececec; font-weight: 600; }
+  .progress-percent { font-size: 12px; color: #9ca3af; }
+  .progress-meta { font-size: 11px; color: #9ca3af; margin-bottom: 8px; min-height: 14px; }
+  .progress-steps {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+    margin-bottom: 10px;
+  }
+  .step-chip {
+    text-align: center;
+    font-size: 11px;
+    border-radius: 999px;
+    padding: 4px 6px;
+    background: #2f2f2f;
+    color: #8c8c8c;
+    border: 1px solid #3c3c3c;
+  }
+  .step-chip.active {
+    color: #f3f4f6;
+    background: #3b3b3b;
+    border-color: #6b7280;
+  }
+  .step-chip.completed {
+    color: #d1fae5;
+    background: #193126;
+    border-color: #2f6b4f;
+  }
+  .progress-bar-bg {
+    width: 100%; height: 6px;
+    background: #333; border-radius: 3px; overflow: hidden;
+  }
+  .progress-bar-fill {
+    height: 100%; background: #fff; border-radius: 3px;
+    transition: width 0.3s;
+    width: 0%;
+  }
+
+  /* Result summary */
+  .result-area {
+    background: #222; border-radius: 8px; padding: 14px;
+    margin-top: 14px; display: none;
+  }
+  .result-area.visible { display: block; }
+  .result-title { font-size: 13px; font-weight: 500; margin-bottom: 6px; }
+  .result-detail { font-size: 12px; color: #999; }
+  .result-errors { font-size: 12px; color: #e88; margin-top: 6px; }
+
+  /* Settings modal */
+  .modal-overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.6);
+    display: none; align-items: center; justify-content: center;
+    z-index: 100;
+  }
+  .modal-overlay.visible { display: flex; }
+  .modal {
+    background: #222; border-radius: 12px;
+    padding: 20px; width: 340px; max-width: 95%;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+  }
+  .modal.debug {
+    width: 92%;
+    max-width: 920px;
+    height: 78vh;
+    display: flex;
+    flex-direction: column;
+  }
+  .modal-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 16px;
+  }
+  .modal-header h3 { font-size: 15px; font-weight: 600; }
+  .modal-close {
+    background: none; border: none; color: #888; font-size: 18px;
+    cursor: pointer; padding: 4px;
+  }
+  .modal-close:hover { color: #fff; }
+  .field-group { margin-bottom: 14px; }
+  .field-label { font-size: 11px; color: #888; margin-bottom: 4px; }
+  .field-toggle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #ddd;
+    font-size: 12px;
+    cursor: pointer;
+  }
+  .field-toggle input { accent-color: #fff; }
+  .field-help {
+    margin-top: 4px;
+    color: #8a8a8a;
+    font-size: 11px;
+  }
+  .field-input {
+    width: 100%; padding: 8px 12px; background: #1a1a1a;
+    border: 1px solid #444; border-radius: 6px; color: #fff;
+    font-size: 13px; font-family: inherit; outline: none;
+  }
+  .field-input:focus { border-color: #888; }
+  .field-select {
+    width: 100%; padding: 8px 12px; background: #1a1a1a;
+    border: 1px solid #444; border-radius: 6px; color: #fff;
+    font-size: 13px; font-family: inherit; outline: none;
+    appearance: none; cursor: pointer;
+  }
+  .field-select:focus { border-color: #888; }
+  .api-key-row { display: flex; gap: 6px; }
+  .api-key-row input { flex: 1; }
+  .toggle-vis-btn {
+    background: #1a1a1a; border: 1px solid #444; border-radius: 6px;
+    color: #888; padding: 8px 10px; cursor: pointer; font-size: 13px;
+  }
+  .toggle-vis-btn:hover { color: #fff; border-color: #888; }
+  .modal-actions { display: flex; gap: 8px; margin-top: 16px; }
+  .modal-actions button {
+    flex: 1; padding: 10px; border: none; border-radius: 8px;
+    font-size: 13px; font-family: inherit; font-weight: 500; cursor: pointer;
+  }
+  .btn-save { background: #fff; color: #000; }
+  .btn-save:hover { background: #e0e0e0; }
+  .btn-cancel { background: #333; color: #ccc; }
+  .btn-cancel:hover { background: #444; }
+  .debug-toolbar {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+  .debug-toolbar button {
+    border: 1px solid #444;
+    background: #2c2c2c;
+    color: #ddd;
+    border-radius: 6px;
+    padding: 6px 10px;
+    font-size: 12px;
+    cursor: pointer;
+  }
+  .debug-toolbar button:hover { border-color: #666; color: #fff; }
+  .debug-output {
+    flex: 1;
+    overflow: auto;
+    border: 1px solid #333;
+    border-radius: 8px;
+    background: #171717;
+    padding: 10px;
+    font-size: 11px;
+    line-height: 1.45;
+    color: #d7d7d7;
+    white-space: pre-wrap;
+    word-break: break-word;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   }
 
   .selected-frames-list::-webkit-scrollbar { width: 4px; }
@@ -562,81 +802,943 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
 </head>
 <body>
 
-<div class="preview-area" id="previewArea">
-  <span class="empty-text" id="emptyText">Nothing selected</span>
-  <div class="selected-frames-list" id="framesList" style="display:none;"></div>
+<!-- Tab bar -->
+<div class="tab-bar">
+  <button class="tab-btn active" data-tab="export">Export PDF</button>
+  <button class="tab-btn" data-tab="translate">Translate</button>
+  <div class="spacer"></div>
+  <button class="icon-btn" id="gearBtn" title="Settings">⚙</button>
+  <button class="icon-btn info hidden" id="debugLogBtn" title="Debug Logs">i</button>
 </div>
 
-<div class="filename-row">
-  <span class="file-icon">📄</span>
-  <input type="text" id="filename" value="Document" placeholder="Filename">
-  <span class="ext">.pdf</span>
-</div>
-
-<div class="options-row">
-  <div class="option-select">
-    <select id="format">
-      <option value="pdf">PDF</option>
-    </select>
+<!-- Export PDF tab (existing) -->
+<div class="tab-content active" id="tab-export">
+  <div class="preview-area" id="previewArea">
+    <span class="empty-text" id="emptyText">Nothing selected</span>
+    <div class="selected-frames-list" id="framesList" style="display:none;"></div>
   </div>
-  <div class="option-select">
-    <select id="scale">
-      <option value="1">1x</option>
-      <option value="2" selected>2x</option>
-      <option value="3">3x</option>
-      <option value="4">4x</option>
-    </select>
+
+  <div class="filename-row">
+    <span class="file-icon">📄</span>
+    <input type="text" id="filename" value="Document" placeholder="Filename">
+    <span class="ext">.pdf</span>
+  </div>
+
+  <div class="options-row">
+    <div class="option-select">
+      <select id="format"><option value="pdf">PDF</option></select>
+    </div>
+    <div class="option-select">
+      <select id="scale">
+        <option value="1">1x</option>
+        <option value="2" selected>2x</option>
+        <option value="3">3x</option>
+        <option value="4">4x</option>
+      </select>
+    </div>
+  </div>
+
+  <button class="action-btn disabled" id="exportBtn">Select frames to export</button>
+</div>
+
+<!-- Translate tab -->
+<div class="tab-content" id="tab-translate">
+  <div class="preview-area" id="translatePreviewArea">
+    <span class="empty-text" id="translateEmptyText">Nothing selected</span>
+    <div class="selected-frames-list" id="translateFramesList" style="display:none;"></div>
+  </div>
+
+  <div class="section-label">Source Language</div>
+  <div class="options-row">
+    <div class="option-select">
+      <select id="sourceLang">
+        <option value="en" selected>English</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="section-label">Target Languages</div>
+  <details class="lang-accordion" id="langAccordion">
+    <summary>
+      <span class="lang-accordion-title" id="langAccordionLabel">Customize target languages</span>
+      <span class="lang-accordion-caret">▾</span>
+    </summary>
+    <div class="lang-grid" id="langGrid">
+      <label class="lang-check"><input type="checkbox" value="fr" checked> French</label>
+      <label class="lang-check"><input type="checkbox" value="de" checked> German</label>
+      <label class="lang-check"><input type="checkbox" value="es" checked> Spanish</label>
+      <label class="lang-check"><input type="checkbox" value="it" checked> Italian</label>
+      <label class="lang-check"><input type="checkbox" value="tr" checked> Turkish</label>
+    </div>
+  </details>
+
+  <div class="output-info" id="outputInfo">Select frames to see output count</div>
+
+  <button class="action-btn disabled" id="translateBtn">Select frames to translate</button>
+  <div class="helper-note" id="translateApiHint">Add API key in Settings to enable Translate.</div>
+
+  <div class="progress-area" id="progressArea">
+    <div class="progress-head">
+      <div class="progress-stage" id="progressStage">Preparing...</div>
+      <div class="progress-percent" id="progressPercent">0%</div>
+    </div>
+    <div class="progress-meta" id="progressMeta"></div>
+    <div class="progress-steps" id="progressSteps">
+      <div class="step-chip" data-stage="extract">1. Extract</div>
+      <div class="step-chip" data-stage="translate">2. Translate</div>
+      <div class="step-chip" data-stage="apply">3. Apply</div>
+    </div>
+    <div class="progress-bar-bg"><div class="progress-bar-fill" id="progressFill"></div></div>
+  </div>
+
+  <div class="result-area" id="resultArea">
+    <div class="result-title" id="resultTitle"></div>
+    <div class="result-detail" id="resultDetail"></div>
+    <div class="result-errors" id="resultErrors"></div>
   </div>
 </div>
 
-<button class="export-btn disabled" id="exportBtn">Select frames to export</button>
+<!-- Settings modal -->
+<div class="modal-overlay" id="settingsModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>Settings</h3>
+      <button class="modal-close" id="modalClose">✕</button>
+    </div>
+
+    <div class="field-group">
+      <div class="field-label">AI Provider</div>
+      <select class="field-select" id="settingsProvider">
+        <option value="gemini">Gemini</option>
+        <option value="openai">OpenAI</option>
+      </select>
+    </div>
+
+    <div class="field-group" id="geminiKeyGroup">
+      <div class="field-label">Gemini API Key</div>
+      <div class="api-key-row">
+        <input type="password" class="field-input" id="settingsGeminiKey" placeholder="Enter Gemini API key">
+        <button class="toggle-vis-btn" id="toggleGeminiKey">👁</button>
+      </div>
+    </div>
+
+    <div class="field-group" id="openaiKeyGroup" style="display:none;">
+      <div class="field-label">OpenAI API Key</div>
+      <div class="api-key-row">
+        <input type="password" class="field-input" id="settingsOpenaiKey" placeholder="Enter OpenAI API key">
+        <button class="toggle-vis-btn" id="toggleOpenaiKey">👁</button>
+      </div>
+    </div>
+
+    <div class="field-group">
+      <div class="field-label">Model</div>
+      <select class="field-select" id="settingsModel">
+        <option value="gemini-3-flash-preview">gemini-3-flash-preview</option>
+      </select>
+    </div>
+
+    <div class="field-group">
+      <label class="field-toggle">
+        <input type="checkbox" id="settingsDebugMode">
+        Enable debug mode
+      </label>
+      <div class="field-help">Shows detailed logs and enables the i button in the header.</div>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn-cancel" id="settingsCancelBtn">Cancel</button>
+      <button class="btn-save" id="settingsSaveBtn">Save</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="debugLogsModal">
+  <div class="modal debug">
+    <div class="modal-header">
+      <h3>Debug Logs</h3>
+      <button class="modal-close" id="debugLogsCloseBtn">✕</button>
+    </div>
+    <div class="debug-toolbar">
+      <button id="debugLogsCopyBtn">Copy Logs</button>
+      <button id="debugLogsClearBtn">Clear</button>
+    </div>
+    <pre class="debug-output" id="debugLogsOutput">Debug mode is enabled. Run Translate to see logs.</pre>
+  </div>
+</div>
 
 <script>
 const { jsPDF } = window.jspdf;
 
+// ── State ──
 let selectedFrames = [];
 let frameImages = [];
+let frameLinks = [];
+let currentSettings = { provider: 'gemini', model: 'gemini-3-flash-preview', apiKeyGemini: '', apiKeyOpenai: '', debugMode: false };
+let isTranslating = false;
+let lastApiErrors = [];
+const API_REQUEST_TIMEOUT_MS = 180000;
+const TRANSLATION_BATCH_SIZE = 120;
+const MAX_DYNAMIC_CONCURRENCY = 10;
+const TRANSLATION_MAX_RETRIES = 2;
+const RETRY_BASE_DELAY_MS = 1200;
+const RETRY_JITTER_MS = 500;
+const ADAPTIVE_RECOVERY_STREAK = 3;
+let translationRunSeq = 0;
+const MAX_DEBUG_LOG_ENTRIES = 1200;
+const debugLogEntries = [];
 
+function getErrorMessage(error) {
+  if (error instanceof Error) return error.message;
+  return String(error);
+}
+
+function isDebugModeEnabled() {
+  return currentSettings.debugMode === true;
+}
+
+function normalizeSettings(settings) {
+  const fallback = { provider: 'gemini', model: 'gemini-3-flash-preview', apiKeyGemini: '', apiKeyOpenai: '', debugMode: false };
+  if (!settings || typeof settings !== 'object') return fallback;
+  const provider = typeof settings.provider === 'string' ? settings.provider : fallback.provider;
+  const model = typeof settings.model === 'string' ? settings.model : fallback.model;
+  const apiKeyGemini = typeof settings.apiKeyGemini === 'string' ? settings.apiKeyGemini : fallback.apiKeyGemini;
+  const apiKeyOpenai = typeof settings.apiKeyOpenai === 'string' ? settings.apiKeyOpenai : fallback.apiKeyOpenai;
+  const debugMode = settings.debugMode === true;
+  return { provider, model, apiKeyGemini, apiKeyOpenai, debugMode };
+}
+
+function getDebugPayload(args) {
+  if (!Array.isArray(args) || args.length <= 1) return undefined;
+  if (args.length === 2) return args[1];
+  return args.slice(1);
+}
+
+function appendDebugLog(source, level, message, payload) {
+  if (!isDebugModeEnabled()) return;
+  debugLogEntries.push({
+    timestamp: Date.now(),
+    source,
+    level,
+    message,
+    payload,
+  });
+  if (debugLogEntries.length > MAX_DEBUG_LOG_ENTRIES) {
+    debugLogEntries.splice(0, debugLogEntries.length - MAX_DEBUG_LOG_ENTRIES);
+  }
+  renderDebugLogs();
+}
+
+function uiLog(...args) {
+  if (!isDebugModeEnabled()) return;
+  appendDebugLog('ui', 'log', String(args[0] ?? ''), getDebugPayload(args));
+  console.log('[PDF Pilot UI]', ...args);
+}
+
+function uiWarn(...args) {
+  if (!isDebugModeEnabled()) return;
+  appendDebugLog('ui', 'warn', String(args[0] ?? ''), getDebugPayload(args));
+  console.warn('[PDF Pilot UI]', ...args);
+}
+
+function uiError(...args) {
+  if (!isDebugModeEnabled()) return;
+  appendDebugLog('ui', 'error', String(args[0] ?? ''), getDebugPayload(args));
+  console.error('[PDF Pilot UI]', ...args);
+}
+
+function uiTable(label, rows) {
+  if (!isDebugModeEnabled()) return;
+  appendDebugLog('ui', 'table', label, rows);
+  if (typeof console !== 'undefined' && typeof console.table === 'function') {
+    console.log('[PDF Pilot UI]', label);
+    console.table(rows);
+    return;
+  }
+  console.log('[PDF Pilot UI]', label, rows);
+}
+
+function sanitizeUrlForLogs(rawUrl) {
+  const text = String(rawUrl || '');
+  try {
+    const parsed = new URL(text);
+    if (parsed.searchParams.has('key')) parsed.searchParams.set('key', '***');
+    return parsed.toString();
+  } catch {
+    return text.replace(/([?&]key=)[^&]+/i, '$1***');
+  }
+}
+
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+function isTimeoutErrorText(text) {
+  return /timed out|timeout|abort/i.test(String(text || ''));
+}
+
+function isRetryableErrorText(text) {
+  const value = String(text || '');
+  if (isNonRetryableQuotaError(null, value)) return false;
+  return (
+    isTimeoutErrorText(value) ||
+    /429|rate limit|too many requests/i.test(value) ||
+    /5\d\d/.test(value) ||
+    /network|fetch|failed to fetch|connection/i.test(value)
+  );
+}
+
+function getRetryDelayMs(attempt) {
+  const exp = RETRY_BASE_DELAY_MS * Math.pow(2, Math.max(0, attempt - 1));
+  const jitter = Math.floor(Math.random() * RETRY_JITTER_MS);
+  return exp + jitter;
+}
+
+function safeJsonParse(text) {
+  if (typeof text !== 'string') return null;
+  try {
+    return JSON.parse(text);
+  } catch {
+    return null;
+  }
+}
+
+function getRetryDelaySeconds(rawErrorText, parsedBody) {
+  if (parsedBody && typeof parsedBody === 'object') {
+    const details = parsedBody.error && Array.isArray(parsedBody.error.details) ? parsedBody.error.details : [];
+    for (const detail of details) {
+      const typeName = typeof detail?.['@type'] === 'string' ? detail['@type'] : '';
+      if (typeName.includes('RetryInfo') && typeof detail.retryDelay === 'string') {
+        const match = detail.retryDelay.match(/([\d.]+)s/i);
+        if (match) {
+          const value = Number(match[1]);
+          if (Number.isFinite(value) && value > 0) return Math.max(1, Math.ceil(value));
+        }
+      }
+    }
+  }
+
+  const text = String(rawErrorText || '');
+  const retryInMatch = text.match(/retry(?:\s+in|\s+after)?\s+([\d.]+)s/i);
+  if (retryInMatch) {
+    const value = Number(retryInMatch[1]);
+    if (Number.isFinite(value) && value > 0) return Math.max(1, Math.ceil(value));
+  }
+
+  return null;
+}
+
+function getQuotaContext(parsedBody, rawErrorText) {
+  const out = { quotaId: '', model: '', isDailyLimit: false, isFreeTier: false };
+  if (!parsedBody || typeof parsedBody !== 'object') return out;
+
+  const details = parsedBody.error && Array.isArray(parsedBody.error.details) ? parsedBody.error.details : [];
+  for (const detail of details) {
+    const typeName = typeof detail?.['@type'] === 'string' ? detail['@type'] : '';
+    if (!typeName.includes('QuotaFailure') || !Array.isArray(detail.violations)) continue;
+    const violation = detail.violations[0];
+    if (!violation || typeof violation !== 'object') continue;
+    out.quotaId = typeof violation.quotaId === 'string' ? violation.quotaId : '';
+    if (violation.quotaDimensions && typeof violation.quotaDimensions === 'object') {
+      out.model = typeof violation.quotaDimensions.model === 'string' ? violation.quotaDimensions.model : '';
+    }
+    break;
+  }
+
+  const combined = `${out.quotaId}\n${rawErrorText || ''}`.toLowerCase();
+  out.isDailyLimit = /perday|per day|daily|day/.test(combined);
+  out.isFreeTier = /free.?tier/.test(combined);
+  return out;
+}
+
+function createProviderApiError(providerName, statusCode, rawBodyText) {
+  const bodyText = typeof rawBodyText === 'string' ? rawBodyText : String(rawBodyText || '');
+  const parsedBody = safeJsonParse(bodyText);
+  const providerError = parsedBody && typeof parsedBody === 'object' && parsedBody.error && typeof parsedBody.error === 'object'
+    ? parsedBody.error
+    : null;
+  const providerMessage = typeof providerError?.message === 'string' ? providerError.message : '';
+  const providerStatus = typeof providerError?.status === 'string' ? providerError.status : '';
+  const lower = `${providerMessage}\n${bodyText}`.toLowerCase();
+  const retryAfterSeconds = getRetryDelaySeconds(bodyText, parsedBody);
+  const quota = getQuotaContext(parsedBody, bodyText);
+
+  let kind = 'api_error';
+  if (statusCode === 429) {
+    const looksQuota = /quota exceeded|resource_exhausted|current quota/.test(lower);
+    const hardQuota = looksQuota && (quota.isDailyLimit || quota.isFreeTier || /billing|plan/.test(lower));
+    kind = hardQuota ? 'quota_exceeded' : 'rate_limited';
+  } else if (statusCode >= 500) {
+    kind = 'provider_unavailable';
+  }
+
+  const modelLabel = quota.model ? ` (${quota.model})` : '';
+  let shortMessage = `${providerName} API error (${statusCode}).`;
+  let userMessage = shortMessage;
+
+  if (kind === 'quota_exceeded') {
+    shortMessage = `${providerName} quota exceeded (${statusCode}).`;
+    userMessage = [
+      `${providerName} quota exceeded${modelLabel}.`,
+      'Free-tier/project quota is exhausted, so translation cannot continue right now.',
+      'What to do:',
+      '1. Wait for quota reset or enable billing/upgrade quota.',
+      '2. Retry with fewer frames/languages to reduce requests.',
+      '3. Check usage: https://ai.dev/rate-limit',
+    ].join('\n');
+  } else if (kind === 'rate_limited') {
+    const retryLine = retryAfterSeconds ? `Retry after ~${retryAfterSeconds}s.` : 'Please retry in a few seconds.';
+    shortMessage = `${providerName} rate limit hit (${statusCode}).`;
+    userMessage = [
+      `${providerName} rate limit hit.`,
+      retryLine,
+      'What to do: reduce selected languages/frames or retry shortly.',
+    ].join('\n');
+  } else if (kind === 'provider_unavailable') {
+    shortMessage = `${providerName} service is temporarily unavailable (${statusCode}).`;
+    userMessage = `${shortMessage}\nTry again in a moment.`;
+  } else if (providerMessage) {
+    userMessage = `${providerName} API error (${statusCode}): ${providerMessage}`;
+  }
+
+  const error = new Error(userMessage);
+  error.name = 'ProviderApiError';
+  error.provider = providerName;
+  error.statusCode = statusCode;
+  error.kind = kind;
+  error.shortMessage = shortMessage;
+  error.userMessage = userMessage;
+  error.retryAfterSeconds = retryAfterSeconds;
+  error.rawBodyText = bodyText;
+  error.providerStatus = providerStatus;
+  return error;
+}
+
+function getUserErrorMessage(error) {
+  if (error && typeof error === 'object' && typeof error.userMessage === 'string' && error.userMessage.trim()) {
+    return error.userMessage;
+  }
+  return getErrorMessage(error);
+}
+
+function getUserErrorSummary(error) {
+  if (error && typeof error === 'object' && typeof error.shortMessage === 'string' && error.shortMessage.trim()) {
+    return error.shortMessage;
+  }
+  const text = getUserErrorMessage(error);
+  return text.split('\n')[0];
+}
+
+function isNonRetryableQuotaError(error, text) {
+  if (error && typeof error === 'object' && error.kind === 'quota_exceeded') return true;
+  const value = String(text || '').toLowerCase();
+  return (
+    /quota exceeded|resource_exhausted|current quota/.test(value) &&
+    (/perday|free.?tier|billing|plan/.test(value))
+  );
+}
+
+function chunkArray(items, size) {
+  const chunks = [];
+  for (let i = 0; i < items.length; i += size) {
+    chunks.push(items.slice(i, i + size));
+  }
+  return chunks;
+}
+
+async function runWithConcurrency(items, concurrency, worker, onItemDone, onItemStart) {
+  if (!Array.isArray(items) || items.length === 0) return;
+
+  const maxWorkers = Math.max(1, Math.min(concurrency, items.length));
+  let nextIndex = 0;
+  let completed = 0;
+
+  async function runWorker(workerId) {
+    while (true) {
+      const idx = nextIndex;
+      nextIndex += 1;
+      if (idx >= items.length) return;
+      if (onItemStart) onItemStart(idx, items.length, items[idx], workerId);
+      await worker(items[idx], idx, workerId);
+      completed += 1;
+      if (onItemDone) onItemDone(completed, items.length, items[idx], idx, workerId);
+    }
+  }
+
+  const workers = [];
+  for (let i = 0; i < maxWorkers; i++) {
+    workers.push(runWorker(i + 1));
+  }
+  await Promise.all(workers);
+}
+
+async function fetchWithTimeout(url, options, timeoutMs = API_REQUEST_TIMEOUT_MS) {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+  const start = Date.now();
+  const safeUrl = sanitizeUrlForLogs(url);
+  try {
+    return await fetch(url, { ...options, signal: controller.signal });
+  } catch (error) {
+    const message = getErrorMessage(error);
+    const isAbortError = (
+      typeof error === 'object' &&
+      error !== null &&
+      'name' in error &&
+      error.name === 'AbortError'
+    ) || /aborterror|signal is aborted|aborted/i.test(message);
+    if (isAbortError) {
+      uiWarn('Request timeout', { timeoutMs, elapsedMs: Date.now() - start, url: safeUrl });
+      throw new Error(`Request timed out after ${Math.round(timeoutMs / 1000)}s`);
+    }
+    uiError('Request failed', { message, url: safeUrl });
+    throw error;
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
+
+function normalizeTranslations(rawTranslations, batch, providerName, langName) {
+  if (!Array.isArray(rawTranslations)) {
+    throw new Error(`${providerName} returned invalid payload for ${langName}: expected an array of translations`);
+  }
+
+  const expectedKeys = new Set(batch.map(item => item.mappingKey));
+  const normalized = [];
+  const seen = new Set();
+
+  for (const item of rawTranslations) {
+    if (!item || typeof item !== 'object') continue;
+    const mappingKey = typeof item.mappingKey === 'string' ? item.mappingKey : null;
+    const translation = typeof item.translation === 'string' ? item.translation : null;
+    if (!mappingKey || translation === null) continue;
+    if (!expectedKeys.has(mappingKey)) continue;
+    if (seen.has(mappingKey)) continue;
+    normalized.push({ mappingKey, translation });
+    seen.add(mappingKey);
+  }
+
+  const missingKeys = [];
+  for (const key of expectedKeys) {
+    if (!seen.has(key)) missingKeys.push(key);
+  }
+
+  if (missingKeys.length > 0) {
+    throw new Error(`${providerName} returned incomplete translations for ${langName} (${missingKeys.length} missing)`);
+  }
+
+  return normalized;
+}
+
+// ── Provider registry ──
+const PROVIDERS = {
+  gemini: {
+    name: 'Gemini',
+    models: ['gemini-3-flash-preview'],
+    async translate(apiKey, model, texts, targetLang) {
+      const LANG_NAMES = { fr: 'French', de: 'German', es: 'Spanish', it: 'Italian', tr: 'Turkish' };
+      const langName = LANG_NAMES[targetLang] || targetLang;
+      uiLog('Gemini translate request', { langName, model, textCount: texts.length });
+
+      const prompt = `You are a professional translator and localization expert.
+
+Translate the following texts from English to ${langName}.
+
+CRITICAL RULES:
+1. Preserve the original meaning accurately
+2. Each text has a character budget — try to stay within it
+3. If the natural translation is longer, rephrase concisely without losing meaning
+4. Do NOT truncate, abbreviate unnaturally, or sacrifice clarity
+5. Return a JSON array with the exact same mappingKey values
+
+Texts to translate:
+${JSON.stringify(texts.map(t => ({ mappingKey: t.mappingKey, text: t.text, charBudget: Math.ceil(t.charCount * 1.3) })))}
+
+Respond with ONLY a valid JSON array, no markdown, no explanation:
+[{"mappingKey":"...","translation":"..."},...]`;
+
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+      const body = {
+        contents: [{ parts: [{ text: prompt }] }],
+        generationConfig: {
+          responseMimeType: 'application/json',
+          temperature: 0.3,
+        },
+      };
+
+      const res = await fetchWithTimeout(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+
+      if (!res.ok) {
+        const err = await res.text();
+        throw createProviderApiError('Gemini', res.status, err);
+      }
+
+      const data = await res.json();
+      const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+      if (!text) throw new Error('No response from Gemini');
+
+      const parsed = JSON.parse(text);
+      uiLog('Gemini translate response received', { langName, textCount: texts.length });
+      return normalizeTranslations(parsed, texts, 'Gemini', langName);
+    }
+  },
+  openai: {
+    name: 'OpenAI',
+    models: ['gpt-5.2', 'gpt-5-mini'],
+    async translate(apiKey, model, texts, targetLang) {
+      const LANG_NAMES = { fr: 'French', de: 'German', es: 'Spanish', it: 'Italian', tr: 'Turkish' };
+      const langName = LANG_NAMES[targetLang] || targetLang;
+      uiLog('OpenAI translate request', { langName, model, textCount: texts.length });
+
+      const prompt = `Translate the following texts from English to ${langName}. Each text has a character budget — stay within it while preserving meaning.
+Return ONLY a valid JSON object with this exact shape:
+{"translations":[{"mappingKey":"...","translation":"..."},...]}
+
+Texts:
+${JSON.stringify(texts.map(t => ({ mappingKey: t.mappingKey, text: t.text, charBudget: Math.ceil(t.charCount * 1.3) })))}`;
+
+      const res = await fetchWithTimeout('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
+        body: JSON.stringify({
+          model,
+          messages: [
+            { role: 'system', content: 'You are a professional translator. Return only valid JSON.' },
+            { role: 'user', content: prompt }
+          ],
+          temperature: 0.3,
+          response_format: { type: 'json_object' },
+        }),
+      });
+
+      if (!res.ok) {
+        const err = await res.text();
+        throw createProviderApiError('OpenAI', res.status, err);
+      }
+
+      const data = await res.json();
+      const text = data.choices?.[0]?.message?.content;
+      if (!text) throw new Error('No response from OpenAI');
+
+      const parsed = JSON.parse(text);
+      const rawTranslations = Array.isArray(parsed) ? parsed : parsed.translations;
+      uiLog('OpenAI translate response received', { langName, textCount: texts.length });
+      return normalizeTranslations(rawTranslations, texts, 'OpenAI', langName);
+    }
+  }
+};
+
+// ── DOM refs ──
 const previewArea = document.getElementById('previewArea');
 const emptyText = document.getElementById('emptyText');
 const framesList = document.getElementById('framesList');
 const exportBtn = document.getElementById('exportBtn');
+const translatePreviewArea = document.getElementById('translatePreviewArea');
+const translateEmptyText = document.getElementById('translateEmptyText');
+const translateFramesList = document.getElementById('translateFramesList');
+const translateBtn = document.getElementById('translateBtn');
+const debugLogBtn = document.getElementById('debugLogBtn');
+const outputInfo = document.getElementById('outputInfo');
+const translateApiHint = document.getElementById('translateApiHint');
+const langAccordionLabel = document.getElementById('langAccordionLabel');
+const progressArea = document.getElementById('progressArea');
+const progressStage = document.getElementById('progressStage');
+const progressMeta = document.getElementById('progressMeta');
+const progressPercent = document.getElementById('progressPercent');
+const progressSteps = document.getElementById('progressSteps');
+const progressFill = document.getElementById('progressFill');
+const resultArea = document.getElementById('resultArea');
+const debugLogsModal = document.getElementById('debugLogsModal');
+const debugLogsOutput = document.getElementById('debugLogsOutput');
+const debugLogsCloseBtn = document.getElementById('debugLogsCloseBtn');
+const debugLogsCopyBtn = document.getElementById('debugLogsCopyBtn');
+const debugLogsClearBtn = document.getElementById('debugLogsClearBtn');
 
-function updateUI() {
+const PROGRESS_STAGE_ORDER = ['extract', 'translate', 'apply'];
+const EXTRACT_STAGE_START = 5;
+const EXTRACT_STAGE_END = 20;
+const TRANSLATE_STAGE_START = 22;
+const TRANSLATE_STAGE_END = 85;
+const APPLY_STAGE_START = 90;
+const APPLY_STAGE_END = 99;
+const LANGUAGE_NAMES = { fr: 'French', de: 'German', es: 'Spanish', it: 'Italian', tr: 'Turkish' };
+
+function setProgress(stage, percent, stageLabel, metaText) {
+  const clamped = Math.max(0, Math.min(100, Math.round(percent)));
+  progressFill.style.width = `${clamped}%`;
+  progressPercent.textContent = `${clamped}%`;
+  progressStage.textContent = stageLabel;
+  progressMeta.textContent = metaText || '';
+
+  const stageIndex = PROGRESS_STAGE_ORDER.indexOf(stage);
+  progressSteps.querySelectorAll('.step-chip').forEach(chip => {
+    chip.classList.remove('active', 'completed');
+    const chipStage = chip.getAttribute('data-stage');
+    const chipIndex = PROGRESS_STAGE_ORDER.indexOf(chipStage);
+    if (chipIndex < stageIndex) {
+      chip.classList.add('completed');
+    } else if (chipIndex === stageIndex) {
+      chip.classList.add('active');
+    }
+  });
+}
+
+function formatDebugLogEntry(entry) {
+  const time = new Date(entry.timestamp).toLocaleTimeString();
+  const header = `${time} [${entry.source.toUpperCase()}] ${entry.level.toUpperCase()} ${entry.message}`;
+  if (entry.payload === undefined) return header;
+  let body = '';
+  try {
+    body = JSON.stringify(entry.payload, null, 2);
+  } catch {
+    body = String(entry.payload);
+  }
+  return `${header}\n${body}`;
+}
+
+function renderDebugLogs() {
+  if (!debugLogsOutput) return;
+  if (debugLogEntries.length === 0) {
+    debugLogsOutput.textContent = 'Debug mode is enabled. Run Translate to see logs.';
+    return;
+  }
+  debugLogsOutput.textContent = debugLogEntries.map(formatDebugLogEntry).join('\n\n');
+  debugLogsOutput.scrollTop = debugLogsOutput.scrollHeight;
+}
+
+function updateDebugUI() {
+  const enabled = isDebugModeEnabled();
+  debugLogBtn.classList.toggle('hidden', !enabled);
+  if (!enabled) debugLogsModal.classList.remove('visible');
+}
+
+async function copyTextToClipboard(text) {
+  const value = String(text || '');
+  if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
+    await navigator.clipboard.writeText(value);
+    return;
+  }
+
+  const textarea = document.createElement('textarea');
+  textarea.value = value;
+  textarea.setAttribute('readonly', 'true');
+  textarea.style.position = 'fixed';
+  textarea.style.top = '0';
+  textarea.style.left = '-9999px';
+  textarea.style.opacity = '0';
+  document.body.appendChild(textarea);
+  textarea.focus();
+  textarea.select();
+  textarea.setSelectionRange(0, textarea.value.length);
+
+  let copied = false;
+  try {
+    copied = typeof document.execCommand === 'function' && document.execCommand('copy');
+  } finally {
+    document.body.removeChild(textarea);
+  }
+
+  if (!copied) {
+    throw new Error('Clipboard API unavailable in this environment');
+  }
+}
+
+function getActiveApiKey() {
+  if (currentSettings.provider === 'gemini') return (currentSettings.apiKeyGemini || '').trim();
+  if (currentSettings.provider === 'openai') return (currentSettings.apiKeyOpenai || '').trim();
+  return '';
+}
+
+function hasActiveApiKey() {
+  return getActiveApiKey().length > 0;
+}
+
+function updateLangAccordionLabel() {
+  const selected = getSelectedLangs();
+  if (selected.length === 0) {
+    langAccordionLabel.textContent = 'Customize target languages (none selected)';
+    return;
+  }
+  const names = selected.map(code => LANGUAGE_NAMES[code] || code.toUpperCase());
+  const preview = names.slice(0, 2).join(', ');
+  const suffix = names.length > 2 ? ` +${names.length - 2}` : '';
+  langAccordionLabel.textContent = `Customize target languages (${selected.length}): ${preview}${suffix}`;
+}
+
+// ── Tabs ──
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+  });
+});
+
+debugLogBtn.addEventListener('click', () => {
+  renderDebugLogs();
+  debugLogsModal.classList.add('visible');
+});
+debugLogsCloseBtn.addEventListener('click', () => {
+  debugLogsModal.classList.remove('visible');
+});
+debugLogsModal.addEventListener('click', (event) => {
+  if (event.target === debugLogsModal) debugLogsModal.classList.remove('visible');
+});
+debugLogsClearBtn.addEventListener('click', () => {
+  debugLogEntries.length = 0;
+  renderDebugLogs();
+});
+debugLogsCopyBtn.addEventListener('click', async () => {
+  const text = debugLogsOutput.textContent || '';
+  try {
+    await copyTextToClipboard(text);
+    uiLog('Debug logs copied to clipboard');
+  } catch (error) {
+    uiWarn('Failed to copy debug logs', { error: getErrorMessage(error) });
+  }
+});
+
+// ── Frames list rendering (shared) ──
+function renderFramesList(container, frames) {
+  const frameIconSvg = `
+    <svg class="frame-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <rect x="3.5" y="7.5" width="17" height="1" fill="#888888"></rect>
+      <rect x="3.5" y="15.5" width="17" height="1" fill="#888888"></rect>
+      <rect x="6.5" y="2.5" width="1" height="19" fill="#888888"></rect>
+      <rect x="16.5" y="2.5" width="1" height="19" fill="#888888"></rect>
+    </svg>
+  `;
+  container.innerHTML = frames.map(f =>
+    `<div class="frame-item">
+      ${frameIconSvg}
+      <span class="frame-name">${f.name}</span>
+      <span class="frame-size">${f.width} × ${f.height}</span>
+    </div>`
+  ).join('');
+}
+
+function updateExportUI() {
   if (selectedFrames.length === 0) {
     emptyText.style.display = '';
     framesList.style.display = 'none';
     previewArea.classList.remove('has-selection');
     exportBtn.textContent = 'Select frames to export';
-    exportBtn.className = 'export-btn disabled';
+    exportBtn.className = 'action-btn disabled';
   } else {
     emptyText.style.display = 'none';
     framesList.style.display = '';
     previewArea.classList.add('has-selection');
     exportBtn.textContent = `Export ${selectedFrames.length} frame${selectedFrames.length > 1 ? 's' : ''}`;
-    exportBtn.className = 'export-btn active';
-
-    framesList.innerHTML = selectedFrames.map(f =>
-      `<div class="frame-item">
-        <div class="frame-icon"></div>
-        <span class="frame-name">${f.name}</span>
-        <span class="frame-size">${f.width} × ${f.height}</span>
-      </div>`
-    ).join('');
+    exportBtn.className = 'action-btn active';
+    renderFramesList(framesList, selectedFrames);
   }
 }
 
+function getSelectedLangs() {
+  return Array.from(document.querySelectorAll('#langGrid input:checked')).map(cb => cb.value);
+}
+
+function updateTranslateUI() {
+  const langs = getSelectedLangs();
+  const hasApiKey = hasActiveApiKey();
+  updateLangAccordionLabel();
+  updateDebugUI();
+  translateApiHint.classList.toggle('hidden', hasApiKey);
+  if (selectedFrames.length === 0) {
+    translateEmptyText.style.display = '';
+    translateFramesList.style.display = 'none';
+    translatePreviewArea.classList.remove('has-selection');
+    translateBtn.textContent = 'Select frames to translate';
+    translateBtn.className = 'action-btn disabled';
+    outputInfo.textContent = 'Select frames to see output count';
+  } else {
+    translateEmptyText.style.display = 'none';
+    translateFramesList.style.display = '';
+    translatePreviewArea.classList.add('has-selection');
+    renderFramesList(translateFramesList, selectedFrames);
+
+    if (!hasApiKey) {
+      translateBtn.textContent = 'Add API key in Settings';
+      translateBtn.className = 'action-btn disabled';
+      outputInfo.textContent = 'Add API key to enable Translate';
+    } else if (langs.length === 0) {
+      translateBtn.textContent = 'Select at least one language';
+      translateBtn.className = 'action-btn disabled';
+      outputInfo.textContent = 'No languages selected';
+    } else {
+      const total = selectedFrames.length * langs.length;
+      translateBtn.textContent = `Translate ${selectedFrames.length} frame${selectedFrames.length > 1 ? 's' : ''} → ${langs.length} language${langs.length > 1 ? 's' : ''}`;
+      translateBtn.className = isTranslating ? 'action-btn disabled' : 'action-btn active';
+      outputInfo.textContent = `Output: ${total} frames (${selectedFrames.length} × ${langs.length} languages)`;
+    }
+  }
+}
+
+document.querySelectorAll('#langGrid input').forEach(cb => {
+  cb.addEventListener('change', updateTranslateUI);
+});
+
+// ── Message handling ──
 onmessage = (event) => {
   const msg = event.data.pluginMessage;
   if (msg.type === 'selection-update') {
     selectedFrames = msg.frames;
-    updateUI();
+    updateExportUI();
+    updateTranslateUI();
   } else if (msg.type === 'export-data') {
     frameImages = msg.images;
+    frameLinks = msg.links || [];
     generatePDF();
+  } else if (msg.type === 'settings-loaded') {
+    currentSettings = normalizeSettings(msg.settings);
+    populateSettingsModal();
+    updateTranslateUI();
+  } else if (msg.type === 'settings-saved') {
+    document.getElementById('settingsModal').classList.remove('visible');
+    updateTranslateUI();
+  } else if (msg.type === 'debug-log') {
+    const level = typeof msg.level === 'string' ? msg.level : 'log';
+    const source = typeof msg.source === 'string' ? msg.source : 'plugin';
+    const message = typeof msg.message === 'string' ? msg.message : '';
+    if (isDebugModeEnabled()) {
+      appendDebugLog(source, level, message, msg.payload);
+      if (level === 'warn') console.warn('[PDF Pilot Plugin]', message, msg.payload);
+      else if (level === 'error') console.error('[PDF Pilot Plugin]', message, msg.payload);
+      else console.log('[PDF Pilot Plugin]', message, msg.payload);
+    }
+  } else if (msg.type === 'text-data') {
+    handleTextData(msg.nodes, msg.frameCount);
+  } else if (msg.type === 'extract-progress') {
+    const total = Math.max(1, Number(msg.total) || 1);
+    const completed = Math.min(total, Math.max(0, Number(msg.completed) || 0));
+    const pct = EXTRACT_STAGE_START + ((completed / total) * (EXTRACT_STAGE_END - EXTRACT_STAGE_START));
+    setProgress(
+      'extract',
+      pct,
+      `Extracting Text Layers (${completed}/${total})`,
+      msg.frameName ? `Scanning: ${msg.frameName}` : 'Scanning selected frames'
+    );
+  } else if (msg.type === 'translation-apply-progress') {
+    const total = Math.max(1, Number(msg.total) || 1);
+    const completed = Math.min(total, Math.max(0, Number(msg.completed) || 0));
+    const pct = APPLY_STAGE_START + ((completed / total) * (APPLY_STAGE_END - APPLY_STAGE_START));
+    const label = typeof msg.language === 'string'
+      ? `Applying ${msg.language} layout (${completed}/${total})`
+      : `Applying translated layouts (${completed}/${total})`;
+    const meta = typeof msg.frameName === 'string'
+      ? `Updating frame: ${msg.frameName}`
+      : 'Writing translated text and preserving design';
+    setProgress('apply', pct, label, meta);
+  } else if (msg.type === 'translation-complete') {
+    handleTranslationComplete(msg.created, msg.errors);
   }
 };
 
+// ── Export PDF (unchanged logic) ──
 exportBtn.addEventListener('click', () => {
   if (selectedFrames.length === 0) return;
   const scale = parseInt(document.getElementById('scale').value, 10);
@@ -645,43 +1747,607 @@ exportBtn.addEventListener('click', () => {
 
 function generatePDF() {
   if (frameImages.length === 0) return;
-
   const scale = parseInt(document.getElementById('scale').value, 10);
   const filename = document.getElementById('filename').value || 'Document';
-
-  // First frame determines nothing special; each page matches its frame size
   const firstFrame = selectedFrames[0];
   const pdfW = firstFrame.width * scale;
   const pdfH = firstFrame.height * scale;
   const orientation = pdfW > pdfH ? 'landscape' : 'portrait';
-
-  const doc = new jsPDF({
-    orientation,
-    unit: 'px',
-    format: [pdfW, pdfH],
-    hotfixes: ['px_scaling']
-  });
+  const doc = new jsPDF({ orientation, unit: 'pt', format: [pdfW, pdfH] });
 
   for (let i = 0; i < frameImages.length; i++) {
     const frame = selectedFrames[i];
     const imgData = frameImages[i];
     const w = frame.width * scale;
     const h = frame.height * scale;
-
     if (i > 0) {
       const orient = w > h ? 'landscape' : 'portrait';
       doc.addPage([w, h], orient);
     }
-
     doc.addImage(imgData, 'PNG', 0, 0, w, h);
+    const pageLinks = frameLinks[i] || [];
+    for (const link of pageLinks) {
+      doc.link(link.x * scale, link.y * scale, link.width * scale, link.height * scale, { url: link.url });
+    }
   }
-
   doc.save(`${filename}.pdf`);
   parent.postMessage({ pluginMessage: { type: 'export-done' } }, '*');
 }
 
-// Request initial selection
+// ── Settings modal ──
+const GEMINI_MODELS = ['gemini-3-flash-preview'];
+const OPENAI_MODELS = ['gpt-5.2', 'gpt-5-mini'];
+
+document.getElementById('gearBtn').addEventListener('click', () => {
+  parent.postMessage({ pluginMessage: { type: 'get-settings' } }, '*');
+  document.getElementById('settingsModal').classList.add('visible');
+});
+document.getElementById('modalClose').addEventListener('click', () => {
+  document.getElementById('settingsModal').classList.remove('visible');
+});
+document.getElementById('settingsCancelBtn').addEventListener('click', () => {
+  document.getElementById('settingsModal').classList.remove('visible');
+});
+
+function populateSettingsModal() {
+  const prov = currentSettings.provider || 'gemini';
+  document.getElementById('settingsProvider').value = prov;
+  document.getElementById('settingsGeminiKey').value = currentSettings.apiKeyGemini || '';
+  document.getElementById('settingsOpenaiKey').value = currentSettings.apiKeyOpenai || '';
+  document.getElementById('settingsDebugMode').checked = currentSettings.debugMode === true;
+  updateProviderUI(prov);
+  const allowedModels = PROVIDERS[prov].models;
+  const selectedModel = allowedModels.includes(currentSettings.model) ? currentSettings.model : allowedModels[0];
+  currentSettings.model = selectedModel;
+  document.getElementById('settingsModel').value = selectedModel;
+}
+
+function updateProviderUI(provider) {
+  document.getElementById('geminiKeyGroup').style.display = provider === 'gemini' ? '' : 'none';
+  document.getElementById('openaiKeyGroup').style.display = provider === 'openai' ? '' : 'none';
+  const modelSelect = document.getElementById('settingsModel');
+  const models = PROVIDERS[provider]?.models || [];
+  modelSelect.innerHTML = models.map(m => `<option value="${m}">${m}</option>`).join('');
+}
+
+document.getElementById('settingsProvider').addEventListener('change', (e) => {
+  updateProviderUI(e.target.value);
+});
+
+document.getElementById('toggleGeminiKey').addEventListener('click', () => {
+  const inp = document.getElementById('settingsGeminiKey');
+  inp.type = inp.type === 'password' ? 'text' : 'password';
+});
+document.getElementById('toggleOpenaiKey').addEventListener('click', () => {
+  const inp = document.getElementById('settingsOpenaiKey');
+  inp.type = inp.type === 'password' ? 'text' : 'password';
+});
+
+document.getElementById('settingsSaveBtn').addEventListener('click', () => {
+  currentSettings = normalizeSettings({
+    provider: document.getElementById('settingsProvider').value,
+    model: document.getElementById('settingsModel').value,
+    apiKeyGemini: document.getElementById('settingsGeminiKey').value,
+    apiKeyOpenai: document.getElementById('settingsOpenaiKey').value,
+    debugMode: document.getElementById('settingsDebugMode').checked,
+  });
+  parent.postMessage({ pluginMessage: { type: 'save-settings', settings: currentSettings } }, '*');
+  updateTranslateUI();
+  uiLog('Debug mode updated', { enabled: currentSettings.debugMode === true });
+});
+
+// ── Translation flow ──
+let pendingTextNodes = [];
+
+translateBtn.addEventListener('click', () => {
+  if (selectedFrames.length === 0 || getSelectedLangs().length === 0 || isTranslating) return;
+
+  const apiKey = getActiveApiKey();
+  if (!apiKey) {
+    uiWarn('Translate blocked: missing API key', { provider: currentSettings.provider });
+    resultArea.classList.add('visible');
+    document.getElementById('resultTitle').textContent = '⚠️ No API Key';
+    document.getElementById('resultDetail').textContent = 'Please add your API key in Settings (⚙)';
+    document.getElementById('resultErrors').textContent = '';
+    return;
+  }
+
+  isTranslating = true;
+  uiLog('Translate started', {
+    selectedFrames: selectedFrames.length,
+    selectedLanguages: getSelectedLangs(),
+    provider: currentSettings.provider,
+    model: currentSettings.model,
+  });
+  resultArea.classList.remove('visible');
+  progressArea.classList.add('visible');
+  setProgress('extract', EXTRACT_STAGE_START, 'Extracting Text Layers', 'Reading selected frames and building mapping keys');
+  updateTranslateUI();
+
+  parent.postMessage({ pluginMessage: { type: 'extract-text' } }, '*');
+});
+
+async function handleTextData(nodes, frameCount) {
+  try {
+    pendingTextNodes = nodes;
+    lastApiErrors = [];
+    const langs = getSelectedLangs();
+    const dynamicConcurrency = Math.max(1, Math.min(MAX_DYNAMIC_CONCURRENCY, langs.length));
+    const translateProgressSpan = TRANSLATE_STAGE_END - TRANSLATE_STAGE_START;
+    const runId = `run-${Date.now().toString(36)}-${++translationRunSeq}`;
+    const pipelineStartMs = Date.now();
+    let adaptiveConcurrencyLimit = dynamicConcurrency;
+    let adaptiveInFlightRequests = 0;
+    let adaptiveSuccessStreak = 0;
+
+    const provider = PROVIDERS[currentSettings.provider];
+    if (!provider) {
+      throw new Error('No translation provider configured. Open settings and select a provider.');
+    }
+
+    const apiKey = getActiveApiKey();
+    const model = currentSettings.model;
+
+    const frameGroups = {};
+    for (const node of nodes) {
+      if (!frameGroups[node.frameId]) frameGroups[node.frameId] = [];
+      frameGroups[node.frameId].push(node);
+    }
+
+    if (Object.keys(frameGroups).length === 0) {
+      throw new Error('No translatable text nodes found in selected layers.');
+    }
+
+    uiLog('Text extraction payload received', {
+      runId,
+      frameCount,
+      nodeCount: nodes.length,
+      groupedFrames: Object.keys(frameGroups).length,
+      languages: langs,
+      dynamicConcurrency,
+      batchSize: TRANSLATION_BATCH_SIZE,
+    });
+
+    const sourceFrameCount = Math.max(Number(frameCount) || 0, Object.keys(frameGroups).length);
+    setProgress(
+      'translate',
+      TRANSLATE_STAGE_START,
+      'Preparing Translation Jobs',
+      `${sourceFrameCount} frame(s), ${langs.length} language(s)`
+    );
+
+    const allTranslations = [];
+    const apiErrors = [];
+
+    const frameEntries = Object.entries(frameGroups);
+    const jobs = [];
+    const translatedByJob = new Map();
+    const languageNodePool = new Map();
+    const apiTasks = [];
+    const perLanguageStats = new Map();
+    let hardQuotaError = null;
+
+    for (const lang of langs) {
+      const pooledNodes = [];
+      const langName = LANGUAGE_NAMES[lang] || lang;
+      perLanguageStats.set(lang, {
+        lang,
+        langName,
+        started: 0,
+        succeeded: 0,
+        failed: 0,
+        timeouts: 0,
+        retries: 0,
+        items: 0,
+        totalDurationMs: 0,
+      });
+      for (let frameIndex = 0; frameIndex < frameEntries.length; frameIndex++) {
+        const [frameId, frameNodes] = frameEntries[frameIndex];
+        const nonTruncated = frameNodes.filter(n => !n.truncated);
+        const truncated = frameNodes.filter(n => n.truncated);
+        const jobId = `${lang}::${frameId}`;
+        jobs.push({
+          id: jobId,
+          lang,
+          langName,
+          frameId,
+          frameIndex,
+          truncated,
+        });
+        translatedByJob.set(jobId, []);
+        pooledNodes.push(...nonTruncated);
+      }
+      languageNodePool.set(lang, pooledNodes);
+    }
+
+    const getFrameIdFromMappingKey = (mappingKey) => {
+      if (typeof mappingKey !== 'string') return null;
+      const idx = mappingKey.indexOf('::');
+      if (idx <= 0) return null;
+      return mappingKey.slice(0, idx);
+    };
+
+    for (const lang of langs) {
+      const langName = LANGUAGE_NAMES[lang] || lang;
+      const pooledNodes = languageNodePool.get(lang) || [];
+      const batches = chunkArray(pooledNodes, TRANSLATION_BATCH_SIZE);
+      for (let batchIndex = 0; batchIndex < batches.length; batchIndex++) {
+        apiTasks.push({
+          taskId: apiTasks.length + 1,
+          lang,
+          langName,
+          batchIndex,
+          batchTotal: batches.length,
+          batch: batches[batchIndex],
+        });
+      }
+    }
+
+    setProgress(
+      'translate',
+      TRANSLATE_STAGE_START,
+      'Dispatching Translation Requests',
+      `${apiTasks.length} API batch(es), concurrency ${dynamicConcurrency}`
+    );
+    uiLog('Dispatching API tasks', {
+      runId,
+      totalTasks: apiTasks.length,
+      dynamicConcurrency,
+      adaptiveConcurrencyLimit,
+    });
+
+    if (apiTasks.length > 0) {
+      let startedBatches = 0;
+      let inFlightBatches = 0;
+      let maxObservedInFlight = 0;
+      const taskStartedAt = new Map();
+
+      await runWithConcurrency(
+        apiTasks,
+        dynamicConcurrency,
+        async (task, taskIndex, workerId) => {
+          const requestId = `${task.lang.toUpperCase()}-${task.batchIndex + 1}/${task.batchTotal}-T${task.taskId}`;
+          const startedAt = taskStartedAt.get(task.taskId) || Date.now();
+          const maxAttempts = TRANSLATION_MAX_RETRIES + 1;
+          let attemptsUsed = 0;
+          let result = null;
+
+          for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+            if (hardQuotaError) {
+              throw hardQuotaError;
+            }
+            attemptsUsed = attempt;
+            while (adaptiveInFlightRequests >= adaptiveConcurrencyLimit) {
+              await sleep(25);
+            }
+            adaptiveInFlightRequests += 1;
+
+            let shouldRetry = false;
+            let retryDelayMs = 0;
+            let caughtError = null;
+            try {
+              result = await provider.translate(apiKey, model, task.batch, task.lang);
+              adaptiveSuccessStreak += 1;
+              if (adaptiveSuccessStreak >= ADAPTIVE_RECOVERY_STREAK && adaptiveConcurrencyLimit < dynamicConcurrency) {
+                const previous = adaptiveConcurrencyLimit;
+                adaptiveConcurrencyLimit += 1;
+                adaptiveSuccessStreak = 0;
+                uiLog('Adaptive concurrency increased', {
+                  runId,
+                  from: previous,
+                  to: adaptiveConcurrencyLimit,
+                  trigger: `${ADAPTIVE_RECOVERY_STREAK} stable successes`,
+                });
+              }
+            } catch (error) {
+              caughtError = error;
+              const errorText = getErrorMessage(error);
+              const errorSummary = getUserErrorSummary(error);
+              const timeoutLike = isTimeoutErrorText(errorText);
+              const quotaHardLimit = isNonRetryableQuotaError(error, errorText);
+              const retryable = !quotaHardLimit && isRetryableErrorText(errorText);
+              const providerRetryAfterSeconds = (
+                error &&
+                typeof error === 'object' &&
+                typeof error.retryAfterSeconds === 'number' &&
+                Number.isFinite(error.retryAfterSeconds) &&
+                error.retryAfterSeconds > 0
+              ) ? error.retryAfterSeconds : null;
+
+              if (timeoutLike) {
+                adaptiveSuccessStreak = 0;
+                const previous = adaptiveConcurrencyLimit;
+                adaptiveConcurrencyLimit = Math.max(1, adaptiveConcurrencyLimit - 1);
+                if (adaptiveConcurrencyLimit !== previous) {
+                  uiWarn('Adaptive concurrency reduced', {
+                    runId,
+                    from: previous,
+                    to: adaptiveConcurrencyLimit,
+                    cause: 'timeout',
+                    requestId,
+                  });
+                }
+              }
+
+              if (quotaHardLimit && !hardQuotaError) {
+                hardQuotaError = error;
+                uiWarn('Hard quota limit detected; queued API batches will use source text', {
+                  runId,
+                  requestId,
+                  error: errorSummary,
+                });
+              }
+
+              if (retryable && attempt < maxAttempts) {
+                shouldRetry = true;
+                const backoffDelayMs = getRetryDelayMs(attempt);
+                const providerDelayMs = providerRetryAfterSeconds ? Math.round(providerRetryAfterSeconds * 1000) : 0;
+                retryDelayMs = Math.max(backoffDelayMs, providerDelayMs);
+                const langStats = perLanguageStats.get(task.lang);
+                if (langStats) langStats.retries += 1;
+                uiWarn('API batch retry scheduled', {
+                  runId,
+                  requestId,
+                  workerId,
+                  attempt,
+                  maxAttempts,
+                  delayMs: retryDelayMs,
+                  timeoutLike,
+                  error: errorSummary,
+                  rawError: errorText,
+                  adaptiveConcurrencyLimit,
+                });
+              } else {
+                throw error;
+              }
+            } finally {
+              adaptiveInFlightRequests = Math.max(0, adaptiveInFlightRequests - 1);
+            }
+
+            if (result) break;
+            if (shouldRetry) {
+              await sleep(retryDelayMs);
+              continue;
+            }
+            if (caughtError) throw caughtError;
+          }
+
+          try {
+            if (!result) throw new Error('No translation result after retries');
+            for (const item of result) {
+              const frameId = getFrameIdFromMappingKey(item.mappingKey);
+              if (!frameId) continue;
+              const jobId = `${task.lang}::${frameId}`;
+              const translatedNodes = translatedByJob.get(jobId);
+              if (!translatedNodes) continue;
+              translatedNodes.push(item);
+            }
+            const langStats = perLanguageStats.get(task.lang);
+            if (langStats) {
+              langStats.succeeded += 1;
+              langStats.totalDurationMs += Date.now() - startedAt;
+            }
+            uiLog('API batch success', {
+              runId,
+              requestId,
+              workerId,
+              taskIndex: taskIndex + 1,
+              lang: task.lang,
+              batchIndex: task.batchIndex + 1,
+              batchTotal: task.batchTotal,
+              itemCount: task.batch.length,
+              attemptsUsed,
+              durationMs: Date.now() - startedAt,
+              inFlight: inFlightBatches,
+              adaptiveInFlight: adaptiveInFlightRequests,
+              adaptiveConcurrencyLimit,
+            });
+          } catch (e) {
+            const errorText = getErrorMessage(e);
+            const userMessage = getUserErrorMessage(e);
+            apiErrors.push(`${task.langName}: ${userMessage}`);
+            const langStats = perLanguageStats.get(task.lang);
+            if (langStats) {
+              langStats.failed += 1;
+              langStats.totalDurationMs += Date.now() - startedAt;
+              if (/timed out/i.test(errorText)) langStats.timeouts += 1;
+            }
+            uiWarn('API batch failed, falling back to source text', {
+              runId,
+              requestId,
+              workerId,
+              lang: task.lang,
+              batchIndex: task.batchIndex + 1,
+              batchTotal: task.batchTotal,
+              error: userMessage,
+              rawError: errorText,
+              durationMs: Date.now() - startedAt,
+              inFlight: inFlightBatches,
+              adaptiveInFlight: adaptiveInFlightRequests,
+              adaptiveConcurrencyLimit,
+            });
+            for (const item of task.batch) {
+              const frameId = getFrameIdFromMappingKey(item.mappingKey);
+              if (!frameId) continue;
+              const jobId = `${task.lang}::${frameId}`;
+              const translatedNodes = translatedByJob.get(jobId);
+              if (!translatedNodes) continue;
+              translatedNodes.push({ mappingKey: item.mappingKey, translation: item.text });
+            }
+          }
+          inFlightBatches = Math.max(0, inFlightBatches - 1);
+          taskStartedAt.delete(task.taskId);
+        },
+        (completedBatches, totalBatches, task, _taskIdx, workerId) => {
+          const pct = TRANSLATE_STAGE_START + Math.round((completedBatches / totalBatches) * translateProgressSpan);
+          setProgress(
+            'translate',
+            pct,
+            `Translating ${task.langName} (${completedBatches}/${totalBatches} batches)`,
+            `Language batch ${task.batchIndex + 1}/${task.batchTotal}`
+          );
+          const queuedBatches = Math.max(0, totalBatches - startedBatches);
+          uiLog('Concurrency progress', {
+            runId,
+            completedBatches,
+            totalBatches,
+            inFlight: inFlightBatches,
+            queuedBatches,
+            workerId,
+            adaptiveConcurrencyLimit,
+            adaptiveInFlight: adaptiveInFlightRequests,
+          });
+        },
+        (_nextIndex, totalBatches, task, workerId) => {
+          startedBatches += 1;
+          inFlightBatches += 1;
+          maxObservedInFlight = Math.max(maxObservedInFlight, inFlightBatches);
+          taskStartedAt.set(task.taskId, Date.now());
+          const langStats = perLanguageStats.get(task.lang);
+          if (langStats) {
+            langStats.started += 1;
+            langStats.items += task.batch.length;
+          }
+          uiLog('API batch started', {
+            runId,
+            requestId: `${task.lang.toUpperCase()}-${task.batchIndex + 1}/${task.batchTotal}-T${task.taskId}`,
+            workerId,
+            startedBatches,
+            totalBatches,
+            inFlight: inFlightBatches,
+            queuedBatches: Math.max(0, totalBatches - startedBatches),
+            adaptiveConcurrencyLimit,
+            adaptiveInFlight: adaptiveInFlightRequests,
+          });
+        }
+      );
+      const apiStageElapsedMs = Date.now() - pipelineStartMs;
+      uiLog('API concurrency summary', {
+        runId,
+        totalTasks: apiTasks.length,
+        targetConcurrency: dynamicConcurrency,
+        maxObservedInFlight,
+        finalAdaptiveConcurrencyLimit: adaptiveConcurrencyLimit,
+        elapsedMs: apiStageElapsedMs,
+      });
+      uiTable(
+        `Per-language API summary (${runId})`,
+        Array.from(perLanguageStats.values()).map(stats => ({
+          language: stats.langName,
+          batches_started: stats.started,
+          batches_success: stats.succeeded,
+          batches_failed: stats.failed,
+          timeouts: stats.timeouts,
+          retries: stats.retries,
+          items: stats.items,
+          avg_ms: stats.started > 0 ? Math.round(stats.totalDurationMs / stats.started) : 0,
+        }))
+      );
+    } else {
+      setProgress(
+        'translate',
+        TRANSLATE_STAGE_END,
+        'No API Calls Needed',
+        'Only truncate-protected text was found; source text will be reused'
+      );
+    }
+
+    for (const job of jobs) {
+      const translatedNodes = translatedByJob.get(job.id) || [];
+      for (const t of job.truncated) {
+        translatedNodes.push({ mappingKey: t.mappingKey, translation: t.text });
+      }
+      allTranslations.push({
+        sourceFrameId: job.frameId,
+        language: job.langName,
+        languageCode: job.lang,
+        nodes: translatedNodes.map(t => ({
+          mappingKey: t.mappingKey,
+          translatedText: t.translation,
+        })),
+      });
+    }
+    uiLog('All translations assembled', {
+      runId,
+      jobs: jobs.length,
+      payloadItems: allTranslations.length,
+      apiErrorCount: apiErrors.length,
+    });
+
+    setProgress('apply', APPLY_STAGE_START, 'Applying Translations', 'Creating translated rows under your original frames');
+    lastApiErrors = apiErrors;
+
+    if (apiErrors.length > 0 && allTranslations.every(t => t.nodes.length === 0)) {
+      isTranslating = false;
+      progressArea.classList.remove('visible');
+      resultArea.classList.add('visible');
+      document.getElementById('resultTitle').textContent = '❌ Translation Failed';
+      document.getElementById('resultDetail').textContent = 'No translated frames were created. Resolve the API issue and retry.';
+      const visibleErrors = apiErrors.slice(0, 3);
+      if (apiErrors.length > visibleErrors.length) {
+        visibleErrors.push(`...and ${apiErrors.length - visibleErrors.length} more issue(s).`);
+      }
+      document.getElementById('resultErrors').textContent = visibleErrors.join('\n\n');
+      updateTranslateUI();
+      return;
+    }
+
+    parent.postMessage({ pluginMessage: { type: 'apply-translations', translations: allTranslations } }, '*');
+  } catch (e) {
+    const userError = getUserErrorMessage(e);
+    uiError('Translation pipeline failed', { error: userError, rawError: getErrorMessage(e) });
+    isTranslating = false;
+    setProgress('translate', 100, 'Translation Failed', getUserErrorSummary(e));
+    resultArea.classList.add('visible');
+    document.getElementById('resultTitle').textContent = '❌ Translation Failed';
+    document.getElementById('resultDetail').textContent = '';
+    document.getElementById('resultErrors').textContent = userError;
+    updateTranslateUI();
+    lastApiErrors = [];
+  }
+}
+
+function handleTranslationComplete(created, errors) {
+  uiLog('Translation apply completed', {
+    created,
+    applyErrorCount: Array.isArray(errors) ? errors.length : 0,
+    apiErrorCount: lastApiErrors.length,
+  });
+  isTranslating = false;
+  setProgress('apply', 100, 'Translation Complete', 'All selected languages processed');
+  resultArea.classList.add('visible');
+  updateTranslateUI();
+
+  const applyErrors = Array.isArray(errors) ? errors.length : 0;
+  const apiErrorCount = lastApiErrors.length;
+
+  if (applyErrors === 0 && apiErrorCount === 0) {
+    document.getElementById('resultTitle').textContent = `✅ Translation Complete`;
+    document.getElementById('resultDetail').textContent = `${created} frames created successfully`;
+    document.getElementById('resultErrors').textContent = '';
+  } else {
+    document.getElementById('resultTitle').textContent = `⚠️ Translation Complete (with issues)`;
+    document.getElementById('resultDetail').textContent = `${created} frames created`;
+    const details = [];
+    if (apiErrorCount > 0) {
+      details.push(`${apiErrorCount} translation API issue(s) — affected text was kept in source language.`);
+      const uniqueApiErrors = Array.from(new Set(lastApiErrors));
+      details.push(...uniqueApiErrors.slice(0, 2));
+      if (uniqueApiErrors.length > 2) {
+        details.push(`...and ${uniqueApiErrors.length - 2} more API issue(s).`);
+      }
+    }
+    if (applyErrors > 0) {
+      details.push(`${applyErrors} font/text apply issue(s) — some text may not have been applied.`);
+    }
+    document.getElementById('resultErrors').textContent = details.join('\n\n');
+  }
+  lastApiErrors = [];
+}
+
+// ── Init ──
 parent.postMessage({ pluginMessage: { type: 'init' } }, '*');
+parent.postMessage({ pluginMessage: { type: 'get-settings' } }, '*');
 </script>
 </body>
 </html>

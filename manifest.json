@@ -1,5 +1,5 @@
 {
-  "name": "Frame to PDF",
+  "name": "PDF Pilot",
   "id": "1604040004181266174",
   "api": "1.0.0",
   "main": "code.js",
@@ -12,7 +12,8 @@
   "ui": "ui.html",
   "networkAccess": {
     "allowedDomains": [
-      "none"
+      "https://generativelanguage.googleapis.com",
+      "https://api.openai.com"
     ]
   }
 }
