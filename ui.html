@@ -750,8 +750,8 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
     position: absolute;
     inset: 0;
     width: var(--progress);
-    background: #2b70ff;
-    opacity: 0.85;
+    background: linear-gradient(90deg, #1f4fd7, #3a7dff);
+    opacity: 1;
     transition: width 0.25s ease;
     pointer-events: none;
   }
@@ -765,7 +765,9 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
   }
   .action-btn.translating {
     color: #fff;
-    background: #273043;
+    background: #1f2a40;
+    pointer-events: auto;
+    cursor: progress;
   }
 
   .progress-meta-inline {
@@ -834,6 +836,91 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
     margin-top: 8px;
     white-space: pre-wrap;
   }
+  .issue-chips {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 10px;
+  }
+  .issue-chip {
+    border: 1px solid #4b4b4b;
+    background: #2a2a2a;
+    color: #e0e0e0;
+    border-radius: 999px;
+    padding: 4px 10px;
+    font-size: 11px;
+    cursor: pointer;
+  }
+  .issue-chip.active {
+    border-color: #7aa2ff;
+    background: #23345a;
+    color: #dbe7ff;
+  }
+  .completion-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 10px;
+  }
+  .completion-action-btn {
+    border: 1px solid #4f4f4f;
+    background: #2f2f2f;
+    color: #dedede;
+    border-radius: 6px;
+    padding: 6px 10px;
+    font-size: 11px;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .completion-action-btn:hover {
+    border-color: #6a6a6a;
+    background: #383838;
+  }
+  .issue-groups {
+    margin-top: 10px;
+    display: grid;
+    gap: 8px;
+  }
+  .issue-group {
+    border: 1px solid #3d3d3d;
+    border-radius: 6px;
+    padding: 8px 10px;
+    background: #262626;
+  }
+  .issue-group-title {
+    font-size: 12px;
+    font-weight: 600;
+    color: #ececec;
+    margin-bottom: 4px;
+  }
+  .issue-group-body {
+    font-size: 12px;
+    color: #c9c9c9;
+    line-height: 1.35;
+  }
+  .issue-group-tech {
+    margin-top: 6px;
+    font-size: 11px;
+    color: #a7a7a7;
+    white-space: pre-wrap;
+  }
+  .issue-group-tech-toggle {
+    margin-top: 8px;
+  }
+  .issue-group-tech-toggle > summary {
+    font-size: 11px;
+    color: #b9c6e8;
+    cursor: pointer;
+    list-style: none;
+  }
+  .issue-group-tech-toggle > summary::-webkit-details-marker { display: none; }
+  .issue-group-tech-content {
+    margin-top: 6px;
+    font-size: 11px;
+    line-height: 1.35;
+    color: #9ea8be;
+    white-space: pre-wrap;
+  }
   .audit-block {
     margin-top: 10px;
     max-height: 260px;
@@ -851,6 +938,15 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
   .audit-item-header:hover { color: #fff; text-decoration: underline; }
   .audit-item-detail { font-size: 11px; color: #999; margin-bottom: 8px; }
   .audit-actions { display: flex; gap: 6px; }
+  .audit-main-btn {
+    border-color: #2f6b4f;
+    background: #1d3a2d;
+    color: #daf4e7;
+  }
+  .audit-main-btn:hover {
+    border-color: #3a7f5f;
+    background: #244635;
+  }
   .audit-action-btn {
     padding: 5px 10px; border: 1px solid #555; border-radius: 5px;
     background: #333; color: #ccc; font-size: 11px; cursor: pointer;
@@ -1105,9 +1201,14 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
     </summary>
     <div class="completion-body">
       <div class="result-detail" id="resultDetail"></div>
+      <div class="issue-chips" id="issueChips"></div>
+      <div class="issue-groups" id="issueGroups"></div>
       <div class="result-errors" id="resultErrors"></div>
       <div class="audit-block" id="auditBlock">
         <div class="audit-title" id="auditTitle"></div>
+        <div class="completion-actions" style="margin-top:0; margin-bottom:8px;">
+          <button type="button" class="completion-action-btn" id="toggleResolvedOverflowsBtn">Show resolved</button>
+        </div>
         <div id="auditList"></div>
       </div>
     </div>
@@ -1207,8 +1308,19 @@ let currentSettings = { provider: 'gemini', model: 'gemini-2.5-flash-lite', apiK
 let isTranslating = false;
 let translateButtonDone = false;
 let lastApiErrors = [];
+let lastApiErrorDetails = [];
+let lastApplyErrorDetails = [];
+let lastOverflowEntries = [];
+let issueFilter = 'all';
+let showResolvedOverflows = false;
+const resolvedOverflowNodeIds = new Set();
+let retryFrameScope = null;
+let hasAutoRetriedForCurrentRun = false;
+let lastLanguageOrder = [];
+let lastLayoutFrameIds = [];
+let targetLanguagesSaveTimer = null;
 const API_REQUEST_TIMEOUT_MS = 120000;
-const TRANSLATION_BATCH_SIZE = 120;
+const TRANSLATION_BATCH_SIZE = 80;
 const MAX_DYNAMIC_CONCURRENCY = 10;
 const TRANSLATION_MAX_RETRIES = 2;
 const RETRY_BASE_DELAY_MS = 1200;
@@ -1488,6 +1600,14 @@ function isNonRetryableQuotaError(error, text) {
   );
 }
 
+function hasRetryableApiFailures() {
+  if (!Array.isArray(lastApiErrorDetails) || lastApiErrorDetails.length === 0) return false;
+  return lastApiErrorDetails.some(item => {
+    const text = `${item?.rawError || ''}\n${item?.userMessage || ''}`;
+    return isRetryableErrorText(text) && !isNonRetryableQuotaError(null, text);
+  });
+}
+
 function chunkArray(items, size) {
   const chunks = [];
   for (let i = 0; i < items.length; i += size) {
@@ -1549,24 +1669,38 @@ function createRequestStartLimiter(intervalMs) {
   };
 }
 
-function estimateOutputTokensForGeminiBatch(texts) {
+// Languages that use non-Latin scripts tokenize less efficiently and expand more during translation.
+const NON_LATIN_LANGS = new Set(['ar', 'zh', 'ja', 'ko', 'hi', 'th', 'he', 'fa', 'ur', 'bn', 'ta', 'te', 'ml', 'ka', 'am', 'my', 'km', 'lo', 'si', 'ne']);
+
+function getLanguageTokenProfile(targetLang) {
+  if (NON_LATIN_LANGS.has(targetLang)) {
+    // Non-Latin scripts: higher expansion, much fewer chars per token.
+    // Empirical: Arabic JSON output tokenizes at ~1.7 chars/token in Gemini.
+    return { expansionFactor: 1.8, charsPerToken: 1.8 };
+  }
+  // Latin-script languages (French, German, Spanish, etc.)
+  return { expansionFactor: 1.4, charsPerToken: 3 };
+}
+
+function estimateOutputTokensForGeminiBatch(texts, targetLang) {
   if (!Array.isArray(texts) || texts.length === 0) return 1024;
+  const { expansionFactor, charsPerToken } = getLanguageTokenProfile(targetLang);
   let totalOutputChars = 0;
   for (const t of texts) {
     const mappingKeyLen = typeof t.mappingKey === 'string' ? t.mappingKey.length : 12;
     const sourceCharCount = Number(t.charCount) || 0;
-    const translationBudgetChars = Math.ceil(sourceCharCount * 1.3);
+    const translationBudgetChars = Math.ceil(sourceCharCount * expansionFactor);
     // JSON response overhead: keys, quotes, commas, brackets.
     totalOutputChars += mappingKeyLen + translationBudgetChars + 40;
   }
-  const estimated = Math.ceil(totalOutputChars / TOKEN_APPROX_CHARS_PER_TOKEN);
+  const estimated = Math.ceil(totalOutputChars / charsPerToken);
   return Math.max(1024, estimated + 256);
 }
 
-function getGeminiMaxOutputTokensForBatch(texts) {
-  const estimated = estimateOutputTokensForGeminiBatch(texts);
+function getGeminiMaxOutputTokensForBatch(texts, targetLang) {
+  const estimated = estimateOutputTokensForGeminiBatch(texts, targetLang);
   // Keep a generous buffer over the estimate to avoid clipping structured JSON output.
-  const buffered = Math.ceil(estimated * 2);
+  const buffered = Math.ceil(estimated * 2.5);
   return Math.min(
     GEMINI_FLASH_LITE_OUTPUT_TOKEN_LIMIT,
     Math.max(4096, buffered)
@@ -1625,6 +1759,15 @@ async function fetchWithTimeout(url, options, timeoutMs = API_REQUEST_TIMEOUT_MS
   }
 }
 
+class IncompleteTranslationError extends Error {
+  constructor(message, partial, missingKeys) {
+    super(message);
+    this.name = 'IncompleteTranslationError';
+    this.partial = partial;
+    this.missingKeys = missingKeys;
+  }
+}
+
 function normalizeTranslations(rawTranslations, batch, providerName, langName) {
   if (!Array.isArray(rawTranslations)) {
     throw new Error(`${providerName} returned invalid payload for ${langName}: expected an array of translations`);
@@ -1651,10 +1794,39 @@ function normalizeTranslations(rawTranslations, batch, providerName, langName) {
   }
 
   if (missingKeys.length > 0) {
-    throw new Error(`${providerName} returned incomplete translations for ${langName} (${missingKeys.length} missing)`);
+    throw new IncompleteTranslationError(
+      `${providerName} returned incomplete translations for ${langName} (${missingKeys.length} missing)`,
+      normalized,
+      missingKeys,
+    );
   }
 
   return normalized;
+}
+
+const PATCH_MAX_ATTEMPTS = 5;
+
+async function patchIncompleteTranslations(texts, providerName, langName, callFn) {
+  const batchByKey = new Map(texts.map(item => [item.mappingKey, item]));
+  let collected = [];
+  let remaining = texts;
+
+  for (let attempt = 0; attempt <= PATCH_MAX_ATTEMPTS; attempt++) {
+    const rawResult = await callFn(remaining);
+    try {
+      const result = normalizeTranslations(rawResult, remaining, providerName, langName);
+      collected.push(...result);
+      return collected;
+    } catch (e) {
+      if (!(e instanceof IncompleteTranslationError)) throw e;
+      collected.push(...e.partial);
+      const missingBatch = e.missingKeys.map(key => batchByKey.get(key)).filter(Boolean);
+      if (missingBatch.length === 0) return collected;
+      if (attempt === PATCH_MAX_ATTEMPTS) throw e;
+      remaining = missingBatch;
+    }
+  }
+  return collected;
 }
 
 // ── Provider registry ──
@@ -1665,15 +1837,10 @@ const PROVIDERS = {
     async translate(apiKey, model, texts, targetLang) {
       const LANG_NAMES = { fr: 'French', de: 'German', es: 'Spanish', it: 'Italian', tr: 'Turkish', ar: 'Arabic' };
       const langName = LANG_NAMES[targetLang] || targetLang;
-      const maxOutputTokens = getGeminiMaxOutputTokensForBatch(texts);
-      uiLog('Gemini translate request', {
-        langName,
-        model,
-        textCount: texts.length,
-        maxOutputTokens,
-      });
 
-      const prompt = `You are a professional translator and localization expert.
+      async function geminiCall(batch) {
+        const maxOutputTokens = getGeminiMaxOutputTokensForBatch(batch, targetLang);
+        const prompt = `You are a professional translator and localization expert.
 
 Translate the following texts from English to ${langName}.
 
@@ -1685,39 +1852,39 @@ CRITICAL RULES:
 5. Return a JSON array with the exact same mappingKey values
 
 Texts to translate:
-${JSON.stringify(texts.map(t => ({ mappingKey: t.mappingKey, text: t.text, charBudget: Math.ceil(t.charCount * 1.3) })))}
+${JSON.stringify(batch.map(t => ({ mappingKey: t.mappingKey, text: t.text, charBudget: Math.ceil(t.charCount * 1.3) })))}
 
 Respond with ONLY a valid JSON array, no markdown, no explanation:
 [{"mappingKey":"...","translation":"..."},...]`;
 
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
-      const body = {
-        contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: {
-          responseMimeType: 'application/json',
-          temperature: 0.3,
-          maxOutputTokens,
-        },
-      };
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+        const body = {
+          contents: [{ parts: [{ text: prompt }] }],
+          generationConfig: {
+            responseMimeType: 'application/json',
+            temperature: 0.3,
+            maxOutputTokens,
+          },
+        };
 
-      const res = await fetchWithTimeout(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
-      });
+        const res = await fetchWithTimeout(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+        });
 
-      if (!res.ok) {
-        const err = await res.text();
-        throw createProviderApiError('Gemini', res.status, err);
+        if (!res.ok) {
+          const err = await res.text();
+          throw createProviderApiError('Gemini', res.status, err);
+        }
+
+        const data = await res.json();
+        const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+        if (!text) throw new Error('No response from Gemini');
+        return JSON.parse(text);
       }
 
-      const data = await res.json();
-      const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
-      if (!text) throw new Error('No response from Gemini');
-
-      const parsed = JSON.parse(text);
-      uiLog('Gemini translate response received', { langName, textCount: texts.length });
-      return normalizeTranslations(parsed, texts, 'Gemini', langName);
+      return patchIncompleteTranslations(texts, 'Gemini', langName, geminiCall);
     }
   },
   openai: {
@@ -1726,42 +1893,42 @@ Respond with ONLY a valid JSON array, no markdown, no explanation:
     async translate(apiKey, model, texts, targetLang) {
       const LANG_NAMES = { fr: 'French', de: 'German', es: 'Spanish', it: 'Italian', tr: 'Turkish', ar: 'Arabic' };
       const langName = LANG_NAMES[targetLang] || targetLang;
-      uiLog('OpenAI translate request', { langName, model, textCount: texts.length });
 
-      const prompt = `Translate the following texts from English to ${langName}. Each text has a character budget — stay within it while preserving meaning.
+      async function openaiCall(batch) {
+        const prompt = `Translate the following texts from English to ${langName}. Each text has a character budget — stay within it while preserving meaning.
 Return ONLY a valid JSON object with this exact shape:
 {"translations":[{"mappingKey":"...","translation":"..."},...]}
 
 Texts:
-${JSON.stringify(texts.map(t => ({ mappingKey: t.mappingKey, text: t.text, charBudget: Math.ceil(t.charCount * 1.3) })))}`;
+${JSON.stringify(batch.map(t => ({ mappingKey: t.mappingKey, text: t.text, charBudget: Math.ceil(t.charCount * 1.3) })))}`;
 
-      const res = await fetchWithTimeout('https://api.openai.com/v1/chat/completions', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
-        body: JSON.stringify({
-          model,
-          messages: [
-            { role: 'system', content: 'You are a professional translator. Return only valid JSON.' },
-            { role: 'user', content: prompt }
-          ],
-          temperature: 0.3,
-          response_format: { type: 'json_object' },
-        }),
-      });
+        const res = await fetchWithTimeout('https://api.openai.com/v1/chat/completions', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
+          body: JSON.stringify({
+            model,
+            messages: [
+              { role: 'system', content: 'You are a professional translator. Return only valid JSON.' },
+              { role: 'user', content: prompt }
+            ],
+            temperature: 0.3,
+            response_format: { type: 'json_object' },
+          }),
+        });
 
-      if (!res.ok) {
-        const err = await res.text();
-        throw createProviderApiError('OpenAI', res.status, err);
+        if (!res.ok) {
+          const err = await res.text();
+          throw createProviderApiError('OpenAI', res.status, err);
+        }
+
+        const data = await res.json();
+        const text = data.choices?.[0]?.message?.content;
+        if (!text) throw new Error('No response from OpenAI');
+        const parsed = JSON.parse(text);
+        return Array.isArray(parsed) ? parsed : parsed.translations;
       }
 
-      const data = await res.json();
-      const text = data.choices?.[0]?.message?.content;
-      if (!text) throw new Error('No response from OpenAI');
-
-      const parsed = JSON.parse(text);
-      const rawTranslations = Array.isArray(parsed) ? parsed : parsed.translations;
-      uiLog('OpenAI translate response received', { langName, textCount: texts.length });
-      return normalizeTranslations(rawTranslations, texts, 'OpenAI', langName);
+      return patchIncompleteTranslations(texts, 'OpenAI', langName, openaiCall);
     }
   }
 };
@@ -1783,9 +1950,12 @@ const sourceLangLabel = document.getElementById('sourceLangLabel');
 const langAccordionLabel = document.getElementById('langAccordionLabel');
 const progressMetaInline = document.getElementById('progressMetaInline');
 const completionSection = document.getElementById('completionSection');
+const issueChips = document.getElementById('issueChips');
+const issueGroups = document.getElementById('issueGroups');
 const auditTitle = document.getElementById('auditTitle');
 const auditList = document.getElementById('auditList');
 const auditBlock = document.getElementById('auditBlock');
+const toggleResolvedOverflowsBtn = document.getElementById('toggleResolvedOverflowsBtn');
 const debugLogsModal = document.getElementById('debugLogsModal');
 const debugLogsOutput = document.getElementById('debugLogsOutput');
 const debugLogsCloseBtn = document.getElementById('debugLogsCloseBtn');
@@ -1799,13 +1969,30 @@ const TRANSLATE_STAGE_END = 85;
 const APPLY_STAGE_START = 90;
 const APPLY_STAGE_END = 99;
 const LANGUAGE_NAMES = { fr: 'French', de: 'German', es: 'Spanish', it: 'Italian', tr: 'Turkish', ar: 'Arabic' };
+const QUOTA_TIER_LABELS = {
+  auto: 'Auto',
+  free: 'Free Tier',
+  tier1: 'Paid Tier 1',
+  tier2: 'Paid Tier 2',
+  tier3: 'Paid Tier 3',
+};
+
+function getQuotaTierLabel(value) {
+  const key = normalizeQuotaProfile(value);
+  return QUOTA_TIER_LABELS[key] || 'Auto';
+}
 
 function setProgress(stage, percent, stageLabel, metaText) {
   const clamped = Math.max(0, Math.min(100, Math.round(percent)));
-  void stage;
+  if (stage === 'extract') {
+    translateBtn.className = 'action-btn translate-progress-btn translating';
+  } else if (stage === 'translate') {
+    translateBtn.className = 'action-btn translate-progress-btn translating';
+  } else if (stage === 'apply') {
+    translateBtn.className = 'action-btn translate-progress-btn translating';
+  }
   translateBtn.style.setProperty('--progress', `${clamped}%`);
   setTranslateButtonText(`${stageLabel} ${clamped}%`);
-  translateBtn.className = 'action-btn disabled translate-progress-btn translating';
   progressMetaInline.textContent = metaText || '';
   progressMetaInline.classList.remove('hidden');
 }
@@ -1905,6 +2092,191 @@ function updateSourceLangLabel() {
   sourceLangLabel.textContent = label;
 }
 
+function classifyApiIssue(detail) {
+  const text = `${detail.userMessage || ''}\n${detail.rawError || ''}`.toLowerCase();
+  if (/timed out|timeout|rate limit|429|too many requests/.test(text)) return 'rate_limit_or_timeout';
+  if (/incomplete translations|missing/.test(text)) return 'incomplete_keys';
+  if (/json|unterminated|string|invalid payload/.test(text)) return 'response_format';
+  return 'other_api';
+}
+
+function classifyApplyIssue(detail) {
+  const text = `${detail.error || ''}`.toLowerCase();
+  if (/font/.test(text)) return 'font_load';
+  if (/mapped node not found|node path|mappingkey|indices/.test(text)) return 'mapping';
+  return 'apply_other';
+}
+
+function summarizeDiagnostics() {
+  const apiIssues = Array.isArray(lastApiErrorDetails) ? lastApiErrorDetails : [];
+  const applyIssues = Array.isArray(lastApplyErrorDetails) ? lastApplyErrorDetails : [];
+  const overflowIssues = Array.isArray(lastOverflowEntries) ? lastOverflowEntries : [];
+
+  const affectedFrames = new Set();
+  const affectedLanguages = new Set();
+  for (const item of apiIssues) {
+    (item.frameIds || []).forEach(id => affectedFrames.add(id));
+    if (item.langCode) affectedLanguages.add(item.langCode);
+  }
+  for (const item of applyIssues) {
+    if (item.mappingKey && typeof item.mappingKey === 'string') {
+      const frameId = item.mappingKey.split('::')[0];
+      if (frameId) affectedFrames.add(frameId);
+    }
+  }
+
+  const grouped = {
+    response_format: [],
+    incomplete_keys: [],
+    rate_limit_or_timeout: [],
+    other_api: [],
+    font_load: [],
+    mapping: [],
+    apply_other: [],
+  };
+
+  for (const item of apiIssues) grouped[classifyApiIssue(item)].push(item);
+  for (const item of applyIssues) grouped[classifyApplyIssue(item)].push(item);
+
+  return {
+    apiCount: apiIssues.length,
+    applyCount: applyIssues.length,
+    overflowCount: overflowIssues.length,
+    partialFallbackCount: apiIssues.length,
+    affectedFrameCount: affectedFrames.size,
+    affectedFrameIds: Array.from(affectedFrames),
+    affectedLanguageCodes: Array.from(affectedLanguages),
+    grouped,
+  };
+}
+
+function buildPlainIssueSummary(groupKey, count) {
+  if (groupKey === 'response_format') return `API response format errors (${count})`;
+  if (groupKey === 'incomplete_keys') return `Incomplete translation keys (${count})`;
+  if (groupKey === 'rate_limit_or_timeout') return `Rate limit / timeout (${count})`;
+  if (groupKey === 'font_load') return `Font load/apply errors (${count})`;
+  if (groupKey === 'mapping') return `Text mapping errors (${count})`;
+  if (groupKey === 'apply_other') return `Text apply errors (${count})`;
+  return `Other API issues (${count})`;
+}
+
+function buildPlainIssueDescription(groupKey) {
+  if (groupKey === 'response_format') return 'Model returned invalid structured output. Batch was retried/fallback applied.';
+  if (groupKey === 'incomplete_keys') return 'Model skipped some text entries. Missing items were kept in source language.';
+  if (groupKey === 'rate_limit_or_timeout') return 'Provider was rate-limited or timed out. Some batches fell back to source text.';
+  if (groupKey === 'font_load') return 'Some translated text could not be applied because required fonts were unavailable.';
+  if (groupKey === 'mapping') return 'Some text layers could not be located in cloned frames during apply.';
+  if (groupKey === 'apply_other') return 'Some translated text failed while applying in Figma.';
+  return 'Some API responses failed and fallback was used.';
+}
+
+function renderIssueGroups() {
+  const summary = summarizeDiagnostics();
+  const groupOrder = [
+    'response_format',
+    'incomplete_keys',
+    'rate_limit_or_timeout',
+    'font_load',
+    'mapping',
+    'apply_other',
+    'other_api',
+  ];
+
+  const chips = [
+    { id: 'all', label: `All (${summary.apiCount + summary.applyCount + summary.overflowCount})` },
+    { id: 'api', label: `API: ${summary.apiCount}` },
+    { id: 'apply', label: `Apply: ${summary.applyCount}` },
+    { id: 'overflow', label: `Overflow: ${summary.overflowCount}` },
+  ];
+
+  issueChips.innerHTML = chips.map(chip => (
+    `<button type="button" class="issue-chip ${issueFilter === chip.id ? 'active' : ''}" data-issue-filter="${chip.id}">${chip.label}</button>`
+  )).join('');
+  issueChips.querySelectorAll('[data-issue-filter]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      issueFilter = btn.getAttribute('data-issue-filter') || 'all';
+      renderIssueGroups();
+      renderAuditPanel(lastOverflowEntries);
+    });
+  });
+
+  const languageNames = summary.affectedLanguageCodes
+    .map(code => LANGUAGE_NAMES[code] || code.toUpperCase())
+    .join(', ');
+  const impactLines = [
+    `Affected frames: ${summary.affectedFrameCount || 0}`,
+    `Affected languages: ${languageNames || 'None'}`,
+    `Fallback used: ${summary.apiCount > 0 ? 'source text kept for failed batches' : 'none'}`,
+  ];
+
+  const cards = [];
+  if (issueFilter === 'all' || issueFilter === 'api' || issueFilter === 'apply') {
+    cards.push(`
+      <div class="issue-group">
+        <div class="issue-group-title">Impact</div>
+        <div class="issue-group-body">${impactLines.join(' · ')}</div>
+      </div>
+    `);
+  }
+
+  if (issueFilter !== 'overflow') {
+    for (const key of groupOrder) {
+      const items = summary.grouped[key] || [];
+      if (items.length === 0) continue;
+      if (issueFilter === 'api' && !['response_format', 'incomplete_keys', 'rate_limit_or_timeout', 'other_api'].includes(key)) continue;
+      if (issueFilter === 'apply' && !['font_load', 'mapping', 'apply_other'].includes(key)) continue;
+      const title = buildPlainIssueSummary(key, items.length);
+      const description = buildPlainIssueDescription(key);
+      const technicalLines = items.slice(0, 2).map(item => item.rawError || item.userMessage || item.error || '').filter(Boolean);
+      const more = items.length - technicalLines.length;
+      cards.push(`
+        <div class="issue-group">
+          <div class="issue-group-title">${title}</div>
+          <div class="issue-group-body">${description}</div>
+          ${technicalLines.length > 0 ? `
+            <details class="issue-group-tech-toggle">
+              <summary>Show technical details</summary>
+              <div class="issue-group-tech-content">${technicalLines.join('\n')}${more > 0 ? `\n...and ${more} more issue(s).` : ''}</div>
+            </details>
+          ` : ''}
+        </div>
+      `);
+    }
+  }
+
+  issueGroups.innerHTML = cards.join('');
+  issueGroups.style.display = (issueFilter === 'overflow' || cards.length === 0) ? 'none' : '';
+}
+
+function selectOnlyLanguages(langCodes) {
+  const wanted = new Set(langCodes);
+  const checkboxes = Array.from(document.querySelectorAll('#langGrid input'));
+  let checkedCount = 0;
+  for (const cb of checkboxes) {
+    cb.checked = wanted.has(cb.value);
+    if (cb.checked) checkedCount += 1;
+  }
+  if (checkedCount === 0 && checkboxes.length > 0) checkboxes[0].checked = true;
+  updateTranslateUI();
+}
+
+function retryFailedLanguages() {
+  const langs = Array.from(new Set(lastApiErrorDetails.map(item => item.langCode).filter(Boolean)));
+  if (langs.length === 0) return;
+  retryFrameScope = null;
+  selectOnlyLanguages(langs);
+  startTranslationRun('manual-retry');
+}
+
+function retryFailedBatchesOnly() {
+  const langs = Array.from(new Set(lastApiErrorDetails.map(item => item.langCode).filter(Boolean)));
+  const frameIds = Array.from(new Set(lastApiErrorDetails.flatMap(item => Array.isArray(item.frameIds) ? item.frameIds : []).filter(Boolean)));
+  if (langs.length === 0) return;
+  retryFrameScope = frameIds.length > 0 ? new Set(frameIds) : null;
+  selectOnlyLanguages(langs);
+  startTranslationRun('manual-retry');
+}
+
 // ── Tabs ──
 document.querySelectorAll('.tab-btn').forEach(btn => {
   btn.addEventListener('click', () => {
@@ -1980,6 +2352,17 @@ function getSelectedLangs() {
   return Array.from(document.querySelectorAll('#langGrid input:checked')).map(cb => cb.value);
 }
 
+function persistTargetLanguages() {
+  const targetLanguages = getSelectedLangs();
+  currentSettings.targetLanguages = targetLanguages;
+  if (targetLanguagesSaveTimer) {
+    clearTimeout(targetLanguagesSaveTimer);
+  }
+  targetLanguagesSaveTimer = setTimeout(() => {
+    parent.postMessage({ pluginMessage: { type: 'save-target-languages', targetLanguages } }, '*');
+  }, 120);
+}
+
 function applySavedTargetLanguages(savedLanguages) {
   if (!Array.isArray(savedLanguages)) return;
   const valid = new Set(savedLanguages.filter(value => typeof value === 'string'));
@@ -2000,6 +2383,15 @@ function applySavedTargetLanguages(savedLanguages) {
 function getTranslateActionLabel(frameCount, langCount) {
   const outputFrames = frameCount * langCount;
   return `Translate \u2192 ${outputFrames} frame${outputFrames > 1 ? 's' : ''}`;
+}
+
+function hasVisibleRunReview() {
+  if (isTranslating) return false;
+  if (completionSection.style.display === 'none') return false;
+  return translateButtonDone
+    || lastOverflowEntries.length > 0
+    || lastApiErrorDetails.length > 0
+    || lastApplyErrorDetails.length > 0;
 }
 
 function updateTranslateUI() {
@@ -2038,7 +2430,7 @@ function updateTranslateUI() {
     } else {
       const defaultLabel = getTranslateActionLabel(selectedFrames.length, langs.length);
       if (isTranslating) {
-        translateBtn.className = 'action-btn disabled translate-progress-btn translating';
+        translateBtn.className = 'action-btn translate-progress-btn translating';
       } else if (translateButtonDone) {
         setTranslateButtonText('Done \u2713');
         translateBtn.className = 'action-btn active translate-progress-btn';
@@ -2056,7 +2448,8 @@ function updateTranslateUI() {
 
 document.querySelectorAll('#langGrid input').forEach(cb => {
   cb.addEventListener('change', () => {
-    if (!isTranslating) {
+    persistTargetLanguages();
+    if (!isTranslating && !hasVisibleRunReview()) {
       translateButtonDone = false;
       
     }
@@ -2074,25 +2467,18 @@ openSettingsLink.addEventListener('click', () => {
   parent.postMessage({ pluginMessage: { type: 'get-settings' } }, '*');
   document.getElementById('settingsModal').classList.add('visible');
 });
+toggleResolvedOverflowsBtn.addEventListener('click', () => {
+  showResolvedOverflows = !showResolvedOverflows;
+  toggleResolvedOverflowsBtn.textContent = showResolvedOverflows ? 'Hide resolved' : 'Show resolved';
+  renderAuditPanel(lastOverflowEntries);
+});
 
 // ── Message handling ──
 onmessage = (event) => {
   const msg = event.data.pluginMessage;
   if (msg.type === 'selection-update') {
     selectedFrames = msg.frames;
-    const stats = (msg.selectionStats && typeof msg.selectionStats === 'object') ? msg.selectionStats : null;
-    if (selectedFrames.length > 1 && stats) {
-      const textNodeCount = Number(stats.textNodeCount) || 0;
-      const totalCharCount = Number(stats.totalCharCount) || 0;
-      const truncatedNodeCount = Number(stats.truncatedNodeCount) || 0;
-      uiLog('Selection text estimate', {
-        frameCount: selectedFrames.length,
-        textNodeCount,
-        totalCharCount,
-        truncatedNodeCount,
-      });
-    }
-    if (!isTranslating) {
+    if (!isTranslating && !hasVisibleRunReview()) {
       translateButtonDone = false;
       
     }
@@ -2147,6 +2533,10 @@ onmessage = (event) => {
   } else if (msg.type === 'audit-action-done') {
     const btn = document.querySelector(`.audit-action-btn[data-node-id="${msg.nodeId}"][data-action="${msg.action}"]`);
     if (btn) { btn.textContent = '✓ Done'; btn.classList.add('done'); btn.disabled = true; }
+    if (msg.nodeId) {
+      resolvedOverflowNodeIds.add(String(msg.nodeId));
+      renderAuditPanel(lastOverflowEntries);
+    }
   } else if (msg.type === 'audit-action-error') {
     const btn = document.querySelector(`.audit-action-btn[data-node-id="${msg.nodeId}"][data-action="${msg.action}"]`);
     if (btn) { btn.textContent = 'Failed'; btn.style.color = '#e88'; }
@@ -2277,14 +2667,18 @@ document.getElementById('settingsSaveBtn').addEventListener('click', () => {
   });
   parent.postMessage({ pluginMessage: { type: 'save-settings', settings: currentSettings } }, '*');
   updateTranslateUI();
-  uiLog('Debug mode updated', { enabled: currentSettings.debugMode === true });
 });
 
 // ── Translation flow ──
 let pendingTextNodes = [];
 
-translateBtn.addEventListener('click', () => {
+function startTranslationRun(reason = 'manual') {
   if (selectedFrames.length === 0 || getSelectedLangs().length === 0 || isTranslating) return;
+  if (reason === 'manual') {
+    hasAutoRetriedForCurrentRun = false;
+    lastLanguageOrder = [...getSelectedLangs()];
+    lastLayoutFrameIds = selectedFrames.map(frame => frame.id);
+  }
 
   const apiKey = getActiveApiKey();
   if (!apiKey) {
@@ -2298,6 +2692,7 @@ translateBtn.addEventListener('click', () => {
   translateButtonDone = false;
   isTranslating = true;
   uiLog('Translate started', {
+    reason,
     selectedFrames: selectedFrames.length,
     selectedLanguages: getSelectedLangs(),
     provider: currentSettings.provider,
@@ -2308,13 +2703,31 @@ translateBtn.addEventListener('click', () => {
   setProgress('extract', EXTRACT_STAGE_START, 'Extracting Text Layers', 'Reading selected frames and building mapping keys');
   updateTranslateUI();
 
-  parent.postMessage({ pluginMessage: { type: 'extract-text' } }, '*');
+  const extractPayload = { type: 'extract-text' };
+  if (retryFrameScope && retryFrameScope.size > 0) {
+    extractPayload.frameIds = Array.from(retryFrameScope);
+  }
+  parent.postMessage({ pluginMessage: extractPayload }, '*');
+}
+
+translateBtn.addEventListener('click', () => {
+  startTranslationRun();
 });
 
 async function handleTextData(nodes, frameCount) {
   try {
-    pendingTextNodes = nodes;
+    const scopedNodes = retryFrameScope && retryFrameScope.size > 0
+      ? nodes.filter(node => retryFrameScope.has(node.frameId))
+      : nodes;
+    pendingTextNodes = scopedNodes;
     lastApiErrors = [];
+    lastApiErrorDetails = [];
+    lastApplyErrorDetails = [];
+    lastOverflowEntries = [];
+    issueFilter = 'all';
+    resolvedOverflowNodeIds.clear();
+    const retryScopeApplied = retryFrameScope && retryFrameScope.size > 0;
+    retryFrameScope = null;
     const langs = getSelectedLangs();
     const translateProgressSpan = TRANSLATE_STAGE_END - TRANSLATE_STAGE_START;
     const runId = `run-${Date.now().toString(36)}-${++translationRunSeq}`;
@@ -2341,7 +2754,7 @@ async function handleTextData(nodes, frameCount) {
     let adaptiveSuccessStreak = 0;
 
     const frameGroups = {};
-    for (const node of nodes) {
+    for (const node of scopedNodes) {
       if (!frameGroups[node.frameId]) frameGroups[node.frameId] = [];
       frameGroups[node.frameId].push(node);
     }
@@ -2350,27 +2763,15 @@ async function handleTextData(nodes, frameCount) {
       throw new Error('No translatable text nodes found in selected layers.');
     }
 
-    uiLog('Text extraction payload received', {
-      runId,
-      frameCount,
-      nodeCount: nodes.length,
-      groupedFrames: Object.keys(frameGroups).length,
-      languages: langs,
-      dynamicConcurrency,
-      batchSize: translationBatchSize,
-      tuningProfile: tuning.profile,
-      requestIntervalMs: tuning.requestIntervalMs,
-    });
-    uiLog('Translation tuning applied', {
+    uiLog('Translation run config', {
       runId,
       provider: currentSettings.provider,
       model,
-      nodeCount: nodes.length,
-      languageCount: langs.length,
+      frames: Object.keys(frameGroups).length,
+      nodes: scopedNodes.length,
+      languages: langs,
       batchSize: translationBatchSize,
-      initialConcurrency: dynamicConcurrency,
-      requestIntervalMs: tuning.requestIntervalMs,
-      modelLimits: tuning.modelLimits,
+      concurrency: dynamicConcurrency,
       tuningProfile: tuning.profile,
     });
 
@@ -2383,7 +2784,7 @@ async function handleTextData(nodes, frameCount) {
     );
 
     const allTranslations = [];
-    const apiErrors = [];
+    const apiErrorDetails = [];
 
     const frameEntries = Object.entries(frameGroups);
     const jobs = [];
@@ -2436,7 +2837,10 @@ async function handleTextData(nodes, frameCount) {
     for (const lang of langs) {
       const langName = LANGUAGE_NAMES[lang] || lang;
       const pooledNodes = languageNodePool.get(lang) || [];
-      const batches = chunkArray(pooledNodes, translationBatchSize);
+      const langBatchSize = NON_LATIN_LANGS.has(lang)
+        ? Math.min(translationBatchSize, 40)
+        : translationBatchSize;
+      const batches = chunkArray(pooledNodes, langBatchSize);
       for (let batchIndex = 0; batchIndex < batches.length; batchIndex++) {
         apiTasks.push({
           taskId: apiTasks.length + 1,
@@ -2458,24 +2862,59 @@ async function handleTextData(nodes, frameCount) {
       'Dispatching Translation Requests',
       dispatchMeta
     );
-    uiLog('Dispatching API tasks', {
-      runId,
-      totalTasks: apiTasks.length,
-      dynamicConcurrency,
-      adaptiveConcurrencyLimit,
-      requestIntervalMs: tuning.requestIntervalMs,
-    });
-
     if (apiTasks.length > 0) {
       let startedBatches = 0;
       let inFlightBatches = 0;
       let maxObservedInFlight = 0;
       const taskStartedAt = new Map();
+      const apiStageStartMs = Date.now();
+      const ETA_SMOOTHING_ALPHA = 0.22;
+      let etaSmoothedMsPerBatch = 0;
+      let etaProjectedFinishAt = 0;
+      let etaTickerId = null;
+      let etaLastMetaText = '';
+      let etaState = null;
 
-      await runWithConcurrency(
-        apiTasks,
-        dynamicConcurrency,
-        async (task, taskIndex, workerId) => {
+      const stopEtaTicker = () => {
+        if (etaTickerId !== null) {
+          clearInterval(etaTickerId);
+          etaTickerId = null;
+        }
+      };
+
+      const buildEtaMeta = () => {
+        if (!etaState) return '';
+        const tierLabel = getQuotaTierLabel(currentSettings.quotaProfile);
+        const overallLabel = `Overall ${etaState.completedBatches}/${etaState.totalBatches} batches`;
+        const languageLabel = `${etaState.langName} ${etaState.langBatchIndex}/${etaState.langBatchTotal}`;
+        let etaLabel = '';
+        if (etaProjectedFinishAt > 0) {
+          const remainingSeconds = Math.max(0, Math.ceil((etaProjectedFinishAt - Date.now()) / 1000));
+          etaLabel = remainingSeconds > 0 ? ` · ~${remainingSeconds}s remaining` : '';
+        }
+        return `${overallLabel} · Language ${languageLabel} · Tier: ${tierLabel}${etaLabel}`;
+      };
+
+      const pushEtaMetaIfChanged = () => {
+        const metaText = buildEtaMeta();
+        if (!metaText || metaText === etaLastMetaText) return;
+        progressMetaInline.textContent = metaText;
+        etaLastMetaText = metaText;
+      };
+
+      const startEtaTicker = () => {
+        if (etaTickerId !== null) return;
+        etaTickerId = setInterval(() => {
+          if (!isTranslating || !etaState || etaProjectedFinishAt <= 0) return;
+          pushEtaMetaIfChanged();
+        }, 1000);
+      };
+
+      try {
+        await runWithConcurrency(
+          apiTasks,
+          dynamicConcurrency,
+          async (task, taskIndex, workerId) => {
           const requestId = `${task.lang.toUpperCase()}-${task.batchIndex + 1}/${task.batchTotal}-T${task.taskId}`;
           const startedAt = taskStartedAt.get(task.taskId) || Date.now();
           const maxAttempts = TRANSLATION_MAX_RETRIES + 1;
@@ -2601,25 +3040,27 @@ async function handleTextData(nodes, frameCount) {
               langStats.succeeded += 1;
               langStats.totalDurationMs += Date.now() - startedAt;
             }
-            uiLog('API batch success', {
-              runId,
-              requestId,
-              workerId,
-              taskIndex: taskIndex + 1,
-              lang: task.lang,
-              batchIndex: task.batchIndex + 1,
-              batchTotal: task.batchTotal,
-              itemCount: task.batch.length,
-              attemptsUsed,
-              durationMs: Date.now() - startedAt,
-              inFlight: inFlightBatches,
-              adaptiveInFlight: adaptiveInFlightRequests,
-              adaptiveConcurrencyLimit,
-            });
           } catch (e) {
             const errorText = getErrorMessage(e);
-            const userMessage = getUserErrorMessage(e);
-            apiErrors.push(`${task.langName}: ${userMessage}`);
+            let userMessage = getUserErrorMessage(e);
+            if (/incomplete translations|missing/i.test(errorText)) {
+              userMessage = 'Model skipped some text entries. Missing entries were kept in source language.';
+            } else if (/unterminated|string|json|unexpected end of json|invalid payload/i.test(errorText)) {
+              userMessage = 'Model returned invalid structured output. Batch was retried/fallback applied.';
+            } else if (/timed out|timeout|429|rate limit|too many requests/i.test(errorText)) {
+              userMessage = 'Provider rate-limited or timed out. Batch fallback kept source text.';
+            }
+            const frameIds = Array.from(new Set(task.batch.map(item => String(item.mappingKey || '').split('::')[0]).filter(Boolean)));
+            apiErrorDetails.push({
+              langCode: task.lang,
+              langName: task.langName,
+              batchIndex: task.batchIndex + 1,
+              batchTotal: task.batchTotal,
+              requestId,
+              userMessage,
+              rawError: errorText,
+              frameIds,
+            });
             const langStats = perLanguageStats.get(task.lang);
             if (langStats) {
               langStats.failed += 1;
@@ -2652,27 +3093,49 @@ async function handleTextData(nodes, frameCount) {
           inFlightBatches = Math.max(0, inFlightBatches - 1);
           taskStartedAt.delete(task.taskId);
         },
-        (completedBatches, totalBatches, task, _taskIdx, workerId) => {
-          const pct = TRANSLATE_STAGE_START + Math.round((completedBatches / totalBatches) * translateProgressSpan);
-          setProgress(
-            'translate',
-            pct,
-            `Translating ${task.langName} (${completedBatches}/${totalBatches} batches)`,
-            `Language batch ${task.batchIndex + 1}/${task.batchTotal}`
-          );
-          const queuedBatches = Math.max(0, totalBatches - startedBatches);
-          uiLog('Concurrency progress', {
-            runId,
-            completedBatches,
-            totalBatches,
-            inFlight: inFlightBatches,
-            queuedBatches,
-            workerId,
-            adaptiveConcurrencyLimit,
-            adaptiveInFlight: adaptiveInFlightRequests,
-          });
-        },
-        (_nextIndex, totalBatches, task, workerId) => {
+          (completedBatches, totalBatches, task, _taskIdx, workerId) => {
+            const pct = TRANSLATE_STAGE_START + Math.round((completedBatches / totalBatches) * translateProgressSpan);
+            etaState = {
+              completedBatches,
+              totalBatches,
+              langName: task.langName,
+              langBatchIndex: task.batchIndex + 1,
+              langBatchTotal: task.batchTotal,
+            };
+
+            if (completedBatches > 0) {
+              const elapsedMs = Date.now() - apiStageStartMs;
+              const avgMsPerBatch = elapsedMs / completedBatches;
+              if (etaSmoothedMsPerBatch === 0) {
+                etaSmoothedMsPerBatch = avgMsPerBatch;
+              } else {
+                etaSmoothedMsPerBatch =
+                  (ETA_SMOOTHING_ALPHA * avgMsPerBatch) +
+                  ((1 - ETA_SMOOTHING_ALPHA) * etaSmoothedMsPerBatch);
+              }
+              const remainingBatches = totalBatches - completedBatches;
+              const candidateFinishAt = Date.now() + Math.ceil(etaSmoothedMsPerBatch * remainingBatches);
+              // Monotonic ETA: never move finish time later once shown.
+              if (etaProjectedFinishAt === 0) {
+                etaProjectedFinishAt = candidateFinishAt;
+              } else {
+                etaProjectedFinishAt = Math.min(etaProjectedFinishAt, candidateFinishAt);
+              }
+              if (etaProjectedFinishAt > Date.now()) {
+                startEtaTicker();
+              }
+            }
+
+            const metaText = buildEtaMeta();
+            etaLastMetaText = metaText;
+            setProgress(
+              'translate',
+              pct,
+              `Translating ${task.langName}`,
+              metaText
+            );
+          },
+          (_nextIndex, totalBatches, task, workerId) => {
           startedBatches += 1;
           inFlightBatches += 1;
           maxObservedInFlight = Math.max(maxObservedInFlight, inFlightBatches);
@@ -2682,19 +3145,11 @@ async function handleTextData(nodes, frameCount) {
             langStats.started += 1;
             langStats.items += task.batch.length;
           }
-          uiLog('API batch started', {
-            runId,
-            requestId: `${task.lang.toUpperCase()}-${task.batchIndex + 1}/${task.batchTotal}-T${task.taskId}`,
-            workerId,
-            startedBatches,
-            totalBatches,
-            inFlight: inFlightBatches,
-            queuedBatches: Math.max(0, totalBatches - startedBatches),
-            adaptiveConcurrencyLimit,
-            adaptiveInFlight: adaptiveInFlightRequests,
-          });
-        }
-      );
+          }
+        );
+      } finally {
+        stopEtaTicker();
+      }
       const apiStageElapsedMs = Date.now() - pipelineStartMs;
       uiLog('API concurrency summary', {
         runId,
@@ -2746,32 +3201,37 @@ async function handleTextData(nodes, frameCount) {
       runId,
       jobs: jobs.length,
       payloadItems: allTranslations.length,
-      apiErrorCount: apiErrors.length,
+      apiErrorCount: apiErrorDetails.length,
     });
 
     setProgress('apply', APPLY_STAGE_START, 'Applying Translations', 'Creating translated rows under your original frames');
-    lastApiErrors = apiErrors;
+    lastApiErrorDetails = apiErrorDetails;
+    lastApiErrors = apiErrorDetails.map(item => `${item.langName}: ${item.userMessage}`);
 
-    if (apiErrors.length > 0 && allTranslations.every(t => t.nodes.length === 0)) {
+    if (apiErrorDetails.length > 0 && allTranslations.every(t => t.nodes.length === 0)) {
       setProgress('translate', 100, 'Translation Failed', 'No translated output could be created');
       isTranslating = false;
       translateButtonDone = false;
       completionSection.style.display = '';
       completionSection.open = true;
       completionSection.className = 'completion-section error';
-      document.getElementById('resultTitle').textContent = '❌ Translation Failed';
-      document.getElementById('resultDetail').textContent = 'No translated frames were created. Resolve the API issue and retry.';
-      const visibleErrors = apiErrors.slice(0, 3);
-      if (apiErrors.length > visibleErrors.length) {
-        visibleErrors.push(`...and ${apiErrors.length - visibleErrors.length} more issue(s).`);
-      }
-      document.getElementById('resultErrors').textContent = visibleErrors.join('\n\n');
+      document.getElementById('resultTitle').textContent = 'Translation failed';
+      document.getElementById('resultDetail').textContent = 'No translated output could be created for this run.';
+      document.getElementById('resultErrors').textContent = '';
       auditBlock.style.display = 'none';
+      renderIssueGroups();
       updateTranslateUI();
       return;
     }
 
-    parent.postMessage({ pluginMessage: { type: 'apply-translations', translations: allTranslations } }, '*');
+    parent.postMessage({
+      pluginMessage: {
+        type: 'apply-translations',
+        translations: allTranslations,
+        languageOrder: lastLanguageOrder,
+        layoutFrameIds: lastLayoutFrameIds,
+      }
+    }, '*');
   } catch (e) {
     const userError = getUserErrorMessage(e);
     uiError('Translation pipeline failed', { error: userError, rawError: getErrorMessage(e) });
@@ -2781,23 +3241,38 @@ async function handleTextData(nodes, frameCount) {
     completionSection.style.display = '';
     completionSection.open = true;
     completionSection.className = 'completion-section error';
-    document.getElementById('resultTitle').textContent = '❌ Translation Failed';
+    document.getElementById('resultTitle').textContent = 'Translation failed';
     document.getElementById('resultDetail').textContent = '';
     document.getElementById('resultErrors').textContent = userError;
     auditBlock.style.display = 'none';
+    renderIssueGroups();
     updateTranslateUI();
     lastApiErrors = [];
+    lastApiErrorDetails = [];
   }
 }
 
 function renderAuditPanel(overflows) {
+  if (issueFilter !== 'all' && issueFilter !== 'overflow') {
+    auditBlock.style.display = 'none';
+    auditList.innerHTML = '';
+    toggleResolvedOverflowsBtn.style.display = 'none';
+    return;
+  }
   if (!overflows || overflows.length === 0) {
     auditBlock.style.display = 'none';
     auditList.innerHTML = '';
+    toggleResolvedOverflowsBtn.style.display = 'none';
     return;
   }
+  const visibleOverflows = overflows.filter(entry => {
+    if (showResolvedOverflows) return true;
+    return !resolvedOverflowNodeIds.has(String(entry.nodeId || ''));
+  });
+
   auditBlock.style.display = '';
-  auditTitle.textContent = `⚠️ ${overflows.length} overflow issue${overflows.length > 1 ? 's' : ''} found`;
+  toggleResolvedOverflowsBtn.style.display = '';
+  auditTitle.textContent = `Overflow review: ${visibleOverflows.length}/${overflows.length} visible`;
   auditList.innerHTML = '';
 
   const postAuditAction = (action, nodeId) => {
@@ -2807,7 +3282,7 @@ function renderAuditPanel(overflows) {
   const createActionButton = (label, action, nodeId) => {
     const btn = document.createElement('button');
     btn.type = 'button';
-    btn.className = 'audit-action-btn';
+    btn.className = action === 'auto-fix-overflow' ? 'audit-action-btn audit-main-btn' : 'audit-action-btn';
     btn.dataset.nodeId = nodeId;
     btn.dataset.action = action;
     btn.textContent = label;
@@ -2816,6 +3291,10 @@ function renderAuditPanel(overflows) {
         btn.textContent = '✓ Ignored';
         btn.classList.add('done');
         btn.disabled = true;
+        if (nodeId) {
+          resolvedOverflowNodeIds.add(String(nodeId));
+          renderAuditPanel(lastOverflowEntries);
+        }
       });
     } else {
       btn.addEventListener('click', () => postAuditAction(action, nodeId));
@@ -2823,7 +3302,7 @@ function renderAuditPanel(overflows) {
     return btn;
   };
 
-  overflows.forEach((entry, index) => {
+  visibleOverflows.forEach((entry, index) => {
     const nodeId = String(entry.nodeId || '');
     const nodeName = String(entry.nodeName || 'Unnamed layer');
     const language = String(entry.language || 'Unknown');
@@ -2843,7 +3322,9 @@ function renderAuditPanel(overflows) {
     const header = document.createElement('div');
     header.className = 'audit-item-header';
     header.dataset.nodeId = nodeId;
-    header.textContent = `"${nodeName}" (${language})`;
+    const langCode = language.slice(0, 2).toUpperCase();
+    const overflowLabel = overflowX > 0 ? `+${overflowX}px` : `+${overflowY}px`;
+    header.textContent = `"${nodeName}" · ${langCode} · ${overflowLabel}`;
     header.addEventListener('click', () => postAuditAction('focus-node', nodeId));
 
     const detail = document.createElement('div');
@@ -2852,7 +3333,8 @@ function renderAuditPanel(overflows) {
 
     const actions = document.createElement('div');
     actions.className = 'audit-actions';
-    actions.appendChild(createActionButton('Decrease Font', 'decrease-font', nodeId));
+    actions.appendChild(createActionButton('Auto-fix', 'auto-fix-overflow', nodeId));
+    actions.appendChild(createActionButton('Font -1', 'decrease-font', nodeId));
     actions.appendChild(createActionButton('Expand Layer', 'expand-layer', nodeId));
     actions.appendChild(createActionButton('Ignore', 'ignore', nodeId));
 
@@ -2864,11 +3346,19 @@ function renderAuditPanel(overflows) {
 }
 
 function handleTranslationComplete(created, errors, overflows) {
+  lastApplyErrorDetails = Array.isArray(errors)
+    ? errors.map(item => ({
+      mappingKey: typeof item?.mappingKey === 'string' ? item.mappingKey : '',
+      error: typeof item?.error === 'string' ? item.error : 'Unknown apply error',
+    }))
+    : [];
+  lastOverflowEntries = Array.isArray(overflows) ? overflows : [];
+
   uiLog('Translation apply completed', {
     created,
-    applyErrorCount: Array.isArray(errors) ? errors.length : 0,
+    applyErrorCount: lastApplyErrorDetails.length,
     apiErrorCount: lastApiErrors.length,
-    overflowCount: Array.isArray(overflows) ? overflows.length : 0,
+    overflowCount: lastOverflowEntries.length,
   });
   setProgress('apply', 100, 'Translation Complete', 'All selected languages processed');
 
@@ -2878,9 +3368,10 @@ function handleTranslationComplete(created, errors, overflows) {
   completionSection.open = true;
   updateTranslateUI();
 
-  const applyErrors = Array.isArray(errors) ? errors.length : 0;
+  const applyErrors = lastApplyErrorDetails.length;
   const apiErrorCount = lastApiErrors.length;
-  const overflowCount = Array.isArray(overflows) ? overflows.length : 0;
+  const overflowCount = lastOverflowEntries.length;
+  const summary = summarizeDiagnostics();
   uiLog('Phase 2 overflow detection summary', {
     phase2Active: true,
     overflowCount,
@@ -2889,34 +3380,29 @@ function handleTranslationComplete(created, errors, overflows) {
 
   if (applyErrors === 0 && apiErrorCount === 0 && overflowCount === 0) {
     completionSection.className = 'completion-section success';
-    document.getElementById('resultTitle').textContent = `✅ Translation Complete`;
-    document.getElementById('resultDetail').textContent = `${created} frames created successfully`;
+    document.getElementById('resultTitle').textContent = `Completed successfully`;
+    document.getElementById('resultDetail').textContent = `${created} created · 0 partial fallbacks · 0 apply failures · 0 overflows`;
     document.getElementById('resultErrors').textContent = '';
   } else {
     completionSection.className = 'completion-section warning';
-    const hasOnlyOverflows = applyErrors === 0 && apiErrorCount === 0 && overflowCount > 0;
-    document.getElementById('resultTitle').textContent = hasOnlyOverflows
-      ? `✅ Translation Complete`
-      : `⚠️ Translation Complete (with issues)`;
-    const detailParts = [`${created} frames created`];
-    if (overflowCount > 0) detailParts.push(`${overflowCount} overflow(s) to review`);
-    document.getElementById('resultDetail').textContent = detailParts.join(' · ');
-    const details = [];
-    if (apiErrorCount > 0) {
-      details.push(`${apiErrorCount} translation API issue(s) — affected text was kept in source language.`);
-      const uniqueApiErrors = Array.from(new Set(lastApiErrors));
-      details.push(...uniqueApiErrors.slice(0, 2));
-      if (uniqueApiErrors.length > 2) {
-        details.push(`...and ${uniqueApiErrors.length - 2} more API issue(s).`);
-      }
-    }
-    if (applyErrors > 0) {
-      details.push(`${applyErrors} font/text apply issue(s) — some text may not have been applied.`);
-    }
-    document.getElementById('resultErrors').textContent = details.join('\n\n');
+    document.getElementById('resultTitle').textContent = `Completed with issues`;
+    document.getElementById('resultDetail').textContent = `${created} created · ${summary.partialFallbackCount} partial fallbacks · ${applyErrors} apply failures · ${overflowCount} overflows`;
+    document.getElementById('resultErrors').textContent = '';
   }
 
-  renderAuditPanel(overflows);
+  renderIssueGroups();
+  renderAuditPanel(lastOverflowEntries);
+  if (apiErrorCount > 0 && !hasAutoRetriedForCurrentRun && hasRetryableApiFailures()) {
+    hasAutoRetriedForCurrentRun = true;
+    setProgress('translate', 100, 'Auto retry starting', 'Running one extra pass on retryable failed batches');
+    setTimeout(() => {
+      uiLog('Auto retry pass triggered', {
+        failedApiIssues: apiErrorCount,
+        affectedLanguages: Array.from(new Set(lastApiErrorDetails.map(item => item.langCode).filter(Boolean))),
+      });
+      retryFailedBatchesOnly();
+    }, 120);
+  }
   lastApiErrors = [];
 }
 

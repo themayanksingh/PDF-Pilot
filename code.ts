@@ -71,6 +71,11 @@ interface SettingsPayload {
   debugMode?: boolean;
 }
 
+function parseTargetLanguagesPayload(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  return value.filter(item => typeof item === 'string') as string[];
+}
+
 interface TranslationNodePayload {
   mappingKey: string;
   translatedText: string;
@@ -97,6 +102,52 @@ interface OverflowInfo {
   containerWidth: number;
   containerHeight: number;
   textAutoResize: string;
+}
+
+async function loadAllFontsForTextNode(textNode: TextNode): Promise<void> {
+  const fontName = textNode.fontName;
+  if (fontName === figma.mixed) {
+    const segments = textNode.getStyledTextSegments(['fontName']);
+    const seen = new Set<string>();
+    for (const seg of segments) {
+      const fn = seg.fontName as FontName;
+      const key = `${fn.family}::${fn.style}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      await figma.loadFontAsync(fn);
+    }
+    return;
+  }
+  await figma.loadFontAsync(fontName);
+}
+
+async function decreaseTextNodeFontByOne(textNode: TextNode): Promise<void> {
+  const fontName = textNode.fontName;
+  if (fontName === figma.mixed) {
+    const segments = textNode.getStyledTextSegments(['fontName', 'fontSize']);
+    for (const seg of segments) {
+      await figma.loadFontAsync(seg.fontName as FontName);
+      const currentSize = seg.fontSize as number;
+      if (currentSize > 6) {
+        textNode.setRangeFontSize(seg.start, seg.end, currentSize - 1);
+      }
+    }
+    return;
+  }
+
+  await figma.loadFontAsync(fontName);
+  const currentSize = textNode.fontSize as number;
+  if (currentSize > 6) {
+    textNode.fontSize = currentSize - 1;
+  }
+}
+
+function expandTextNodeLayer(textNode: TextNode): void {
+  if (textNode.textAutoResize === 'NONE') {
+    textNode.textAutoResize = 'HEIGHT';
+    return;
+  }
+  textNode.resize(textNode.width + 40, textNode.height);
 }
 
 function asObject(value: unknown): Record<string, unknown> | null {
@@ -244,46 +295,82 @@ function extractTextNodes(frame: SceneNode): TextNodeInfo[] {
   return nodes;
 }
 
-function findOverflowContainer(textNode: TextNode): SceneNode | null {
+function findOverflowContainers(textNode: TextNode): SceneNode[] {
   let current: BaseNode | null = textNode.parent;
   let fallbackContainer: SceneNode | null = null;
+  const clippingContainers: SceneNode[] = [];
   while (current && current.type !== 'PAGE') {
     if (current.type === 'FRAME' || current.type === 'COMPONENT' || current.type === 'INSTANCE') {
       if (!fallbackContainer) fallbackContainer = current as SceneNode;
       const maybeClipsContent = current as SceneNode & { clipsContent?: boolean };
-      if (maybeClipsContent.clipsContent) return current as SceneNode;
+      if (maybeClipsContent.clipsContent) clippingContainers.push(current as SceneNode);
     }
     current = current.parent;
   }
-  return fallbackContainer;
+  if (clippingContainers.length > 0) return clippingContainers;
+  return fallbackContainer ? [fallbackContainer] : [];
 }
 
 function checkOverflow(textNode: TextNode, mappingKey: string, language: string, frameName: string, cloneFrameId: string): OverflowInfo | null {
-  const container = findOverflowContainer(textNode);
-  if (!container) return null;
+  const containers = findOverflowContainers(textNode);
+  if (containers.length === 0) return null;
 
   let effectiveWidth = textNode.width;
   let effectiveHeight = textNode.height;
   const originalResize = textNode.textAutoResize;
   const originalWidth = textNode.width;
   const originalHeight = textNode.height;
-  const usesTemporaryMeasure = originalResize === 'NONE';
+  const usesTemporaryMeasure = originalResize === 'NONE' || originalResize === 'TRUNCATE';
+  let selfOverflowY = 0;
+  let lineHeightClipRiskY = 0;
 
   try {
-    // For NONE resize mode, text clips without growing — measure true size safely
+    // For fixed/truncate modes, text can overflow inside its own layer.
+    // Temporarily switch to HEIGHT to measure true content height.
     if (usesTemporaryMeasure) {
       textNode.textAutoResize = 'HEIGHT';
-      effectiveHeight = textNode.height;
+      const measuredHeight = textNode.height;
+      effectiveHeight = measuredHeight;
       effectiveWidth = originalWidth;
+      selfOverflowY = Math.max(0, Math.round(measuredHeight - originalHeight));
     }
 
-    const containerRight = container.absoluteTransform[0][2] + container.width;
-    const containerBottom = container.absoluteTransform[1][2] + container.height;
     const nodeRight = textNode.absoluteTransform[0][2] + effectiveWidth;
     const nodeBottom = textNode.absoluteTransform[1][2] + effectiveHeight;
 
-    const overflowX = Math.round(Math.max(0, nodeRight - containerRight));
-    const overflowY = Math.round(Math.max(0, nodeBottom - containerBottom));
+    // Heuristic: detect glyph clipping caused by line-height set below font size.
+    try {
+      const segments = textNode.getStyledTextSegments(['fontSize', 'lineHeight']);
+      for (const seg of segments) {
+        if (typeof seg.fontSize !== 'number') continue;
+        const fontSize = seg.fontSize;
+        const lineHeight = seg.lineHeight;
+        if (!lineHeight || typeof lineHeight !== 'object' || !('unit' in lineHeight)) continue;
+
+        if (lineHeight.unit === 'PIXELS' && typeof lineHeight.value === 'number') {
+          const risk = Math.max(0, Math.round(fontSize - lineHeight.value));
+          lineHeightClipRiskY = Math.max(lineHeightClipRiskY, risk);
+        } else if (lineHeight.unit === 'PERCENT' && typeof lineHeight.value === 'number') {
+          const px = fontSize * (lineHeight.value / 100);
+          const risk = Math.max(0, Math.round(fontSize - px));
+          lineHeightClipRiskY = Math.max(lineHeightClipRiskY, risk);
+        }
+      }
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : String(error);
+      pluginWarn('Line-height overflow heuristic failed', { mappingKey, nodeId: textNode.id, error: message });
+    }
+
+    let containerOverflowX = 0;
+    let containerOverflowY = 0;
+    for (const container of containers) {
+      const containerRight = container.absoluteTransform[0][2] + container.width;
+      const containerBottom = container.absoluteTransform[1][2] + container.height;
+      containerOverflowX = Math.max(containerOverflowX, Math.round(Math.max(0, nodeRight - containerRight)));
+      containerOverflowY = Math.max(containerOverflowY, Math.round(Math.max(0, nodeBottom - containerBottom)));
+    }
+    const overflowX = containerOverflowX;
+    const overflowY = Math.max(containerOverflowY, selfOverflowY, lineHeightClipRiskY);
 
     if (overflowX > 0 || overflowY > 0) {
       return {
@@ -297,8 +384,8 @@ function checkOverflow(textNode: TextNode, mappingKey: string, language: string,
         overflowY,
         currentWidth: Math.round(effectiveWidth),
         currentHeight: Math.round(effectiveHeight),
-        containerWidth: Math.round(container.width),
-        containerHeight: Math.round(container.height),
+        containerWidth: Math.round(containers[0].width),
+        containerHeight: Math.round(containers[0].height),
         textAutoResize: originalResize,
       };
     }
@@ -393,12 +480,6 @@ function sendSelection() {
   const frames = getSelectedFrames();
   const selectionStats = getSelectionTextStats(selectedFrameNodes);
   figma.ui.postMessage({ type: 'selection-update', frames, selectionStats });
-  pluginLog('Selection stats updated', {
-    frameCount: frames.length,
-    textNodeCount: selectionStats.textNodeCount,
-    totalCharCount: selectionStats.totalCharCount,
-    truncatedNodeCount: selectionStats.truncatedNodeCount,
-  });
 }
 
 figma.on('selectionchange', sendSelection);
@@ -421,8 +502,6 @@ figma.ui.onmessage = async (rawMsg: unknown) => {
       figma.notify('No frames selected');
       return;
     }
-    pluginLog('Export started', { frameCount: frames.length, scale });
-
     const images: string[] = [];
     const allLinks: LinkInfo[][] = [];
 
@@ -437,7 +516,6 @@ figma.ui.onmessage = async (rawMsg: unknown) => {
     }
 
     figma.ui.postMessage({ type: 'export-data', images, links: allLinks });
-    pluginLog('Export data sent to UI', { frameCount: frames.length, imageCount: images.length });
   }
 
   if (type === 'export-done') {
@@ -478,15 +556,26 @@ figma.ui.onmessage = async (rawMsg: unknown) => {
     figma.notify('Settings saved ✅');
   }
 
+  if (type === 'save-target-languages') {
+    const targetLanguages = parseTargetLanguagesPayload(msg?.targetLanguages);
+    await figma.clientStorage.setAsync('target-languages', targetLanguages);
+  }
+
   if (type === 'extract-text') {
-    const frames = figma.currentPage.selection.filter(isAllowedSelectionNode);
+    const frameIdScope = Array.isArray(msg?.frameIds)
+      ? (msg?.frameIds as unknown[]).filter(item => typeof item === 'string') as string[]
+      : null;
+    const selectedFrames = figma.currentPage.selection.filter(isAllowedSelectionNode);
+    let frames: FrameNode[] = selectedFrames;
+    if (frameIdScope && frameIdScope.length > 0) {
+      const idSet = new Set(frameIdScope);
+      frames = selectedFrames.filter(frame => idSet.has(frame.id));
+    }
 
     if (frames.length === 0) {
       figma.notify('No frames selected');
       return;
     }
-    pluginLog('Extract text started', { frameCount: frames.length });
-
     const allNodes: (TextNodeInfo & { frameName: string; frameId: string })[] = [];
     for (let frameIndex = 0; frameIndex < frames.length; frameIndex++) {
       const frame = frames[frameIndex];
@@ -503,7 +592,6 @@ figma.ui.onmessage = async (rawMsg: unknown) => {
     }
 
     figma.ui.postMessage({ type: 'text-data', nodes: allNodes, frameCount: frames.length });
-    pluginLog('Extract text completed', { frameCount: frames.length, textNodeCount: allNodes.length });
   }
 
   if (type === 'apply-translations') {
@@ -542,13 +630,24 @@ figma.ui.onmessage = async (rawMsg: unknown) => {
       if (translations.length === 0) {
         errors.push({ mappingKey: '__global__', error: 'No valid translation payload received from UI' });
       }
-      pluginLog('Apply translations started', { translationItems: translations.length });
+      const layoutFrameIds = Array.isArray(msg?.layoutFrameIds)
+        ? (msg.layoutFrameIds as unknown[]).filter((v): v is string => typeof v === 'string')
+        : [];
 
+      // Use explicit language order from UI so retry passes position clones consistently.
+      const languageOrder = Array.isArray(msg?.languageOrder)
+        ? (msg.languageOrder as unknown[]).filter((v): v is string => typeof v === 'string')
+        : [];
       const languageIndices = new Map<string, number>();
-      let langCounter = 0;
+      for (let i = 0; i < languageOrder.length; i++) {
+        languageIndices.set(languageOrder[i], i);
+      }
+      // Fallback: assign indices for any languages not in the explicit order.
+      let langCounter = languageOrder.length;
       for (const t of translations) {
-        if (!languageIndices.has(t.language)) {
-          languageIndices.set(t.language, langCounter++);
+        // languageOrder contains codes (e.g. 'fr', 'ar'), so look up by languageCode.
+        if (!languageIndices.has(t.languageCode)) {
+          languageIndices.set(t.languageCode, langCounter++);
         }
       }
 
@@ -562,11 +661,25 @@ figma.ui.onmessage = async (rawMsg: unknown) => {
       }
 
       const sourceFrames = Array.from(sourceFramesById.values());
-      const sourceTop = sourceFrames.length > 0 ? Math.min(...sourceFrames.map(frame => frame.y)) : 0;
-      const sourceBottom = sourceFrames.length > 0 ? Math.max(...sourceFrames.map(frame => frame.y + frame.height)) : 0;
+      const layoutAnchorFrames: FrameNode[] = [];
+      if (layoutFrameIds.length > 0) {
+        for (const frameId of layoutFrameIds) {
+          const node = await figma.getNodeByIdAsync(frameId);
+          if (node && node.type === 'FRAME') layoutAnchorFrames.push(node);
+        }
+      }
+      const framesForLayout = layoutAnchorFrames.length > 0 ? layoutAnchorFrames : sourceFrames;
+      const sourceTop = framesForLayout.length > 0 ? Math.min(...framesForLayout.map(frame => frame.y)) : 0;
+      const sourceBottom = framesForLayout.length > 0 ? Math.max(...framesForLayout.map(frame => frame.y + frame.height)) : 0;
       const sourceRowHeight = Math.max(0, sourceBottom - sourceTop);
       const rowGap = 120;
       const rowStride = sourceRowHeight + rowGap;
+      pluginLog('Clone layout anchors', {
+        translationFrameCount: sourceFrames.length,
+        layoutAnchorFrameCount: layoutAnchorFrames.length,
+        sourceRowHeight: Math.round(sourceRowHeight),
+        rowStride: Math.round(rowStride),
+      });
       const totalTranslationUnits = Math.max(1, translations.length);
       let completedTranslationUnits = 0;
 
@@ -574,18 +687,23 @@ figma.ui.onmessage = async (rawMsg: unknown) => {
         const sourceFrame = sourceFramesById.get(translation.sourceFrameId);
         if (!sourceFrame) continue;
 
+        // Remove any existing clone for this frame+language (e.g. from a previous failed run).
+        const expectedCloneName = `${sourceFrame.name} — ${translation.language}`;
+        const parent = sourceFrame.parent;
+        if (parent && 'children' in parent) {
+          for (const child of [...parent.children]) {
+            if (child.name === expectedCloneName && child.id !== sourceFrame.id) {
+              child.remove();
+            }
+          }
+        }
+
         const clone = sourceFrame.clone();
-        const langIdx = languageIndices.get(translation.language)!;
+        const langIdx = languageIndices.get(translation.languageCode) ?? languageIndices.get(translation.language) ?? 0;
         clone.x = sourceFrame.x;
         clone.y = sourceFrame.y + rowStride * (langIdx + 1);
-        clone.name = `${sourceFrame.name} — ${translation.language}`;
+        clone.name = expectedCloneName;
         totalFramesCreated++;
-        pluginLog('Applying translation item', {
-          language: translation.language,
-          sourceFrameId: translation.sourceFrameId,
-          nodeCount: translation.nodes.length,
-        });
-
         for (const nodeTranslation of translation.nodes) {
           if (!nodeTranslation.mappingKey.includes('::')) {
             errors.push({ mappingKey: nodeTranslation.mappingKey, error: 'Invalid mappingKey format in payload' });
@@ -676,15 +794,6 @@ figma.ui.onmessage = async (rawMsg: unknown) => {
         detectOverflows(clone as SceneNode, clone as SceneNode);
         totalOverflowScannedNodes += scannedInClone;
         if (foundInClone > 0) clonesWithOverflow++;
-        pluginLog('Overflow scan completed for clone', {
-          language: translation.language,
-          sourceFrameId: translation.sourceFrameId,
-          cloneFrameId: clone.id,
-          scannedTextNodes: scannedInClone,
-          overflowCount: foundInClone,
-          status: foundInClone > 0 ? 'issues-found' : 'no-overflow',
-        });
-
         completedTranslationUnits++;
         figma.ui.postMessage({
           type: 'translation-apply-progress',
@@ -700,18 +809,8 @@ figma.ui.onmessage = async (rawMsg: unknown) => {
       pluginError('Apply translations crashed', { error: message });
     }
 
-    pluginLog('Phase 2 overflow detection summary', {
-      phase2Active: true,
-      created: totalFramesCreated,
-      scannedTextNodes: totalOverflowScannedNodes,
-      overflowCount: overflows.length,
-      clonesWithOverflow,
-      clonesWithoutOverflow: Math.max(0, totalFramesCreated - clonesWithOverflow),
-      status: overflows.length > 0 ? 'issues-found' : 'no-overflow',
-    });
     figma.ui.postMessage({ type: 'translation-complete', created: totalFramesCreated, errors, overflows });
     figma.notify(errors.length > 0 ? 'Translation completed with issues ⚠️' : 'Translation complete! ✅');
-    pluginLog('Apply translations finished', { created: totalFramesCreated, errorCount: errors.length, overflowCount: overflows.length });
   }
 
   if (type === 'decrease-font') {
@@ -721,23 +820,7 @@ figma.ui.onmessage = async (rawMsg: unknown) => {
     if (!node || node.type !== 'TEXT') return;
     const textNode = node as TextNode;
     try {
-      const fontName = textNode.fontName;
-      if (fontName === figma.mixed) {
-        const segments = textNode.getStyledTextSegments(['fontName', 'fontSize']);
-        for (const seg of segments) {
-          await figma.loadFontAsync(seg.fontName as FontName);
-          const currentSize = seg.fontSize as number;
-          if (currentSize > 6) {
-            textNode.setRangeFontSize(seg.start, seg.end, currentSize - 1);
-          }
-        }
-      } else {
-        await figma.loadFontAsync(fontName);
-        const currentSize = textNode.fontSize as number;
-        if (currentSize > 6) {
-          textNode.fontSize = currentSize - 1;
-        }
-      }
+      await decreaseTextNodeFontByOne(textNode);
       figma.ui.postMessage({ type: 'audit-action-done', action: 'decrease-font', nodeId });
     } catch (e: unknown) {
       const message = e instanceof Error ? e.message : String(e);
@@ -752,30 +835,29 @@ figma.ui.onmessage = async (rawMsg: unknown) => {
     if (!node || node.type !== 'TEXT') return;
     const textNode = node as TextNode;
     try {
-      const fontName = textNode.fontName;
-      if (fontName === figma.mixed) {
-        const segments = textNode.getStyledTextSegments(['fontName']);
-        const seen = new Set<string>();
-        for (const seg of segments) {
-          const fn = seg.fontName as FontName;
-          const key = `${fn.family}::${fn.style}`;
-          if (!seen.has(key)) {
-            await figma.loadFontAsync(fn);
-            seen.add(key);
-          }
-        }
-      } else {
-        await figma.loadFontAsync(fontName);
-      }
-      if (textNode.textAutoResize === 'NONE') {
-        textNode.textAutoResize = 'HEIGHT';
-      } else {
-        textNode.resize(textNode.width + 40, textNode.height);
-      }
+      await loadAllFontsForTextNode(textNode);
+      expandTextNodeLayer(textNode);
       figma.ui.postMessage({ type: 'audit-action-done', action: 'expand-layer', nodeId });
     } catch (e: unknown) {
       const message = e instanceof Error ? e.message : String(e);
       figma.ui.postMessage({ type: 'audit-action-error', action: 'expand-layer', nodeId, error: message });
+    }
+  }
+
+  if (type === 'auto-fix-overflow') {
+    const nodeId = asString(msg?.nodeId);
+    if (!nodeId) return;
+    const node = await figma.getNodeByIdAsync(nodeId);
+    if (!node || node.type !== 'TEXT') return;
+    const textNode = node as TextNode;
+    try {
+      await loadAllFontsForTextNode(textNode);
+      await decreaseTextNodeFontByOne(textNode);
+      expandTextNodeLayer(textNode);
+      figma.ui.postMessage({ type: 'audit-action-done', action: 'auto-fix-overflow', nodeId });
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : String(e);
+      figma.ui.postMessage({ type: 'audit-action-error', action: 'auto-fix-overflow', nodeId, error: message });
     }
   }
 
