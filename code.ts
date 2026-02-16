@@ -71,6 +71,38 @@ interface SettingsPayload {
   debugMode?: boolean;
 }
 
+interface ModelSpendBreakdown {
+  model: string;
+  prompt_tokens: number;
+  completion_tokens: number;
+  total_tokens: number;
+  cost_usd: number;
+  cost_inr: number;
+}
+
+interface SpendRunRecord {
+  run_id: string;
+  last_run_at: string;
+  prompt_tokens: number;
+  completion_tokens: number;
+  total_tokens: number;
+  total_cost_usd: number;
+  total_cost_inr: number;
+  fx_rate_usd_inr: number | null;
+  model_breakdown: ModelSpendBreakdown[];
+}
+
+interface SpendSummary {
+  total_cost_usd: number;
+  total_cost_inr: number;
+  total_tokens: number;
+  count: number;
+}
+
+const SPEND_RECENT_RUNS_KEY = 'spend-runs-v2';
+const SPEND_ALL_TIME_SUMMARY_KEY = 'spend-all-time-summary-v1';
+const SPEND_RECENT_RUN_LIMIT = 10;
+
 function parseTargetLanguagesPayload(value: unknown): string[] {
   if (!Array.isArray(value)) return [];
   return value.filter(item => typeof item === 'string') as string[];
@@ -163,6 +195,19 @@ function asBoolean(value: unknown): boolean | null {
   return typeof value === 'boolean' ? value : null;
 }
 
+function asNumber(value: unknown): number | null {
+  return typeof value === 'number' && Number.isFinite(value) ? value : null;
+}
+
+function numberOr(value: unknown, fallback: number): number {
+  const numeric = asNumber(value);
+  return numeric === null ? fallback : numeric;
+}
+
+function asArray(value: unknown): unknown[] {
+  return Array.isArray(value) ? value : [];
+}
+
 function parseSettingsPayload(value: unknown): SettingsPayload {
   const obj = asObject(value);
   if (!obj) return {};
@@ -179,6 +224,97 @@ function parseSettingsPayload(value: unknown): SettingsPayload {
     targetLanguages,
     debugMode: asBoolean(obj.debugMode) ?? undefined,
   };
+}
+
+function emptySpendSummary(): SpendSummary {
+  return {
+    total_cost_usd: 0,
+    total_cost_inr: 0,
+    total_tokens: 0,
+    count: 0,
+  };
+}
+
+function normalizeModelSpendBreakdown(entry: unknown): ModelSpendBreakdown | null {
+  const obj = asObject(entry);
+  if (!obj) return null;
+  const model = asString(obj.model) || asString(obj.modelName) || '';
+  if (!model) return null;
+  const promptTokens = numberOr(obj.prompt_tokens ?? obj.promptTokens, 0);
+  const completionTokens = numberOr(obj.completion_tokens ?? obj.completionTokens, 0);
+  const totalTokens = numberOr(obj.total_tokens ?? obj.totalTokens, promptTokens + completionTokens);
+  return {
+    model,
+    prompt_tokens: promptTokens,
+    completion_tokens: completionTokens,
+    total_tokens: totalTokens,
+    cost_usd: numberOr(obj.cost_usd ?? obj.costUsd, 0),
+    cost_inr: numberOr(obj.cost_inr ?? obj.costInr, 0),
+  };
+}
+
+function normalizeSpendRunRecord(value: unknown): SpendRunRecord | null {
+  const obj = asObject(value);
+  if (!obj) return null;
+  const runId = asString(obj.run_id) || asString(obj.runId) || `run-${Date.now().toString(36)}`;
+  const runAt = asString(obj.last_run_at) || asString(obj.lastRunAt) || new Date().toISOString();
+  const promptTokens = numberOr(obj.prompt_tokens ?? obj.promptTokens, 0);
+  const completionTokens = numberOr(obj.completion_tokens ?? obj.completionTokens, 0);
+  const totalTokens = numberOr(obj.total_tokens ?? obj.totalTokens, promptTokens + completionTokens);
+  const fxRate = asNumber(obj.fx_rate_usd_inr ?? obj.fxRateUsdInr);
+  const normalizedBreakdown = asArray(obj.model_breakdown ?? obj.modelBreakdown)
+    .map(normalizeModelSpendBreakdown)
+    .filter((item): item is ModelSpendBreakdown => item !== null);
+  return {
+    run_id: runId,
+    last_run_at: runAt,
+    prompt_tokens: promptTokens,
+    completion_tokens: completionTokens,
+    total_tokens: totalTokens,
+    total_cost_usd: numberOr(obj.total_cost_usd ?? obj.totalCostUsd, 0),
+    total_cost_inr: numberOr(obj.total_cost_inr ?? obj.totalCostInr, 0),
+    fx_rate_usd_inr: fxRate === null ? null : fxRate,
+    model_breakdown: normalizedBreakdown,
+  };
+}
+
+function mergeSummaryWithRun(summary: SpendSummary, run: SpendRunRecord): SpendSummary {
+  return {
+    total_cost_usd: summary.total_cost_usd + run.total_cost_usd,
+    total_cost_inr: summary.total_cost_inr + run.total_cost_inr,
+    total_tokens: summary.total_tokens + run.total_tokens,
+    count: summary.count + 1,
+  };
+}
+
+function normalizeSpendSummary(value: unknown): SpendSummary {
+  const obj = asObject(value);
+  if (!obj) return emptySpendSummary();
+  return {
+    total_cost_usd: numberOr(obj.total_cost_usd ?? obj.totalCostUsd, 0),
+    total_cost_inr: numberOr(obj.total_cost_inr ?? obj.totalCostInr, 0),
+    total_tokens: numberOr(obj.total_tokens ?? obj.totalTokens, 0),
+    count: numberOr(obj.count, 0),
+  };
+}
+
+function getSummaryForRuns(runs: SpendRunRecord[]): SpendSummary {
+  return runs.reduce((summary, run) => mergeSummaryWithRun(summary, run), emptySpendSummary());
+}
+
+async function loadRecentSpendRuns(): Promise<SpendRunRecord[]> {
+  const stored = await figma.clientStorage.getAsync(SPEND_RECENT_RUNS_KEY);
+  const normalized = asArray(stored)
+    .map(normalizeSpendRunRecord)
+    .filter((item): item is SpendRunRecord => item !== null);
+  return normalized
+    .sort((a, b) => Date.parse(b.last_run_at) - Date.parse(a.last_run_at))
+    .slice(0, SPEND_RECENT_RUN_LIMIT);
+}
+
+async function loadAllTimeSpendSummary(): Promise<SpendSummary> {
+  const stored = await figma.clientStorage.getAsync(SPEND_ALL_TIME_SUMMARY_KEY);
+  return normalizeSpendSummary(stored);
 }
 
 function parseTranslationPayloads(value: unknown): TranslationPayload[] {
@@ -561,6 +697,36 @@ figma.ui.onmessage = async (rawMsg: unknown) => {
     await figma.clientStorage.setAsync('target-languages', targetLanguages);
   }
 
+  if (type === 'get-dashboard-data') {
+    const recentRuns = await loadRecentSpendRuns();
+    const summaryLast10 = getSummaryForRuns(recentRuns);
+    const summaryAllTime = await loadAllTimeSpendSummary();
+    figma.ui.postMessage({
+      type: 'dashboard-data',
+      recent_runs: recentRuns,
+      summary_last_10: summaryLast10,
+      summary_all_time: summaryAllTime,
+    });
+  }
+
+  if (type === 'record-run-spend') {
+    const runRecord = normalizeSpendRunRecord(msg?.run);
+    if (!runRecord) return;
+    const existingRuns = await loadRecentSpendRuns();
+    const deduped = existingRuns.filter(run => run.run_id !== runRecord.run_id);
+    const recentRuns = [runRecord, ...deduped].slice(0, SPEND_RECENT_RUN_LIMIT);
+    await figma.clientStorage.setAsync(SPEND_RECENT_RUNS_KEY, recentRuns);
+    const allTimeSummary = await loadAllTimeSpendSummary();
+    const nextAllTimeSummary = mergeSummaryWithRun(allTimeSummary, runRecord);
+    await figma.clientStorage.setAsync(SPEND_ALL_TIME_SUMMARY_KEY, nextAllTimeSummary);
+    figma.ui.postMessage({
+      type: 'dashboard-data',
+      recent_runs: recentRuns,
+      summary_last_10: getSummaryForRuns(recentRuns),
+      summary_all_time: nextAllTimeSummary,
+    });
+  }
+
   if (type === 'extract-text') {
     const frameIdScope = Array.isArray(msg?.frameIds)
       ? (msg?.frameIds as unknown[]).filter(item => typeof item === 'string') as string[]
@@ -598,8 +764,8 @@ figma.ui.onmessage = async (rawMsg: unknown) => {
     const errors: { mappingKey: string; error: string }[] = [];
     const overflows: OverflowInfo[] = [];
     let totalFramesCreated = 0;
-    let totalOverflowScannedNodes = 0;
-    let clonesWithOverflow = 0;
+    let _totalOverflowScannedNodes = 0;
+    let _clonesWithOverflow = 0;
     try {
       const loadedFontKeys = new Set<string>();
       const getFontKey = (font: FontName) => `${font.family}::${font.style}`;
@@ -792,8 +958,8 @@ figma.ui.onmessage = async (rawMsg: unknown) => {
           }
         };
         detectOverflows(clone as SceneNode, clone as SceneNode);
-        totalOverflowScannedNodes += scannedInClone;
-        if (foundInClone > 0) clonesWithOverflow++;
+        _totalOverflowScannedNodes += scannedInClone;
+        if (foundInClone > 0) _clonesWithOverflow++;
         completedTranslationUnits++;
         figma.ui.postMessage({
           type: 'translation-apply-progress',

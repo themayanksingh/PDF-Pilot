@@ -734,6 +734,42 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
     cursor: pointer;
     padding: 0;
   }
+  .run-feed {
+    margin-top: 10px;
+    border: 1px solid #333;
+    border-radius: 8px;
+    background: #202020;
+    padding: 10px;
+  }
+  .run-feed-title {
+    font-size: 12px;
+    font-weight: 600;
+    color: #e6e6e6;
+    margin-bottom: 8px;
+  }
+  .run-feed-empty {
+    font-size: 11px;
+    color: #999;
+  }
+  .run-feed-list {
+    display: grid;
+    gap: 8px;
+  }
+  .run-feed-item {
+    border: 1px solid #373737;
+    border-radius: 6px;
+    background: #272727;
+    padding: 8px;
+  }
+  .run-feed-item-time {
+    font-size: 11px;
+    color: #d9d9d9;
+    margin-bottom: 2px;
+  }
+  .run-feed-item-meta {
+    font-size: 11px;
+    color: #b6b6b6;
+  }
   @media (max-width: 520px) {
     .lang-config-row {
       grid-template-columns: 1fr;
@@ -969,7 +1005,9 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
   .modal-overlay.visible { display: flex; }
   .modal {
     background: #222; border-radius: 12px;
-    padding: 20px; width: 340px; max-width: 95%;
+    padding: 20px; width: 360px; max-width: 95%;
+    max-height: 88vh;
+    overflow-y: auto;
     box-shadow: 0 8px 32px rgba(0,0,0,0.5);
   }
   .modal.debug {
@@ -1020,6 +1058,20 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
   .field-select:focus { border-color: #888; }
   .api-key-row { display: flex; gap: 6px; }
   .api-key-row input { flex: 1; }
+  .key-clear-btn {
+    background: #1a1a1a;
+    border: 1px solid #444;
+    border-radius: 6px;
+    color: #bdbdbd;
+    padding: 0 10px;
+    font-size: 11px;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .key-clear-btn:hover {
+    border-color: #666;
+    color: #fff;
+  }
   .toggle-vis-btn {
     background: #1a1a1a; border: 1px solid #444; border-radius: 6px;
     color: #888; padding: 0; cursor: pointer; font-size: 12px;
@@ -1046,6 +1098,63 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
   .btn-save:hover { background: #e0e0e0; }
   .btn-cancel { background: #333; color: #ccc; }
   .btn-cancel:hover { background: #444; }
+  .dashboard-section-title {
+    margin: 8px 0 10px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #efefef;
+  }
+  .dashboard-summaries {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+  .dashboard-summary-card {
+    border: 1px solid #393939;
+    border-radius: 8px;
+    background: #1e1e1e;
+    padding: 8px;
+  }
+  .dashboard-summary-title {
+    font-size: 11px;
+    color: #b8b8b8;
+    margin-bottom: 4px;
+  }
+  .dashboard-summary-line {
+    font-size: 12px;
+    color: #f1f1f1;
+  }
+  .dashboard-summary-muted {
+    color: #adadad;
+    font-size: 11px;
+  }
+  .dashboard-runs-title {
+    margin: 10px 0 6px;
+    font-size: 12px;
+    color: #e7e7e7;
+    font-weight: 600;
+  }
+  .dashboard-runs-list {
+    display: grid;
+    gap: 6px;
+    max-height: 180px;
+    overflow-y: auto;
+  }
+  .dashboard-run-item {
+    border: 1px solid #363636;
+    border-radius: 6px;
+    background: #272727;
+    padding: 8px;
+  }
+  .dashboard-run-time {
+    font-size: 11px;
+    color: #d6d6d6;
+    margin-bottom: 2px;
+  }
+  .dashboard-run-meta {
+    font-size: 11px;
+    color: #b8b8b8;
+  }
   .debug-toolbar {
     display: flex;
     gap: 8px;
@@ -1088,10 +1197,11 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
   <button class="tab-btn active" data-tab="translate">Translate</button>
   <button class="tab-btn" data-tab="export">Export PDF</button>
   <div class="spacer"></div>
-  <button class="icon-btn" id="gearBtn" title="Settings" aria-label="Settings">
+  <button class="icon-btn" id="dashboardBtn" title="Dashboard" aria-label="Dashboard">
     <svg viewBox="0 0 24 24" aria-hidden="true">
-      <circle cx="12" cy="12" r="3"></circle>
-      <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33a1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h.08a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v.08a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+      <path d="M3 6.5h18"></path>
+      <path d="M3 12h18"></path>
+      <path d="M3 17.5h18"></path>
     </svg>
   </button>
   <button class="icon-btn hidden" id="debugLogBtn" title="Debug Logs" aria-label="Debug Logs">
@@ -1186,7 +1296,13 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
 
   <div class="helper-callout hidden" id="translateApiHint">
     <span>API key is required for Translate.</span>
-    <button type="button" class="helper-link-btn" id="openSettingsLink">Open Settings</button>
+    <button type="button" class="helper-link-btn" id="openDashboardLink">Open Dashboard</button>
+  </div>
+
+  <div class="run-feed" id="runFeed">
+    <div class="run-feed-title">Run Spend</div>
+    <div class="run-feed-empty" id="runFeedEmpty">No runs yet. Spend appears here after each translation run.</div>
+    <div class="run-feed-list" id="runFeedList"></div>
   </div>
 
   <button class="action-btn disabled translate-progress-btn" id="translateBtn">Select frames to translate</button>
@@ -1215,14 +1331,15 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
   </details>
 </div>
 
-<!-- Settings modal -->
-<div class="modal-overlay" id="settingsModal">
+<!-- Dashboard modal -->
+<div class="modal-overlay" id="dashboardModal">
   <div class="modal">
     <div class="modal-header">
-      <h3>Settings</h3>
-      <button class="modal-close" id="modalClose">✕</button>
+      <h3>Dashboard</h3>
+      <button class="modal-close" id="dashboardCloseBtn">✕</button>
     </div>
 
+    <div class="dashboard-section-title">API Key Management</div>
     <div class="field-group">
       <div class="field-label">AI Provider</div>
       <select class="field-select" id="settingsProvider">
@@ -1238,6 +1355,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
         <button class="toggle-vis-btn" id="toggleGeminiKey" type="button" aria-label="Show Gemini API key">
           <span class="toggle-vis-icon" aria-hidden="true"></span>
         </button>
+        <button class="key-clear-btn" id="clearGeminiKeyBtn" type="button">Remove</button>
       </div>
     </div>
 
@@ -1248,6 +1366,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
         <button class="toggle-vis-btn" id="toggleOpenaiKey" type="button" aria-label="Show OpenAI API key">
           <span class="toggle-vis-icon" aria-hidden="true"></span>
         </button>
+        <button class="key-clear-btn" id="clearOpenaiKeyBtn" type="button">Remove</button>
       </div>
     </div>
 
@@ -1277,9 +1396,25 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
     </div>
 
     <div class="modal-actions">
-      <button class="btn-cancel" id="settingsCancelBtn">Cancel</button>
+      <button class="btn-cancel" id="dashboardCancelBtn">Cancel</button>
       <button class="btn-save" id="settingsSaveBtn">Save</button>
     </div>
+
+    <div class="dashboard-section-title">Spend Analytics</div>
+    <div class="dashboard-summaries">
+      <div class="dashboard-summary-card">
+        <div class="dashboard-summary-title">Last 10 Totals</div>
+        <div class="dashboard-summary-line" id="summaryLast10Cost">$0.00 · ₹0.00</div>
+        <div class="dashboard-summary-line dashboard-summary-muted" id="summaryLast10Meta">0 runs · 0 tokens</div>
+      </div>
+      <div class="dashboard-summary-card">
+        <div class="dashboard-summary-title">All-time Totals</div>
+        <div class="dashboard-summary-line" id="summaryAllTimeCost">$0.00 · ₹0.00</div>
+        <div class="dashboard-summary-line dashboard-summary-muted" id="summaryAllTimeMeta">0 runs · 0 tokens</div>
+      </div>
+    </div>
+    <div class="dashboard-runs-title">Last 10 Runs</div>
+    <div class="dashboard-runs-list" id="dashboardRunsList"></div>
   </div>
 </div>
 
@@ -1810,23 +1945,34 @@ async function patchIncompleteTranslations(texts, providerName, langName, callFn
   const batchByKey = new Map(texts.map(item => [item.mappingKey, item]));
   let collected = [];
   let remaining = texts;
+  let usage = { prompt_tokens: 0, completion_tokens: 0, total_tokens: 0 };
 
   for (let attempt = 0; attempt <= PATCH_MAX_ATTEMPTS; attempt++) {
-    const rawResult = await callFn(remaining);
+    const callResult = await callFn(remaining);
+    const callUsage = callResult && typeof callResult === 'object' ? callResult.usage : null;
+    if (callUsage && typeof callUsage === 'object') {
+      usage.prompt_tokens += safeNumber(Number(callUsage.prompt_tokens), 0);
+      usage.completion_tokens += safeNumber(Number(callUsage.completion_tokens), 0);
+      usage.total_tokens += safeNumber(
+        Number(callUsage.total_tokens),
+        safeNumber(Number(callUsage.prompt_tokens), 0) + safeNumber(Number(callUsage.completion_tokens), 0)
+      );
+    }
+    const rawResult = callResult && typeof callResult === 'object' ? callResult.translations : [];
     try {
       const result = normalizeTranslations(rawResult, remaining, providerName, langName);
       collected.push(...result);
-      return collected;
+      return { translations: collected, usage };
     } catch (e) {
       if (!(e instanceof IncompleteTranslationError)) throw e;
       collected.push(...e.partial);
       const missingBatch = e.missingKeys.map(key => batchByKey.get(key)).filter(Boolean);
-      if (missingBatch.length === 0) return collected;
+      if (missingBatch.length === 0) return { translations: collected, usage };
       if (attempt === PATCH_MAX_ATTEMPTS) throw e;
       remaining = missingBatch;
     }
   }
-  return collected;
+  return { translations: collected, usage };
 }
 
 // ── Provider registry ──
@@ -1881,7 +2027,15 @@ Respond with ONLY a valid JSON array, no markdown, no explanation:
         const data = await res.json();
         const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
         if (!text) throw new Error('No response from Gemini');
-        return JSON.parse(text);
+        const usageMeta = data.usageMetadata || {};
+        return {
+          translations: JSON.parse(text),
+          usage: {
+            prompt_tokens: safeNumber(Number(usageMeta.promptTokenCount), 0),
+            completion_tokens: safeNumber(Number(usageMeta.candidatesTokenCount), 0),
+            total_tokens: safeNumber(Number(usageMeta.totalTokenCount), 0),
+          },
+        };
       }
 
       return patchIncompleteTranslations(texts, 'Gemini', langName, geminiCall);
@@ -1925,7 +2079,15 @@ ${JSON.stringify(batch.map(t => ({ mappingKey: t.mappingKey, text: t.text, charB
         const text = data.choices?.[0]?.message?.content;
         if (!text) throw new Error('No response from OpenAI');
         const parsed = JSON.parse(text);
-        return Array.isArray(parsed) ? parsed : parsed.translations;
+        const usage = data.usage || {};
+        return {
+          translations: Array.isArray(parsed) ? parsed : parsed.translations,
+          usage: {
+            prompt_tokens: safeNumber(Number(usage.prompt_tokens), 0),
+            completion_tokens: safeNumber(Number(usage.completion_tokens), 0),
+            total_tokens: safeNumber(Number(usage.total_tokens), 0),
+          },
+        };
       }
 
       return patchIncompleteTranslations(texts, 'OpenAI', langName, openaiCall);
@@ -1944,7 +2106,15 @@ const translateFramesList = document.getElementById('translateFramesList');
 const translateBtn = document.getElementById('translateBtn');
 const debugLogBtn = document.getElementById('debugLogBtn');
 const translateApiHint = document.getElementById('translateApiHint');
-const openSettingsLink = document.getElementById('openSettingsLink');
+const openDashboardLink = document.getElementById('openDashboardLink');
+const runFeedEmpty = document.getElementById('runFeedEmpty');
+const runFeedList = document.getElementById('runFeedList');
+const dashboardModal = document.getElementById('dashboardModal');
+const dashboardRunsList = document.getElementById('dashboardRunsList');
+const summaryLast10Cost = document.getElementById('summaryLast10Cost');
+const summaryLast10Meta = document.getElementById('summaryLast10Meta');
+const summaryAllTimeCost = document.getElementById('summaryAllTimeCost');
+const summaryAllTimeMeta = document.getElementById('summaryAllTimeMeta');
 const sourceLangInput = document.getElementById('sourceLang');
 const sourceLangLabel = document.getElementById('sourceLangLabel');
 const langAccordionLabel = document.getElementById('langAccordionLabel');
@@ -1976,10 +2146,258 @@ const QUOTA_TIER_LABELS = {
   tier2: 'Paid Tier 2',
   tier3: 'Paid Tier 3',
 };
+const USD_INR_CACHE_KEY = 'fx-usd-inr-cache-v1';
+const DEFAULT_FX_CACHE_TTL_SECONDS = 86400;
+const MODEL_PRICING_USD_PER_1M_TOKENS = {
+  'gemini-2.5-flash-lite': { prompt: 0.1, completion: 0.4 },
+  'gpt-5.2': { prompt: 1.25, completion: 10 },
+  'gpt-5-mini': { prompt: 0.25, completion: 2 },
+};
+let spendDashboardState = {
+  recent_runs: [],
+  summary_last_10: { total_cost_usd: 0, total_cost_inr: 0, total_tokens: 0, count: 0 },
+  summary_all_time: { total_cost_usd: 0, total_cost_inr: 0, total_tokens: 0, count: 0 },
+};
 
 function getQuotaTierLabel(value) {
   const key = normalizeQuotaProfile(value);
   return QUOTA_TIER_LABELS[key] || 'Auto';
+}
+
+function safeNumber(value, fallback = 0) {
+  return Number.isFinite(value) ? value : fallback;
+}
+
+function formatUsd(value) {
+  return `$${safeNumber(value).toFixed(4)}`;
+}
+
+function formatInr(value) {
+  return `₹${safeNumber(value).toFixed(2)}`;
+}
+
+function formatTokenCount(value) {
+  return `${Math.round(safeNumber(value)).toLocaleString()} tokens`;
+}
+
+function formatRunDateTime(value) {
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return 'Unknown run time';
+  return parsed.toLocaleString();
+}
+
+function normalizeSpendSummary(summary) {
+  if (!summary || typeof summary !== 'object') {
+    return { total_cost_usd: 0, total_cost_inr: 0, total_tokens: 0, count: 0 };
+  }
+  return {
+    total_cost_usd: safeNumber(Number(summary.total_cost_usd), 0),
+    total_cost_inr: safeNumber(Number(summary.total_cost_inr), 0),
+    total_tokens: safeNumber(Number(summary.total_tokens), 0),
+    count: safeNumber(Number(summary.count), 0),
+  };
+}
+
+function normalizeModelBreakdown(item) {
+  if (!item || typeof item !== 'object') return null;
+  const model = typeof item.model === 'string' ? item.model : '';
+  if (!model) return null;
+  return {
+    model,
+    prompt_tokens: safeNumber(Number(item.prompt_tokens), 0),
+    completion_tokens: safeNumber(Number(item.completion_tokens), 0),
+    total_tokens: safeNumber(Number(item.total_tokens), 0),
+    cost_usd: safeNumber(Number(item.cost_usd), 0),
+    cost_inr: safeNumber(Number(item.cost_inr), 0),
+  };
+}
+
+function normalizeSpendRunRecord(record) {
+  if (!record || typeof record !== 'object') return null;
+  const runId = typeof record.run_id === 'string' ? record.run_id : '';
+  const lastRunAt = typeof record.last_run_at === 'string' ? record.last_run_at : '';
+  if (!runId || !lastRunAt) return null;
+  return {
+    run_id: runId,
+    last_run_at: lastRunAt,
+    prompt_tokens: safeNumber(Number(record.prompt_tokens), 0),
+    completion_tokens: safeNumber(Number(record.completion_tokens), 0),
+    total_tokens: safeNumber(Number(record.total_tokens), 0),
+    total_cost_usd: safeNumber(Number(record.total_cost_usd), 0),
+    total_cost_inr: safeNumber(Number(record.total_cost_inr), 0),
+    fx_rate_usd_inr: record.fx_rate_usd_inr === null ? null : safeNumber(Number(record.fx_rate_usd_inr), 0),
+    model_breakdown: Array.isArray(record.model_breakdown)
+      ? record.model_breakdown.map(normalizeModelBreakdown).filter(Boolean)
+      : [],
+  };
+}
+
+function normalizeDashboardData(data) {
+  const source = data && typeof data === 'object' ? data : {};
+  const recentRuns = Array.isArray(source.recent_runs)
+    ? source.recent_runs.map(normalizeSpendRunRecord).filter(Boolean)
+    : [];
+  return {
+    recent_runs: recentRuns,
+    summary_last_10: normalizeSpendSummary(source.summary_last_10),
+    summary_all_time: normalizeSpendSummary(source.summary_all_time),
+  };
+}
+
+function renderRunFeed() {
+  const recentRuns = spendDashboardState.recent_runs;
+  runFeedList.innerHTML = '';
+  if (!recentRuns || recentRuns.length === 0) {
+    runFeedEmpty.style.display = '';
+    return;
+  }
+  runFeedEmpty.style.display = 'none';
+  recentRuns.slice(0, 10).forEach(run => {
+    const item = document.createElement('div');
+    item.className = 'run-feed-item';
+    const time = document.createElement('div');
+    time.className = 'run-feed-item-time';
+    time.textContent = formatRunDateTime(run.last_run_at);
+    const meta = document.createElement('div');
+    meta.className = 'run-feed-item-meta';
+    meta.textContent = `${formatTokenCount(run.total_tokens)} · ${formatUsd(run.total_cost_usd)} · ${formatInr(run.total_cost_inr)}`;
+    item.appendChild(time);
+    item.appendChild(meta);
+    runFeedList.appendChild(item);
+  });
+}
+
+function renderDashboardSpend() {
+  const last10 = spendDashboardState.summary_last_10;
+  const allTime = spendDashboardState.summary_all_time;
+  summaryLast10Cost.textContent = `${formatUsd(last10.total_cost_usd)} · ${formatInr(last10.total_cost_inr)}`;
+  summaryLast10Meta.textContent = `${Math.round(last10.count)} runs · ${Math.round(last10.total_tokens).toLocaleString()} tokens`;
+  summaryAllTimeCost.textContent = `${formatUsd(allTime.total_cost_usd)} · ${formatInr(allTime.total_cost_inr)}`;
+  summaryAllTimeMeta.textContent = `${Math.round(allTime.count)} runs · ${Math.round(allTime.total_tokens).toLocaleString()} tokens`;
+
+  dashboardRunsList.innerHTML = '';
+  if (spendDashboardState.recent_runs.length === 0) {
+    const empty = document.createElement('div');
+    empty.className = 'dashboard-run-meta';
+    empty.textContent = 'No runs recorded yet.';
+    dashboardRunsList.appendChild(empty);
+    return;
+  }
+  spendDashboardState.recent_runs.forEach(run => {
+    const item = document.createElement('div');
+    item.className = 'dashboard-run-item';
+    const time = document.createElement('div');
+    time.className = 'dashboard-run-time';
+    time.textContent = formatRunDateTime(run.last_run_at);
+    const meta = document.createElement('div');
+    meta.className = 'dashboard-run-meta';
+    meta.textContent = `${formatUsd(run.total_cost_usd)} · ${formatInr(run.total_cost_inr)} · ${formatTokenCount(run.total_tokens)}`;
+    item.appendChild(time);
+    item.appendChild(meta);
+    dashboardRunsList.appendChild(item);
+  });
+}
+
+function applyDashboardData(data) {
+  spendDashboardState = normalizeDashboardData(data);
+  renderRunFeed();
+  renderDashboardSpend();
+}
+
+function getModelPricing(model) {
+  return MODEL_PRICING_USD_PER_1M_TOKENS[model] || { prompt: 0, completion: 0 };
+}
+
+function computeModelCostUsd(model, promptTokens, completionTokens) {
+  const pricing = getModelPricing(model);
+  return ((promptTokens / 1_000_000) * pricing.prompt) + ((completionTokens / 1_000_000) * pricing.completion);
+}
+
+function addUsageToModelTotals(modelTotals, model, usage) {
+  const current = modelTotals.get(model) || { prompt_tokens: 0, completion_tokens: 0, total_tokens: 0 };
+  const promptTokens = safeNumber(Number(usage?.prompt_tokens), 0);
+  const completionTokens = safeNumber(Number(usage?.completion_tokens), 0);
+  const totalTokens = safeNumber(Number(usage?.total_tokens), promptTokens + completionTokens);
+  current.prompt_tokens += promptTokens;
+  current.completion_tokens += completionTokens;
+  current.total_tokens += totalTokens;
+  modelTotals.set(model, current);
+}
+
+function buildRunSpendRecord(runId, runAtIso, modelTotals, fxRate) {
+  const breakdown = [];
+  for (const [model, usage] of modelTotals.entries()) {
+    const costUsd = computeModelCostUsd(model, usage.prompt_tokens, usage.completion_tokens);
+    breakdown.push({
+      model,
+      prompt_tokens: usage.prompt_tokens,
+      completion_tokens: usage.completion_tokens,
+      total_tokens: usage.total_tokens,
+      cost_usd: costUsd,
+      cost_inr: costUsd * fxRate,
+    });
+  }
+  const promptTokens = breakdown.reduce((sum, item) => sum + item.prompt_tokens, 0);
+  const completionTokens = breakdown.reduce((sum, item) => sum + item.completion_tokens, 0);
+  const totalTokens = breakdown.reduce((sum, item) => sum + item.total_tokens, 0);
+  const totalCostUsd = breakdown.reduce((sum, item) => sum + item.cost_usd, 0);
+  return {
+    run_id: runId,
+    last_run_at: runAtIso,
+    prompt_tokens: promptTokens,
+    completion_tokens: completionTokens,
+    total_tokens: totalTokens,
+    total_cost_usd: totalCostUsd,
+    total_cost_inr: totalCostUsd * fxRate,
+    fx_rate_usd_inr: fxRate,
+    model_breakdown: breakdown,
+  };
+}
+
+async function fetchUsdToInrRate(cacheTtlSeconds = DEFAULT_FX_CACHE_TTL_SECONDS) {
+  const now = Date.now();
+  try {
+    const raw = localStorage.getItem(USD_INR_CACHE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (
+        parsed &&
+        typeof parsed.rate === 'number' &&
+        typeof parsed.fetchedAt === 'number' &&
+        now - parsed.fetchedAt < (cacheTtlSeconds * 1000)
+      ) {
+        return parsed.rate;
+      }
+    }
+  } catch (error) {
+    uiWarn('FX cache read failed', { error: getErrorMessage(error) });
+  }
+
+  const response = await fetchWithTimeout('https://open.er-api.com/v6/latest/USD', { method: 'GET' }, 20000);
+  if (!response.ok) {
+    throw new Error(`FX fetch failed with status ${response.status}`);
+  }
+  const data = await response.json();
+  const rate = Number(data?.rates?.INR);
+  if (!Number.isFinite(rate) || rate <= 0) {
+    throw new Error('FX source returned invalid USD/INR rate');
+  }
+  try {
+    localStorage.setItem(USD_INR_CACHE_KEY, JSON.stringify({ rate, fetchedAt: now }));
+  } catch (error) {
+    uiWarn('FX cache write failed', { error: getErrorMessage(error) });
+  }
+  return rate;
+}
+
+function openDashboard() {
+  parent.postMessage({ pluginMessage: { type: 'get-settings' } }, '*');
+  parent.postMessage({ pluginMessage: { type: 'get-dashboard-data' } }, '*');
+  dashboardModal.classList.add('visible');
+}
+
+function closeDashboard() {
+  dashboardModal.classList.remove('visible');
 }
 
 function setProgress(stage, percent, stageLabel, metaText) {
@@ -2417,7 +2835,7 @@ function updateTranslateUI() {
 
     if (!hasApiKey) {
       translateButtonDone = false;
-      setTranslateButtonText('Add API key in Settings');
+      setTranslateButtonText('Add API key in Dashboard');
       translateBtn.className = 'action-btn disabled translate-progress-btn';
       translateBtn.style.setProperty('--progress', '0%');
       progressMetaInline.classList.add('hidden');
@@ -2463,9 +2881,8 @@ document.querySelectorAll('input[name="sourceLangOption"]').forEach(radio => {
   });
 });
 updateSourceLangLabel();
-openSettingsLink.addEventListener('click', () => {
-  parent.postMessage({ pluginMessage: { type: 'get-settings' } }, '*');
-  document.getElementById('settingsModal').classList.add('visible');
+openDashboardLink.addEventListener('click', () => {
+  openDashboard();
 });
 toggleResolvedOverflowsBtn.addEventListener('click', () => {
   showResolvedOverflows = !showResolvedOverflows;
@@ -2493,8 +2910,10 @@ onmessage = (event) => {
     populateSettingsModal();
     updateTranslateUI();
   } else if (msg.type === 'settings-saved') {
-    document.getElementById('settingsModal').classList.remove('visible');
+    closeDashboard();
     updateTranslateUI();
+  } else if (msg.type === 'dashboard-data') {
+    applyDashboardData(msg);
   } else if (msg.type === 'debug-log') {
     const level = typeof msg.level === 'string' ? msg.level : 'log';
     const source = typeof msg.source === 'string' ? msg.source : 'plugin';
@@ -2579,17 +2998,22 @@ function generatePDF() {
   parent.postMessage({ pluginMessage: { type: 'export-done' } }, '*');
 }
 
-// ── Settings modal ──
+// ── Dashboard modal ──
 
-document.getElementById('gearBtn').addEventListener('click', () => {
-  parent.postMessage({ pluginMessage: { type: 'get-settings' } }, '*');
-  document.getElementById('settingsModal').classList.add('visible');
+document.getElementById('dashboardBtn').addEventListener('click', () => {
+  openDashboard();
 });
-document.getElementById('modalClose').addEventListener('click', () => {
-  document.getElementById('settingsModal').classList.remove('visible');
+document.getElementById('dashboardCloseBtn').addEventListener('click', () => {
+  closeDashboard();
 });
-document.getElementById('settingsCancelBtn').addEventListener('click', () => {
-  document.getElementById('settingsModal').classList.remove('visible');
+document.getElementById('dashboardCancelBtn').addEventListener('click', () => {
+  closeDashboard();
+});
+document.getElementById('clearGeminiKeyBtn').addEventListener('click', () => {
+  document.getElementById('settingsGeminiKey').value = '';
+});
+document.getElementById('clearOpenaiKeyBtn').addEventListener('click', () => {
+  document.getElementById('settingsOpenaiKey').value = '';
 });
 
 function populateSettingsModal() {
@@ -2731,7 +3155,9 @@ async function handleTextData(nodes, frameCount) {
     const langs = getSelectedLangs();
     const translateProgressSpan = TRANSLATE_STAGE_END - TRANSLATE_STAGE_START;
     const runId = `run-${Date.now().toString(36)}-${++translationRunSeq}`;
+    const runStartedAtIso = new Date().toISOString();
     const pipelineStartMs = Date.now();
+    const modelSpendTotals = new Map();
 
     const provider = PROVIDERS[currentSettings.provider];
     if (!provider) {
@@ -2939,6 +3365,7 @@ async function handleTextData(nodes, frameCount) {
             let caughtError = null;
             try {
               result = await provider.translate(apiKey, model, task.batch, task.lang);
+              addUsageToModelTotals(modelSpendTotals, model, result?.usage);
               adaptiveSuccessStreak += 1;
               if (adaptiveSuccessStreak >= ADAPTIVE_RECOVERY_STREAK && adaptiveConcurrencyLimit < dynamicConcurrency) {
                 const previous = adaptiveConcurrencyLimit;
@@ -3027,7 +3454,8 @@ async function handleTextData(nodes, frameCount) {
 
           try {
             if (!result) throw terminalBatchError || new Error('No translation result after retries');
-            for (const item of result) {
+            const translatedItems = Array.isArray(result.translations) ? result.translations : [];
+            for (const item of translatedItems) {
               const frameId = getFrameIdFromMappingKey(item.mappingKey);
               if (!frameId) continue;
               const jobId = `${task.lang}::${frameId}`;
@@ -3203,6 +3631,16 @@ async function handleTextData(nodes, frameCount) {
       payloadItems: allTranslations.length,
       apiErrorCount: apiErrorDetails.length,
     });
+    try {
+      const usdToInrRate = await fetchUsdToInrRate(DEFAULT_FX_CACHE_TTL_SECONDS);
+      const runSpendRecord = buildRunSpendRecord(runId, runStartedAtIso, modelSpendTotals, usdToInrRate);
+      parent.postMessage({ pluginMessage: { type: 'record-run-spend', run: runSpendRecord } }, '*');
+    } catch (fxError) {
+      uiWarn('Spend recording skipped due to FX fetch issue', {
+        runId,
+        error: getErrorMessage(fxError),
+      });
+    }
 
     setProgress('apply', APPLY_STAGE_START, 'Applying Translations', 'Creating translated rows under your original frames');
     lastApiErrorDetails = apiErrorDetails;
@@ -3409,6 +3847,7 @@ function handleTranslationComplete(created, errors, overflows) {
 // ── Init ──
 parent.postMessage({ pluginMessage: { type: 'init' } }, '*');
 parent.postMessage({ pluginMessage: { type: 'get-settings' } }, '*');
+parent.postMessage({ pluginMessage: { type: 'get-dashboard-data' } }, '*');
 </script>
 </body>
 </html>

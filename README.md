@@ -7,11 +7,6 @@ Figma plugin for:
 
 ## Features
 
-### Export PDF
-- Select one or more `Frame` / `Component` / `Instance` nodes
-- Export to PDF from the `Export PDF` tab
-- Preserves URL links detected in text and node reactions
-
 ### Translate (AI)
 - Select one or more `Frame` / `Component` / `Instance` nodes
 - Choose target languages (FR/DE/ES/IT/TR/AR)
@@ -20,10 +15,16 @@ Figma plugin for:
 - Loads required fonts before text replacement (including mixed font ranges)
 - Skips `TRUNCATE` text nodes and keeps source text for those nodes
 - Shows in-button progress while translating
+- Shows per-run spend in the Translate run feed (datetime, tokens, USD + INR)
 - Shows a combined completion + audit section with:
   - translation API issues
   - text/font apply issues
   - overflow audit actions (Phase 2)
+
+### Export PDF
+- Select one or more `Frame` / `Component` / `Instance` nodes
+- Export to PDF from the `Export PDF` tab
+- Preserves URL links detected in text and node reactions
 
 ## AI Providers and Models
 
@@ -53,6 +54,8 @@ These values are from Gemini API official rate-limit docs.
 - `ui.html`: plugin UI, tabs, provider calls, settings modal
 - `manifest.json`: plugin metadata and `networkAccess.allowedDomains`
 - `docs/PLAN.md`: translation implementation plan
+
+Note: README is public-facing. Internal implementation details live in `docs/private-plugin-notes.md`.
 
 ## Setup
 
@@ -92,10 +95,14 @@ npm run lint
 ### Translate
 1. Select nodes in Figma.
 2. Open plugin.
-3. Click `⚙` and save provider + API key.
+3. Click `☰` (Dashboard) and save provider + API key.
 4. Go to `Translate`.
 5. Set source language and pick target languages.
 6. Click Translate.
+
+Spend visibility:
+- Open `☰` Dashboard to manage API keys and view spend analytics (last 10 + all-time totals).
+- The Translate tab also shows per-run spend cards after each run.
 
 ## Network Access
 
