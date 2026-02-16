@@ -679,6 +679,7 @@ figma.ui.onmessage = async (rawMsg: unknown) => {
 
   if (type === 'save-settings') {
     const settings = parseSettingsPayload(msg?.settings);
+    const silent = asBoolean(msg?.silent) === true;
     const debugMode = settings.debugMode === true;
     pluginDebugMode = debugMode;
     await figma.clientStorage.setAsync('ai-provider', settings.provider || 'gemini');
@@ -689,7 +690,7 @@ figma.ui.onmessage = async (rawMsg: unknown) => {
     await figma.clientStorage.setAsync('target-languages', Array.isArray(settings.targetLanguages) ? settings.targetLanguages : []);
     await figma.clientStorage.setAsync('debug-mode', debugMode);
     figma.ui.postMessage({ type: 'settings-saved' });
-    figma.notify('Settings saved ✅');
+    if (!silent) figma.notify('Settings saved ✅');
   }
 
   if (type === 'save-target-languages') {

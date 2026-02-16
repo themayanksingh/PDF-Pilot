@@ -734,42 +734,6 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
     cursor: pointer;
     padding: 0;
   }
-  .run-feed {
-    margin-top: 10px;
-    border: 1px solid #333;
-    border-radius: 8px;
-    background: #202020;
-    padding: 10px;
-  }
-  .run-feed-title {
-    font-size: 12px;
-    font-weight: 600;
-    color: #e6e6e6;
-    margin-bottom: 8px;
-  }
-  .run-feed-empty {
-    font-size: 11px;
-    color: #999;
-  }
-  .run-feed-list {
-    display: grid;
-    gap: 8px;
-  }
-  .run-feed-item {
-    border: 1px solid #373737;
-    border-radius: 6px;
-    background: #272727;
-    padding: 8px;
-  }
-  .run-feed-item-time {
-    font-size: 11px;
-    color: #d9d9d9;
-    margin-bottom: 2px;
-  }
-  .run-feed-item-meta {
-    font-size: 11px;
-    color: #b6b6b6;
-  }
   @media (max-width: 520px) {
     .lang-config-row {
       grid-template-columns: 1fr;
@@ -1098,15 +1062,181 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
   .btn-save:hover { background: #e0e0e0; }
   .btn-cancel { background: #333; color: #ccc; }
   .btn-cancel:hover { background: #444; }
+  .dashboard-modal {
+    padding: 0;
+    width: 380px;
+    height: calc(100vh - 16px);
+    max-height: calc(100vh - 16px);
+    min-height: 0;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+  .dashboard-head {
+    position: sticky;
+    top: 0;
+    z-index: 3;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 14px 12px;
+    background: #222;
+    border-bottom: 1px solid #343434;
+  }
+  .dashboard-head h3 {
+    margin: 0;
+    font-size: 15px;
+    font-weight: 600;
+    line-height: 1.2;
+  }
+  .dashboard-subtitle { margin-top: 3px; font-size: 11px; color: #9d9d9d; }
+  .dashboard-head-right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .dashboard-save-status {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 64px;
+    font-size: 10px;
+    padding: 3px 6px;
+    border-radius: 10px;
+    border: 1px solid #474747;
+    color: #c7c7c7;
+    background: #2c2c2c;
+  }
+  .dashboard-save-status.saving {
+    color: #f5e1a7;
+    border-color: #836929;
+    background: #3a2f15;
+  }
+  .dashboard-save-status.saved {
+    color: #c7f1d7;
+    border-color: #2f6b4f;
+    background: #1d3a2d;
+  }
+  .dashboard-stack {
+    padding: 8px 12px;
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    display: block;
+  }
+  .dashboard-stack > .dashboard-card {
+    margin-bottom: 0;
+    padding: 8px 0;
+    border-bottom: 1px solid #3a3a3a;
+  }
+  .dashboard-stack > .dashboard-card:last-child {
+    margin-bottom: 0;
+    border-bottom: none;
+  }
+  .dashboard-card {
+    border: none;
+    border-radius: 0;
+    background: transparent;
+    padding: 0;
+  }
+  .dashboard-toggle {
+    padding: 0;
+    overflow: visible;
+  }
+  .dashboard-toggle-head {
+    width: 100%;
+    background: transparent;
+    border: 0;
+    color: inherit;
+    cursor: pointer;
+    min-height: 46px;
+    padding: 0 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    user-select: none;
+    text-align: left;
+    font: inherit;
+  }
+  .dashboard-toggle-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .dashboard-toggle-head .dashboard-section-title {
+    margin: 0;
+  }
+  .dashboard-toggle-caret {
+    width: 0;
+    height: 0;
+    border-top: 6px solid transparent;
+    border-bottom: 6px solid transparent;
+    border-left: 9px solid #b0b0b0;
+    transition: transform 0.15s ease;
+  }
+  .dashboard-toggle.is-open .dashboard-toggle-caret {
+    transform: rotate(90deg);
+  }
+  .dashboard-toggle-body {
+    padding: 0 12px 8px;
+  }
+  .dashboard-toggle:not(.is-open) .dashboard-toggle-body {
+    display: none;
+  }
+  .dashboard-toggle.is-open .dashboard-toggle-body {
+    display: block;
+  }
+  .dashboard-card-plain-title {
+    margin: 0;
+    font-size: 12px;
+    font-weight: 600;
+    color: #efefef;
+    min-height: 46px;
+    padding: 0 12px;
+    display: flex;
+    align-items: center;
+  }
+  .dashboard-card-plain-body {
+    padding: 0 12px 8px;
+  }
   .dashboard-section-title {
-    margin: 8px 0 10px;
+    margin: 0 0 8px;
     font-size: 12px;
     font-weight: 600;
     color: #efefef;
   }
+  .dashboard-subsection {
+    border: 1px solid #343434;
+    border-radius: 8px;
+    padding: 8px;
+    background: #202020;
+    margin-top: 8px;
+  }
+  .dashboard-subsection-title {
+    font-size: 11px;
+    color: #cfcfcf;
+    margin-bottom: 7px;
+    font-weight: 600;
+  }
+  .dashboard-provider-meta {
+    font-size: 11px;
+    color: #a9a9a9;
+    margin-top: 6px;
+  }
+  .dashboard-advanced {
+    margin-top: 8px;
+    border-top: 1px dashed #3b3b3b;
+    padding-top: 8px;
+  }
+  .dashboard-advanced > summary {
+    cursor: pointer;
+    list-style: none;
+    font-size: 11px;
+    color: #b8c6ea;
+  }
+  .dashboard-advanced > summary::-webkit-details-marker { display: none; }
   .dashboard-summaries {
     display: grid;
-    grid-template-columns: 1fr 1fr;
     gap: 8px;
   }
   .dashboard-summary-card {
@@ -1129,7 +1259,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
     font-size: 11px;
   }
   .dashboard-runs-title {
-    margin: 10px 0 6px;
+    margin: 0 0 6px;
     font-size: 12px;
     color: #e7e7e7;
     font-weight: 600;
@@ -1299,12 +1429,6 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
     <button type="button" class="helper-link-btn" id="openDashboardLink">Open Dashboard</button>
   </div>
 
-  <div class="run-feed" id="runFeed">
-    <div class="run-feed-title">Run Spend</div>
-    <div class="run-feed-empty" id="runFeedEmpty">No runs yet. Spend appears here after each translation run.</div>
-    <div class="run-feed-list" id="runFeedList"></div>
-  </div>
-
   <button class="action-btn disabled translate-progress-btn" id="translateBtn">Select frames to translate</button>
   <div class="progress-meta-inline hidden" id="progressMetaInline"></div>
 
@@ -1333,88 +1457,121 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
 
 <!-- Dashboard modal -->
 <div class="modal-overlay" id="dashboardModal">
-  <div class="modal">
-    <div class="modal-header">
-      <h3>Dashboard</h3>
-      <button class="modal-close" id="dashboardCloseBtn">✕</button>
+  <div class="modal dashboard-modal">
+    <div class="dashboard-head">
+      <div>
+        <h3>Dashboard</h3>
+        <div class="dashboard-subtitle">API settings and spend analytics</div>
+      </div>
+      <div class="dashboard-head-right">
+        <span class="dashboard-save-status saved" id="dashboardSaveStatus">Saved</span>
+        <button class="modal-close" id="dashboardCloseBtn">✕</button>
+      </div>
     </div>
 
-    <div class="dashboard-section-title">API Key Management</div>
-    <div class="field-group">
-      <div class="field-label">AI Provider</div>
-      <select class="field-select" id="settingsProvider">
-        <option value="gemini">Gemini</option>
-        <option value="openai">OpenAI</option>
-      </select>
-    </div>
-
-    <div class="field-group" id="geminiKeyGroup">
-      <div class="field-label">Gemini API Key</div>
-      <div class="api-key-row">
-        <input type="password" class="field-input" id="settingsGeminiKey" placeholder="Enter Gemini API key">
-        <button class="toggle-vis-btn" id="toggleGeminiKey" type="button" aria-label="Show Gemini API key">
-          <span class="toggle-vis-icon" aria-hidden="true"></span>
+    <div class="dashboard-stack">
+      <div class="dashboard-card dashboard-toggle is-open" id="dashboardSectionLlm">
+        <button type="button" class="dashboard-toggle-head" data-target="dashboardSectionLlm" aria-expanded="true">
+          <span class="dashboard-toggle-left">
+            <span class="dashboard-toggle-caret" aria-hidden="true"></span>
+            <span class="dashboard-section-title">1. LLM Settings</span>
+          </span>
         </button>
-        <button class="key-clear-btn" id="clearGeminiKeyBtn" type="button">Remove</button>
-      </div>
-    </div>
+        <div class="dashboard-toggle-body">
+          <div class="field-group">
+            <div class="field-label">AI Provider</div>
+            <select class="field-select" id="settingsProvider">
+              <option value="gemini">Gemini</option>
+              <option value="openai">OpenAI</option>
+            </select>
+          </div>
+          <div class="dashboard-provider-meta" id="activeProviderMeta">Active provider: Gemini</div>
 
-    <div class="field-group" id="openaiKeyGroup" style="display:none;">
-      <div class="field-label">OpenAI API Key</div>
-      <div class="api-key-row">
-        <input type="password" class="field-input" id="settingsOpenaiKey" placeholder="Enter OpenAI API key">
-        <button class="toggle-vis-btn" id="toggleOpenaiKey" type="button" aria-label="Show OpenAI API key">
-          <span class="toggle-vis-icon" aria-hidden="true"></span>
+          <div class="dashboard-subsection" id="geminiKeySection">
+            <div class="dashboard-subsection-title">Gemini API Key</div>
+            <div class="field-group" id="geminiKeyGroup">
+              <div class="api-key-row">
+                <input type="password" class="field-input" id="settingsGeminiKey" placeholder="Enter Gemini API key">
+                <button class="toggle-vis-btn" id="toggleGeminiKey" type="button" aria-label="Show Gemini API key">
+                  <span class="toggle-vis-icon" aria-hidden="true"></span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="dashboard-subsection" id="openaiKeySection" style="display:none;">
+            <div class="dashboard-subsection-title">OpenAI API Key</div>
+            <div class="field-group" id="openaiKeyGroup">
+              <div class="api-key-row">
+                <input type="password" class="field-input" id="settingsOpenaiKey" placeholder="Enter OpenAI API key">
+                <button class="toggle-vis-btn" id="toggleOpenaiKey" type="button" aria-label="Show OpenAI API key">
+                  <span class="toggle-vis-icon" aria-hidden="true"></span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="dashboard-subsection" id="modelSettingsSection">
+            <div class="dashboard-subsection-title">Model Settings</div>
+            <div class="field-help" id="modelSettingsDescription">Gemini model: gemini-2.5-flash-lite (fixed)</div>
+            <div class="field-group" id="quotaProfileGroup">
+              <div class="field-label">Gemini Quota Tier</div>
+              <select class="field-select" id="settingsQuotaProfile">
+                <option value="auto">Auto (safe default)</option>
+                <option value="free">Free Tier</option>
+                <option value="tier1">Paid Tier 1</option>
+                <option value="tier2">Paid Tier 2</option>
+                <option value="tier3">Paid Tier 3</option>
+              </select>
+              <div class="field-help">Gemini-only throughput control. Set this to your actual Gemini quota tier for best speed and fewer rate-limit errors.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="dashboard-card dashboard-toggle is-open" id="dashboardSectionSpend">
+        <button type="button" class="dashboard-toggle-head" data-target="dashboardSectionSpend" aria-expanded="true">
+          <span class="dashboard-toggle-left">
+            <span class="dashboard-toggle-caret" aria-hidden="true"></span>
+            <span class="dashboard-section-title">2. Spend</span>
+          </span>
         </button>
-        <button class="key-clear-btn" id="clearOpenaiKeyBtn" type="button">Remove</button>
+        <div class="dashboard-toggle-body">
+          <div class="dashboard-summaries">
+            <div class="dashboard-summary-card">
+              <div class="dashboard-summary-title">Last Run</div>
+              <div class="dashboard-summary-line" id="summaryLastRunCost">$0.00 · ₹0.00</div>
+              <div class="dashboard-summary-line dashboard-summary-muted" id="summaryLastRunMeta">No runs yet</div>
+            </div>
+            <div class="dashboard-summary-card">
+              <div class="dashboard-summary-title">Last 10 Totals</div>
+              <div class="dashboard-summary-line" id="summaryLast10Cost">$0.00 · ₹0.00</div>
+              <div class="dashboard-summary-line dashboard-summary-muted" id="summaryLast10Meta">0 runs · 0 tokens</div>
+            </div>
+            <div class="dashboard-summary-card">
+              <div class="dashboard-summary-title">All-time Totals</div>
+              <div class="dashboard-summary-line" id="summaryAllTimeCost">$0.00 · ₹0.00</div>
+              <div class="dashboard-summary-line dashboard-summary-muted" id="summaryAllTimeMeta">0 runs · 0 tokens</div>
+            </div>
+          </div>
+          <div class="dashboard-runs-title" style="margin-top:10px;">Recent Runs (Last 10)</div>
+          <div class="dashboard-runs-list" id="dashboardRunsList"></div>
+        </div>
       </div>
-    </div>
 
-    <div class="field-group">
-      <div class="field-label">Translation Model</div>
-      <div class="field-help">Gemini 2.5 Flash Lite (fixed)</div>
+      <section class="dashboard-card" id="dashboardSectionDebug">
+        <div class="dashboard-card-plain-title">3. Debug Mode</div>
+        <div class="dashboard-card-plain-body">
+          <div class="field-group">
+            <label class="field-toggle">
+              <input type="checkbox" id="settingsDebugMode">
+              Enable debug mode
+            </label>
+            <div class="field-help">Shows detailed logs and enables the i button in the header.</div>
+          </div>
+        </div>
+      </section>
     </div>
-
-    <div class="field-group" id="quotaProfileGroup">
-      <div class="field-label">Gemini Quota Tier</div>
-      <select class="field-select" id="settingsQuotaProfile">
-        <option value="auto">Auto (safe default)</option>
-        <option value="free">Free Tier</option>
-        <option value="tier1">Paid Tier 1</option>
-        <option value="tier2">Paid Tier 2</option>
-        <option value="tier3">Paid Tier 3</option>
-      </select>
-      <div class="field-help">Used only for API pacing/concurrency tuning. Set this to your actual Gemini quota tier for best speed and fewer rate-limit errors.</div>
-    </div>
-
-    <div class="field-group">
-      <label class="field-toggle">
-        <input type="checkbox" id="settingsDebugMode">
-        Enable debug mode
-      </label>
-      <div class="field-help">Shows detailed logs and enables the i button in the header.</div>
-    </div>
-
-    <div class="modal-actions">
-      <button class="btn-cancel" id="dashboardCancelBtn">Cancel</button>
-      <button class="btn-save" id="settingsSaveBtn">Save</button>
-    </div>
-
-    <div class="dashboard-section-title">Spend Analytics</div>
-    <div class="dashboard-summaries">
-      <div class="dashboard-summary-card">
-        <div class="dashboard-summary-title">Last 10 Totals</div>
-        <div class="dashboard-summary-line" id="summaryLast10Cost">$0.00 · ₹0.00</div>
-        <div class="dashboard-summary-line dashboard-summary-muted" id="summaryLast10Meta">0 runs · 0 tokens</div>
-      </div>
-      <div class="dashboard-summary-card">
-        <div class="dashboard-summary-title">All-time Totals</div>
-        <div class="dashboard-summary-line" id="summaryAllTimeCost">$0.00 · ₹0.00</div>
-        <div class="dashboard-summary-line dashboard-summary-muted" id="summaryAllTimeMeta">0 runs · 0 tokens</div>
-      </div>
-    </div>
-    <div class="dashboard-runs-title">Last 10 Runs</div>
-    <div class="dashboard-runs-list" id="dashboardRunsList"></div>
   </div>
 </div>
 
@@ -1454,6 +1611,8 @@ let hasAutoRetriedForCurrentRun = false;
 let lastLanguageOrder = [];
 let lastLayoutFrameIds = [];
 let targetLanguagesSaveTimer = null;
+let settingsAutosaveTimer = null;
+let isHydratingDashboardSettings = false;
 const API_REQUEST_TIMEOUT_MS = 120000;
 const TRANSLATION_BATCH_SIZE = 80;
 const MAX_DYNAMIC_CONCURRENCY = 10;
@@ -2043,7 +2202,7 @@ Respond with ONLY a valid JSON array, no markdown, no explanation:
   },
   openai: {
     name: 'OpenAI',
-    models: ['gpt-5.2', 'gpt-5-mini'],
+    models: ['gpt-5-mini'],
     async translate(apiKey, model, texts, targetLang) {
       const LANG_NAMES = { fr: 'French', de: 'German', es: 'Spanish', it: 'Italian', tr: 'Turkish', ar: 'Arabic' };
       const langName = LANG_NAMES[targetLang] || targetLang;
@@ -2107,10 +2266,12 @@ const translateBtn = document.getElementById('translateBtn');
 const debugLogBtn = document.getElementById('debugLogBtn');
 const translateApiHint = document.getElementById('translateApiHint');
 const openDashboardLink = document.getElementById('openDashboardLink');
-const runFeedEmpty = document.getElementById('runFeedEmpty');
-const runFeedList = document.getElementById('runFeedList');
 const dashboardModal = document.getElementById('dashboardModal');
 const dashboardRunsList = document.getElementById('dashboardRunsList');
+const dashboardSaveStatus = document.getElementById('dashboardSaveStatus');
+const activeProviderMeta = document.getElementById('activeProviderMeta');
+const summaryLastRunCost = document.getElementById('summaryLastRunCost');
+const summaryLastRunMeta = document.getElementById('summaryLastRunMeta');
 const summaryLast10Cost = document.getElementById('summaryLast10Cost');
 const summaryLast10Meta = document.getElementById('summaryLast10Meta');
 const summaryAllTimeCost = document.getElementById('summaryAllTimeCost');
@@ -2150,7 +2311,6 @@ const USD_INR_CACHE_KEY = 'fx-usd-inr-cache-v1';
 const DEFAULT_FX_CACHE_TTL_SECONDS = 86400;
 const MODEL_PRICING_USD_PER_1M_TOKENS = {
   'gemini-2.5-flash-lite': { prompt: 0.1, completion: 0.4 },
-  'gpt-5.2': { prompt: 1.25, completion: 10 },
   'gpt-5-mini': { prompt: 0.25, completion: 2 },
 };
 let spendDashboardState = {
@@ -2184,6 +2344,25 @@ function formatRunDateTime(value) {
   const parsed = new Date(value);
   if (Number.isNaN(parsed.getTime())) return 'Unknown run time';
   return parsed.toLocaleString();
+}
+
+function setDashboardSaveStatus(state) {
+  if (!dashboardSaveStatus) return;
+  dashboardSaveStatus.classList.remove('saving', 'saved');
+  if (state === 'saving') {
+    dashboardSaveStatus.classList.add('saving');
+    dashboardSaveStatus.textContent = 'Saving...';
+    return;
+  }
+  dashboardSaveStatus.classList.add('saved');
+  dashboardSaveStatus.textContent = 'Saved';
+}
+
+function renderDashboardSettingsMeta() {
+  if (activeProviderMeta) {
+    const providerLabel = currentSettings.provider === 'openai' ? 'OpenAI' : 'Gemini';
+    activeProviderMeta.textContent = `Active provider: ${providerLabel}`;
+  }
 }
 
 function normalizeSpendSummary(summary) {
@@ -2244,32 +2423,17 @@ function normalizeDashboardData(data) {
   };
 }
 
-function renderRunFeed() {
-  const recentRuns = spendDashboardState.recent_runs;
-  runFeedList.innerHTML = '';
-  if (!recentRuns || recentRuns.length === 0) {
-    runFeedEmpty.style.display = '';
-    return;
-  }
-  runFeedEmpty.style.display = 'none';
-  recentRuns.slice(0, 10).forEach(run => {
-    const item = document.createElement('div');
-    item.className = 'run-feed-item';
-    const time = document.createElement('div');
-    time.className = 'run-feed-item-time';
-    time.textContent = formatRunDateTime(run.last_run_at);
-    const meta = document.createElement('div');
-    meta.className = 'run-feed-item-meta';
-    meta.textContent = `${formatTokenCount(run.total_tokens)} · ${formatUsd(run.total_cost_usd)} · ${formatInr(run.total_cost_inr)}`;
-    item.appendChild(time);
-    item.appendChild(meta);
-    runFeedList.appendChild(item);
-  });
-}
-
 function renderDashboardSpend() {
+  const latestRun = spendDashboardState.recent_runs[0] || null;
   const last10 = spendDashboardState.summary_last_10;
   const allTime = spendDashboardState.summary_all_time;
+  if (latestRun) {
+    summaryLastRunCost.textContent = `${formatUsd(latestRun.total_cost_usd)} · ${formatInr(latestRun.total_cost_inr)}`;
+    summaryLastRunMeta.textContent = `${formatRunDateTime(latestRun.last_run_at)} · ${formatTokenCount(latestRun.total_tokens)}`;
+  } else {
+    summaryLastRunCost.textContent = '$0.00 · ₹0.00';
+    summaryLastRunMeta.textContent = 'No runs yet';
+  }
   summaryLast10Cost.textContent = `${formatUsd(last10.total_cost_usd)} · ${formatInr(last10.total_cost_inr)}`;
   summaryLast10Meta.textContent = `${Math.round(last10.count)} runs · ${Math.round(last10.total_tokens).toLocaleString()} tokens`;
   summaryAllTimeCost.textContent = `${formatUsd(allTime.total_cost_usd)} · ${formatInr(allTime.total_cost_inr)}`;
@@ -2300,7 +2464,6 @@ function renderDashboardSpend() {
 
 function applyDashboardData(data) {
   spendDashboardState = normalizeDashboardData(data);
-  renderRunFeed();
   renderDashboardSpend();
 }
 
@@ -2910,7 +3073,8 @@ onmessage = (event) => {
     populateSettingsModal();
     updateTranslateUI();
   } else if (msg.type === 'settings-saved') {
-    closeDashboard();
+    setDashboardSaveStatus('saved');
+    renderDashboardSettingsMeta();
     updateTranslateUI();
   } else if (msg.type === 'dashboard-data') {
     applyDashboardData(msg);
@@ -3006,17 +3170,19 @@ document.getElementById('dashboardBtn').addEventListener('click', () => {
 document.getElementById('dashboardCloseBtn').addEventListener('click', () => {
   closeDashboard();
 });
-document.getElementById('dashboardCancelBtn').addEventListener('click', () => {
-  closeDashboard();
-});
-document.getElementById('clearGeminiKeyBtn').addEventListener('click', () => {
-  document.getElementById('settingsGeminiKey').value = '';
-});
-document.getElementById('clearOpenaiKeyBtn').addEventListener('click', () => {
-  document.getElementById('settingsOpenaiKey').value = '';
+document.querySelectorAll('.dashboard-toggle-head[data-target]').forEach(button => {
+  button.addEventListener('click', () => {
+    const targetId = button.getAttribute('data-target');
+    if (!targetId) return;
+    const section = document.getElementById(targetId);
+    if (!section) return;
+    const isOpen = section.classList.toggle('is-open');
+    button.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+  });
 });
 
 function populateSettingsModal() {
+  isHydratingDashboardSettings = true;
   const prov = currentSettings.provider || 'gemini';
   document.getElementById('settingsProvider').value = prov;
   document.getElementById('settingsGeminiKey').value = currentSettings.apiKeyGemini || '';
@@ -3025,18 +3191,33 @@ function populateSettingsModal() {
   applySavedTargetLanguages(currentSettings.targetLanguages);
   document.getElementById('settingsDebugMode').checked = currentSettings.debugMode === true;
   updateProviderUI(prov);
+  renderDashboardSettingsMeta();
   currentSettings.model = (PROVIDERS[prov]?.models || ['gemini-2.5-flash-lite'])[0];
+  setDashboardSaveStatus('saved');
+  isHydratingDashboardSettings = false;
 }
 
 function updateProviderUI(provider) {
+  const geminiSection = document.getElementById('geminiKeySection');
+  const openaiSection = document.getElementById('openaiKeySection');
+  const modelSettingsDescription = document.getElementById('modelSettingsDescription');
+  if (geminiSection) geminiSection.style.display = provider === 'gemini' ? '' : 'none';
+  if (openaiSection) openaiSection.style.display = provider === 'openai' ? '' : 'none';
   document.getElementById('geminiKeyGroup').style.display = provider === 'gemini' ? '' : 'none';
   document.getElementById('openaiKeyGroup').style.display = provider === 'openai' ? '' : 'none';
   document.getElementById('quotaProfileGroup').style.display = provider === 'gemini' ? '' : 'none';
+  if (modelSettingsDescription) {
+    modelSettingsDescription.textContent = provider === 'gemini'
+      ? 'Gemini model: gemini-2.5-flash-lite (fixed)'
+      : 'OpenAI model: gpt-5-mini (fixed)';
+  }
   currentSettings.model = (PROVIDERS[provider]?.models || ['gemini-2.5-flash-lite'])[0];
+  renderDashboardSettingsMeta();
 }
 
 document.getElementById('settingsProvider').addEventListener('change', (e) => {
   updateProviderUI(e.target.value);
+  queueDashboardSettingsSave(120);
 });
 
 function getVisibilityIconSvg(isVisible) {
@@ -3078,9 +3259,9 @@ function bindKeyVisibilityToggle(buttonId, inputId, label) {
 bindKeyVisibilityToggle('toggleGeminiKey', 'settingsGeminiKey', 'Gemini API key');
 bindKeyVisibilityToggle('toggleOpenaiKey', 'settingsOpenaiKey', 'OpenAI API key');
 
-document.getElementById('settingsSaveBtn').addEventListener('click', () => {
+function collectDashboardSettings() {
   const provider = document.getElementById('settingsProvider').value;
-  currentSettings = normalizeSettings({
+  return normalizeSettings({
     provider,
     model: (PROVIDERS[provider]?.models || ['gemini-2.5-flash-lite'])[0],
     apiKeyGemini: document.getElementById('settingsGeminiKey').value,
@@ -3089,9 +3270,43 @@ document.getElementById('settingsSaveBtn').addEventListener('click', () => {
     targetLanguages: getSelectedLangs(),
     debugMode: document.getElementById('settingsDebugMode').checked,
   });
-  parent.postMessage({ pluginMessage: { type: 'save-settings', settings: currentSettings } }, '*');
-  updateTranslateUI();
+}
+
+function queueDashboardSettingsSave(delayMs = 260) {
+  if (isHydratingDashboardSettings) return;
+  if (settingsAutosaveTimer) clearTimeout(settingsAutosaveTimer);
+  setDashboardSaveStatus('saving');
+  settingsAutosaveTimer = setTimeout(() => {
+    currentSettings = collectDashboardSettings();
+    renderDashboardSettingsMeta();
+    parent.postMessage({ pluginMessage: { type: 'save-settings', settings: currentSettings, silent: true } }, '*');
+    updateTranslateUI();
+  }, delayMs);
+}
+
+document.getElementById('settingsGeminiKey').addEventListener('input', () => {
+  queueDashboardSettingsSave();
 });
+document.getElementById('settingsOpenaiKey').addEventListener('input', () => {
+  queueDashboardSettingsSave();
+});
+document.getElementById('settingsQuotaProfile').addEventListener('change', () => {
+  queueDashboardSettingsSave();
+});
+document.getElementById('settingsDebugMode').addEventListener('change', () => {
+  queueDashboardSettingsSave();
+});
+/* Legacy manual save entrypoint kept as a callable helper for compatibility. */
+function persistSettingsNow() {
+  if (settingsAutosaveTimer) clearTimeout(settingsAutosaveTimer);
+  setDashboardSaveStatus('saving');
+  currentSettings = normalizeSettings({
+    ...collectDashboardSettings(),
+  });
+  renderDashboardSettingsMeta();
+  parent.postMessage({ pluginMessage: { type: 'save-settings', settings: currentSettings, silent: true } }, '*');
+  updateTranslateUI();
+}
 
 // ── Translation flow ──
 let pendingTextNodes = [];

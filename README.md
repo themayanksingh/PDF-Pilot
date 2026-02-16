@@ -31,7 +31,6 @@ Figma plugin for:
 - Gemini:
   - `gemini-2.5-flash-lite` (fixed in UI)
 - OpenAI:
-  - `gpt-5.2`
   - `gpt-5-mini`
 
 API keys are only required for the `Translate` workflow.
