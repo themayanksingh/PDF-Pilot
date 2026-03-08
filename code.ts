@@ -134,6 +134,7 @@ interface OverflowInfo {
   nodeId: string;
   nodeName: string;
   language: string;
+  languageCode: string;
   frameName: string;
   cloneFrameId: string;
   overflowX: number;
@@ -459,7 +460,7 @@ function findOverflowContainers(textNode: TextNode): SceneNode[] {
   return fallbackContainer ? [fallbackContainer] : [];
 }
 
-function checkOverflow(textNode: TextNode, mappingKey: string, language: string, frameName: string, cloneFrameId: string): OverflowInfo | null {
+function checkOverflow(textNode: TextNode, mappingKey: string, language: string, languageCode: string, frameName: string, cloneFrameId: string): OverflowInfo | null {
   const containers = findOverflowContainers(textNode);
   if (containers.length === 0) return null;
 
@@ -526,6 +527,7 @@ function checkOverflow(textNode: TextNode, mappingKey: string, language: string,
         nodeId: textNode.id,
         nodeName: textNode.name,
         language,
+        languageCode,
         frameName,
         cloneFrameId,
         overflowX,
@@ -1089,6 +1091,29 @@ figma.ui.onmessage = async (rawMsg: unknown) => {
           }
         }
 
+        // Apply RTL text alignment for Arabic clones BEFORE overflow detection.
+        // Figma's text engine renders Arabic script RTL automatically, but
+        // alignment stays LEFT unless corrected. Flip LEFT → RIGHT so the
+        // text sits at the correct edge of each text box.
+        // This must happen before overflow detection so the audit uses
+        // post-alignment geometry.
+        if (translation.languageCode.split('-')[0] === 'ar') {
+          const applyRtlAlignment = (node: SceneNode): void => {
+            if (node.type === 'TEXT') {
+              const textNode = node as TextNode;
+              if (textNode.textAlignHorizontal === 'LEFT') {
+                textNode.textAlignHorizontal = 'RIGHT';
+              }
+            }
+            if ('children' in node) {
+              for (const child of (node as FrameNode).children) {
+                applyRtlAlignment(child);
+              }
+            }
+          };
+          applyRtlAlignment(clone as SceneNode);
+        }
+
         // Overflow detection for this clone
         const appliedMappingKeys = new Set(
           translation.nodes
@@ -1110,6 +1135,7 @@ figma.ui.onmessage = async (rawMsg: unknown) => {
                 node as TextNode,
                 mappingKey,
                 translation.language,
+                translation.languageCode,
                 cloneFrameName,
                 clone.id
               );
@@ -1128,27 +1154,6 @@ figma.ui.onmessage = async (rawMsg: unknown) => {
         detectOverflows(clone as SceneNode, clone as SceneNode);
         _totalOverflowScannedNodes += scannedInClone;
         if (foundInClone > 0) _clonesWithOverflow++;
-
-        // Apply RTL text alignment for Arabic clones.
-        // Figma's text engine renders Arabic script RTL automatically, but
-        // alignment stays LEFT unless corrected. Flip LEFT → RIGHT so the
-        // text sits at the correct edge of each text box.
-        if (translation.languageCode.split('-')[0] === 'ar') {
-          const applyRtlAlignment = (node: SceneNode): void => {
-            if (node.type === 'TEXT') {
-              const textNode = node as TextNode;
-              if (textNode.textAlignHorizontal === 'LEFT') {
-                textNode.textAlignHorizontal = 'RIGHT';
-              }
-            }
-            if ('children' in node) {
-              for (const child of (node as FrameNode).children) {
-                applyRtlAlignment(child);
-              }
-            }
-          };
-          applyRtlAlignment(clone as SceneNode);
-        }
 
         completedTranslationUnits++;
         figma.ui.postMessage({
@@ -1280,6 +1285,7 @@ figma.ui.onmessage = async (rawMsg: unknown) => {
       }
       const cloneFrame = cloneNode as FrameLike;
       const languageName = cloneFrame.getPluginData('pdf-pilot-clone-language-name') || '';
+      const languageCode = cloneFrame.getPluginData('pdf-pilot-clone-language-code') || '';
       const sourceName = cloneFrame.getPluginData('pdf-pilot-clone-source-name') || cloneFrame.name;
 
       for (const patch of clonePatches) {
@@ -1320,7 +1326,7 @@ figma.ui.onmessage = async (rawMsg: unknown) => {
           continue;
         }
 
-        const overflow = checkOverflow(textNode, patch.mappingKey, languageName, sourceName, cloneFrameId);
+        const overflow = checkOverflow(textNode, patch.mappingKey, languageName, languageCode, sourceName, cloneFrameId);
         if (overflow) patchOverflows.push(overflow);
       }
     }

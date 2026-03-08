@@ -2358,6 +2358,12 @@
     const OVERFLOW_RETRY_MAX = 2;
     let nodesByMappingKey = new Map();
     let lastCreatedFrameCount = 0;
+    let lastOverflowRetryAttemptedKeys = new Set();
+    // Module-level spend tracking so overflow retries can accumulate usage.
+    let currentRunModelSpendTotals = new Map();
+    let currentRunId = '';
+    let currentRunStartedAtIso = '';
+    let currentRunFxRate = null;
     const MAX_DEBUG_LOG_ENTRIES = 1200;
     const debugLogEntries = [];
 
@@ -4002,13 +4008,30 @@ ${JSON.stringify(batch.map(t => ({ mappingKey: t.mappingKey, text: t.text, charB
         const patchErrors = Array.isArray(msg.errors) ? msg.errors : [];
         uiLog('patch-complete received', { remainingOverflows: patchedOverflows.length, patchErrors: patchErrors.length });
 
-        // Replace lastOverflowEntries with those that still overflow
-        lastOverflowEntries = patchedOverflows;
+        // Merge patch errors into lastApplyErrorDetails so they are visible in the review panel.
+        if (patchErrors.length > 0) {
+          lastApplyErrorDetails = lastApplyErrorDetails.concat(
+            patchErrors.map(item => ({
+              mappingKey: typeof item?.mappingKey === 'string' ? item.mappingKey : '',
+              error: typeof item?.error === 'string' ? item.error : 'Unknown patch error',
+            }))
+          );
+        }
 
-        if (patchedOverflows.length > 0 && overflowRetryCount < OVERFLOW_RETRY_MAX) {
+        // Preserve overflow entries that the retry did not attempt (e.g. API failure
+        // for that language, or empty translation result). Without this, unpatched
+        // items would silently vanish from the review panel.
+        const patchedKeys = new Set(patchedOverflows.map(o => o.mappingKey));
+        const attemptedKeys = lastOverflowRetryAttemptedKeys;
+        const unattempted = lastOverflowEntries.filter(
+          o => !attemptedKeys.has(o.mappingKey) && !patchedKeys.has(o.mappingKey)
+        );
+        lastOverflowEntries = [...patchedOverflows, ...unattempted];
+
+        if (lastOverflowEntries.length > 0 && overflowRetryCount < OVERFLOW_RETRY_MAX) {
           // Still overflows and retries remain — run another retry
-          setProgress('apply', 92, `Overflow retry ${overflowRetryCount + 1}/${OVERFLOW_RETRY_MAX}`, `${patchedOverflows.length} overflow(s) remain; retrying`);
-          runOverflowRetry(patchedOverflows);
+          setProgress('apply', 92, `Overflow retry ${overflowRetryCount + 1}/${OVERFLOW_RETRY_MAX}`, `${lastOverflowEntries.length} overflow(s) remain; retrying`);
+          runOverflowRetry(lastOverflowEntries);
         } else {
           // Done retrying — show final panel
           setProgress('apply', 100, 'Translation Complete', 'All selected languages processed');
@@ -4296,6 +4319,11 @@ ${JSON.stringify(batch.map(t => ({ mappingKey: t.mappingKey, text: t.text, charB
         const runStartedAtIso = new Date().toISOString();
         const pipelineStartMs = Date.now();
         const modelSpendTotals = new Map();
+        // Sync to module-level so overflow retries can accumulate spend.
+        currentRunModelSpendTotals = modelSpendTotals;
+        currentRunId = runId;
+        currentRunStartedAtIso = runStartedAtIso;
+        currentRunFxRate = null;
 
         const provider = PROVIDERS[currentSettings.provider];
         if (!provider) {
@@ -4780,6 +4808,7 @@ ${JSON.stringify(batch.map(t => ({ mappingKey: t.mappingKey, text: t.text, charB
             error: getErrorMessage(fxError),
           });
         }
+        currentRunFxRate = usdToInrRate;
         const runSpendRecord = buildRunSpendRecord(runId, runStartedAtIso, modelSpendTotals, usdToInrRate);
         parent.postMessage({ pluginMessage: { type: 'record-run-spend', run: runSpendRecord } }, '*');
 
@@ -4989,6 +5018,9 @@ ${JSON.stringify(batch.map(t => ({ mappingKey: t.mappingKey, text: t.text, charB
       }
 
       const allPatches = [];
+      // Track which overflow mappingKeys we actually attempted so patch-complete
+      // can preserve entries that were never sent for patching.
+      const attemptedKeys = new Set();
 
       for (const [langCode, entries] of byLang) {
         const langObj = ALL_LANGUAGES.find(l => l.code === langCode);
@@ -5012,10 +5044,15 @@ ${JSON.stringify(batch.map(t => ({ mappingKey: t.mappingKey, text: t.text, charB
 
         if (items.length === 0) continue;
 
+        // Mark all items in this batch as attempted before the API call.
+        for (const item of items) attemptedKeys.add(item.mappingKey);
+
         try {
           const apiKey = getActiveApiKey();
           const model = currentSettings.model;
           const result = await provider.translate(apiKey, model, items, langCode);
+          // Accumulate retry usage into the run-level spend totals.
+          addUsageToModelTotals(currentRunModelSpendTotals, model, result?.usage);
           const translations = Array.isArray(result?.translations)
             ? result.translations
             : (Array.isArray(result) ? result : []);
@@ -5034,6 +5071,19 @@ ${JSON.stringify(batch.map(t => ({ mappingKey: t.mappingKey, text: t.text, charB
         }
       }
 
+      // Store attempted keys so patch-complete can preserve unattempted overflow entries.
+      lastOverflowRetryAttemptedKeys = attemptedKeys;
+
+      // Emit an updated spend record that includes retry usage.
+      try {
+        const retrySpendRecord = buildRunSpendRecord(
+          currentRunId, currentRunStartedAtIso, currentRunModelSpendTotals, currentRunFxRate
+        );
+        parent.postMessage({ pluginMessage: { type: 'record-run-spend', run: retrySpendRecord } }, '*');
+      } catch (spendErr) {
+        uiWarn('Failed to emit retry spend update', { error: getErrorMessage(spendErr) });
+      }
+
       if (allPatches.length === 0) {
         uiLog('Overflow retry: no valid patches, finishing');
         finishDisplayAfterRetries(lastCreatedFrameCount);
@@ -5044,7 +5094,7 @@ ${JSON.stringify(batch.map(t => ({ mappingKey: t.mappingKey, text: t.text, charB
       parent.postMessage({ pluginMessage: { type: 'patch-node-translations', patches: allPatches } }, '*');
     }
 
-        function handleTranslationComplete(created, errors, overflows) {
+    function handleTranslationComplete(created, errors, overflows) {
       lastApplyErrorDetails = Array.isArray(errors)
         ? errors.map(item => ({
           mappingKey: typeof item?.mappingKey === 'string' ? item.mappingKey : '',
