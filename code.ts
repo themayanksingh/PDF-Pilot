@@ -78,7 +78,6 @@ interface ModelSpendBreakdown {
   completion_tokens: number;
   total_tokens: number;
   cost_usd: number;
-  cost_inr: number;
 }
 
 interface SpendRunRecord {
@@ -88,14 +87,11 @@ interface SpendRunRecord {
   completion_tokens: number;
   total_tokens: number;
   total_cost_usd: number;
-  total_cost_inr: number;
-  fx_rate_usd_inr: number | null;
   model_breakdown: ModelSpendBreakdown[];
 }
 
 interface SpendSummary {
   total_cost_usd: number;
-  total_cost_inr: number;
   total_tokens: number;
   count: number;
 }
@@ -240,7 +236,6 @@ function parseSettingsPayload(value: unknown): SettingsPayload {
 function emptySpendSummary(): SpendSummary {
   return {
     total_cost_usd: 0,
-    total_cost_inr: 0,
     total_tokens: 0,
     count: 0,
   };
@@ -260,7 +255,6 @@ function normalizeModelSpendBreakdown(entry: unknown): ModelSpendBreakdown | nul
     completion_tokens: completionTokens,
     total_tokens: totalTokens,
     cost_usd: numberOr(obj.cost_usd ?? obj.costUsd, 0),
-    cost_inr: numberOr(obj.cost_inr ?? obj.costInr, 0),
   };
 }
 
@@ -272,7 +266,6 @@ function normalizeSpendRunRecord(value: unknown): SpendRunRecord | null {
   const promptTokens = numberOr(obj.prompt_tokens ?? obj.promptTokens, 0);
   const completionTokens = numberOr(obj.completion_tokens ?? obj.completionTokens, 0);
   const totalTokens = numberOr(obj.total_tokens ?? obj.totalTokens, promptTokens + completionTokens);
-  const fxRate = asNumber(obj.fx_rate_usd_inr ?? obj.fxRateUsdInr);
   const normalizedBreakdown = asArray(obj.model_breakdown ?? obj.modelBreakdown)
     .map(normalizeModelSpendBreakdown)
     .filter((item): item is ModelSpendBreakdown => item !== null);
@@ -283,8 +276,6 @@ function normalizeSpendRunRecord(value: unknown): SpendRunRecord | null {
     completion_tokens: completionTokens,
     total_tokens: totalTokens,
     total_cost_usd: numberOr(obj.total_cost_usd ?? obj.totalCostUsd, 0),
-    total_cost_inr: numberOr(obj.total_cost_inr ?? obj.totalCostInr, 0),
-    fx_rate_usd_inr: fxRate === null ? null : fxRate,
     model_breakdown: normalizedBreakdown,
   };
 }
@@ -292,7 +283,6 @@ function normalizeSpendRunRecord(value: unknown): SpendRunRecord | null {
 function mergeSummaryWithRun(summary: SpendSummary, run: SpendRunRecord): SpendSummary {
   return {
     total_cost_usd: summary.total_cost_usd + run.total_cost_usd,
-    total_cost_inr: summary.total_cost_inr + run.total_cost_inr,
     total_tokens: summary.total_tokens + run.total_tokens,
     count: summary.count + 1,
   };
@@ -303,7 +293,6 @@ function normalizeSpendSummary(value: unknown): SpendSummary {
   if (!obj) return emptySpendSummary();
   return {
     total_cost_usd: numberOr(obj.total_cost_usd ?? obj.totalCostUsd, 0),
-    total_cost_inr: numberOr(obj.total_cost_inr ?? obj.totalCostInr, 0),
     total_tokens: numberOr(obj.total_tokens ?? obj.totalTokens, 0),
     count: numberOr(obj.count, 0),
   };
@@ -883,12 +872,10 @@ figma.ui.onmessage = async (rawMsg: unknown) => {
       const oldRun = existingRuns.find(r => r.run_id === runRecord.run_id);
       if (oldRun) {
         const deltaCostUsd = runRecord.total_cost_usd - oldRun.total_cost_usd;
-        const deltaCostInr = runRecord.total_cost_inr - oldRun.total_cost_inr;
         const deltaTokens = runRecord.total_tokens - oldRun.total_tokens;
-        if (deltaCostUsd > 0 || deltaCostInr > 0 || deltaTokens > 0) {
+        if (deltaCostUsd > 0 || deltaTokens > 0) {
           nextAllTimeSummary = {
             total_cost_usd: allTimeSummary.total_cost_usd + Math.max(0, deltaCostUsd),
-            total_cost_inr: allTimeSummary.total_cost_inr + Math.max(0, deltaCostInr),
             total_tokens: allTimeSummary.total_tokens + Math.max(0, deltaTokens),
             count: allTimeSummary.count,
           };

@@ -2515,7 +2515,6 @@
     let currentRunModelSpendTotals = new Map();
     let currentRunId = '';
     let currentRunStartedAtIso = '';
-    let currentRunFxRate = null;
     const MAX_DEBUG_LOG_ENTRIES = 1200;
     const debugLogEntries = [];
 
@@ -3262,16 +3261,14 @@ ${JSON.stringify(batch.map(t => ({ mappingKey: t.mappingKey, text: t.text, charB
       tier2: 'Paid Tier 2',
       tier3: 'Paid Tier 3',
     };
-    const USD_INR_CACHE_KEY = 'fx-usd-inr-cache-v1';
-    const DEFAULT_FX_CACHE_TTL_SECONDS = 86400;
     const MODEL_PRICING_USD_PER_1M_TOKENS = {
       'gemini-2.5-flash-lite': { prompt: 0.1, completion: 0.4 },
       'gpt-5-mini': { prompt: 0.25, completion: 2 },
     };
     let spendDashboardState = {
       recent_runs: [],
-      summary_last_10: { total_cost_usd: 0, total_cost_inr: 0, total_tokens: 0, count: 0 },
-      summary_all_time: { total_cost_usd: 0, total_cost_inr: 0, total_tokens: 0, count: 0 },
+      summary_last_10: { total_cost_usd: 0, total_tokens: 0, count: 0 },
+      summary_all_time: { total_cost_usd: 0, total_tokens: 0, count: 0 },
     };
 
     function getQuotaTierLabel(value) {
@@ -3315,11 +3312,10 @@ ${JSON.stringify(batch.map(t => ({ mappingKey: t.mappingKey, text: t.text, charB
 
     function normalizeSpendSummary(summary) {
       if (!summary || typeof summary !== 'object') {
-        return { total_cost_usd: 0, total_cost_inr: 0, total_tokens: 0, count: 0 };
+        return { total_cost_usd: 0, total_tokens: 0, count: 0 };
       }
       return {
         total_cost_usd: safeNumber(Number(summary.total_cost_usd), 0),
-        total_cost_inr: safeNumber(Number(summary.total_cost_inr), 0),
         total_tokens: safeNumber(Number(summary.total_tokens), 0),
         count: safeNumber(Number(summary.count), 0),
       };
@@ -3335,7 +3331,6 @@ ${JSON.stringify(batch.map(t => ({ mappingKey: t.mappingKey, text: t.text, charB
         completion_tokens: safeNumber(Number(item.completion_tokens), 0),
         total_tokens: safeNumber(Number(item.total_tokens), 0),
         cost_usd: safeNumber(Number(item.cost_usd), 0),
-        cost_inr: safeNumber(Number(item.cost_inr), 0),
       };
     }
 
@@ -3351,8 +3346,6 @@ ${JSON.stringify(batch.map(t => ({ mappingKey: t.mappingKey, text: t.text, charB
         completion_tokens: safeNumber(Number(record.completion_tokens), 0),
         total_tokens: safeNumber(Number(record.total_tokens), 0),
         total_cost_usd: safeNumber(Number(record.total_cost_usd), 0),
-        total_cost_inr: safeNumber(Number(record.total_cost_inr), 0),
-        fx_rate_usd_inr: record.fx_rate_usd_inr === null ? null : safeNumber(Number(record.fx_rate_usd_inr), 0),
         model_breakdown: Array.isArray(record.model_breakdown)
           ? record.model_breakdown.map(normalizeModelBreakdown).filter(Boolean)
           : [],
@@ -3435,7 +3428,7 @@ ${JSON.stringify(batch.map(t => ({ mappingKey: t.mappingKey, text: t.text, charB
       modelTotals.set(model, current);
     }
 
-    function buildRunSpendRecord(runId, runAtIso, modelTotals, fxRate) {
+    function buildRunSpendRecord(runId, runAtIso, modelTotals) {
       const breakdown = [];
       for (const [model, usage] of modelTotals.entries()) {
         const costUsd = computeModelCostUsd(model, usage.prompt_tokens, usage.completion_tokens);
@@ -3445,7 +3438,6 @@ ${JSON.stringify(batch.map(t => ({ mappingKey: t.mappingKey, text: t.text, charB
           completion_tokens: usage.completion_tokens,
           total_tokens: usage.total_tokens,
           cost_usd: costUsd,
-          cost_inr: costUsd * fxRate,
         });
       }
       const promptTokens = breakdown.reduce((sum, item) => sum + item.prompt_tokens, 0);
@@ -3459,46 +3451,8 @@ ${JSON.stringify(batch.map(t => ({ mappingKey: t.mappingKey, text: t.text, charB
         completion_tokens: completionTokens,
         total_tokens: totalTokens,
         total_cost_usd: totalCostUsd,
-        total_cost_inr: totalCostUsd * fxRate,
-        fx_rate_usd_inr: fxRate,
         model_breakdown: breakdown,
       };
-    }
-
-    async function fetchUsdToInrRate(cacheTtlSeconds = DEFAULT_FX_CACHE_TTL_SECONDS) {
-      const now = Date.now();
-      try {
-        const raw = localStorage.getItem(USD_INR_CACHE_KEY);
-        if (raw) {
-          const parsed = JSON.parse(raw);
-          if (
-            parsed &&
-            typeof parsed.rate === 'number' &&
-            typeof parsed.fetchedAt === 'number' &&
-            now - parsed.fetchedAt < (cacheTtlSeconds * 1000)
-          ) {
-            return parsed.rate;
-          }
-        }
-      } catch (error) {
-        uiWarn('FX cache read failed', { error: getErrorMessage(error) });
-      }
-
-      const response = await fetchWithTimeout('https://open.er-api.com/v6/latest/USD', { method: 'GET' }, 20000);
-      if (!response.ok) {
-        throw new Error(`FX fetch failed with status ${response.status}`);
-      }
-      const data = await response.json();
-      const rate = Number(data?.rates?.INR);
-      if (!Number.isFinite(rate) || rate <= 0) {
-        throw new Error('FX source returned invalid USD/INR rate');
-      }
-      try {
-        localStorage.setItem(USD_INR_CACHE_KEY, JSON.stringify({ rate, fetchedAt: now }));
-      } catch (error) {
-        uiWarn('FX cache write failed', { error: getErrorMessage(error) });
-      }
-      return rate;
     }
 
     function openDashboard() {
@@ -4461,8 +4415,6 @@ ${JSON.stringify(batch.map(t => ({ mappingKey: t.mappingKey, text: t.text, charB
         currentRunModelSpendTotals = modelSpendTotals;
         currentRunId = runId;
         currentRunStartedAtIso = runStartedAtIso;
-        currentRunFxRate = null;
-
         const provider = PROVIDERS[currentSettings.provider];
         if (!provider) {
           throw new Error('No translation provider configured. Open settings and select a provider.');
@@ -4935,19 +4887,7 @@ ${JSON.stringify(batch.map(t => ({ mappingKey: t.mappingKey, text: t.text, charB
           payloadItems: allTranslations.length,
           apiErrorCount: apiErrorDetails.length,
         });
-        // Fetch FX rate for INR conversion but do not let a failure block
-        // spend recording — USD totals and token counts are always available.
-        let usdToInrRate = null;
-        try {
-          usdToInrRate = await fetchUsdToInrRate(DEFAULT_FX_CACHE_TTL_SECONDS);
-        } catch (fxError) {
-          uiWarn('FX rate fetch failed; spend recorded without INR conversion', {
-            runId,
-            error: getErrorMessage(fxError),
-          });
-        }
-        currentRunFxRate = usdToInrRate;
-        const runSpendRecord = buildRunSpendRecord(runId, runStartedAtIso, modelSpendTotals, usdToInrRate);
+        const runSpendRecord = buildRunSpendRecord(runId, runStartedAtIso, modelSpendTotals);
         parent.postMessage({ pluginMessage: { type: 'record-run-spend', run: runSpendRecord } }, '*');
 
         setProgress('apply', APPLY_STAGE_START, 'Applying Translations', 'Creating translated rows under your original frames');
@@ -5216,7 +5156,7 @@ ${JSON.stringify(batch.map(t => ({ mappingKey: t.mappingKey, text: t.text, charB
       // Emit an updated spend record that includes retry usage.
       try {
         const retrySpendRecord = buildRunSpendRecord(
-          currentRunId, currentRunStartedAtIso, currentRunModelSpendTotals, currentRunFxRate
+          currentRunId, currentRunStartedAtIso, currentRunModelSpendTotals
         );
         parent.postMessage({ pluginMessage: { type: 'record-run-spend', run: retrySpendRecord } }, '*');
       } catch (spendErr) {
