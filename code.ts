@@ -69,6 +69,7 @@ interface SettingsPayload {
   quotaProfile?: string;
   targetLanguages?: string[];
   debugMode?: boolean;
+  enableTranslation?: boolean;
 }
 
 interface ModelSpendBreakdown {
@@ -223,6 +224,7 @@ function parseSettingsPayload(value: unknown): SettingsPayload {
     quotaProfile: asString(obj.quotaProfile) || undefined,
     targetLanguages,
     debugMode: asBoolean(obj.debugMode) ?? undefined,
+    enableTranslation: asBoolean(obj.enableTranslation) ?? undefined,
   };
 }
 
@@ -670,10 +672,11 @@ figma.ui.onmessage = async (rawMsg: unknown) => {
     const quotaProfile = await figma.clientStorage.getAsync('quota-profile');
     const targetLanguages = await figma.clientStorage.getAsync('target-languages');
     const debugMode = await figma.clientStorage.getAsync('debug-mode');
+    const enableTranslation = await figma.clientStorage.getAsync('enable-translation');
     pluginDebugMode = debugMode === true;
     figma.ui.postMessage({
       type: 'settings-loaded',
-      settings: { provider, model, apiKeyGemini, apiKeyOpenai, quotaProfile, targetLanguages, debugMode: pluginDebugMode },
+      settings: { provider, model, apiKeyGemini, apiKeyOpenai, quotaProfile, targetLanguages, debugMode: pluginDebugMode, enableTranslation: enableTranslation === true },
     });
   }
 
@@ -689,6 +692,7 @@ figma.ui.onmessage = async (rawMsg: unknown) => {
     await figma.clientStorage.setAsync('quota-profile', settings.quotaProfile || 'auto');
     await figma.clientStorage.setAsync('target-languages', Array.isArray(settings.targetLanguages) ? settings.targetLanguages : []);
     await figma.clientStorage.setAsync('debug-mode', debugMode);
+    await figma.clientStorage.setAsync('enable-translation', settings.enableTranslation === true);
     figma.ui.postMessage({ type: 'settings-saved' });
     if (!silent) figma.notify('Settings saved ✅');
   }
