@@ -102,7 +102,9 @@ interface SpendSummary {
 
 const SPEND_RECENT_RUNS_KEY = 'spend-runs-v2';
 const SPEND_ALL_TIME_SUMMARY_KEY = 'spend-all-time-summary-v1';
+const SPEND_KNOWN_RUN_IDS_KEY = 'spend-known-run-ids-v1';
 const SPEND_RECENT_RUN_LIMIT = 10;
+const SPEND_KNOWN_RUN_IDS_LIMIT = 200;
 
 function parseTargetLanguagesPayload(value: unknown): string[] {
   if (!Array.isArray(value)) return [];
@@ -553,6 +555,154 @@ function checkOverflow(textNode: TextNode, mappingKey: string, language: string,
   }
 }
 
+/**
+ * Resolve a Figma LineHeight to a pixel value, falling back to
+ * `fontSize * 1.2` when the line height is set to AUTO.
+ */
+function resolveLineHeightPx(lh: LineHeight, fontSize: number): number {
+  if (lh.unit === 'PIXELS') return lh.value;
+  if (lh.unit === 'PERCENT') return fontSize * (lh.value / 100);
+  // AUTO – Figma uses ≈1.2× the font size
+  return fontSize * 1.2;
+}
+
+/**
+ * Estimate per-hyperlink bounding boxes within a text node by splitting
+ * the full text into lines, mapping each hyperlink segment to a line,
+ * and computing approximate x/y/w/h from font metrics.
+ *
+ * This replaces the previous whole-node hitbox approach and produces
+ * significantly tighter link annotations in the exported PDF.
+ */
+function extractTextNodeLinks(
+  textNode: TextNode,
+  frameX: number,
+  frameY: number,
+): LinkInfo[] {
+  const segments = textNode.getStyledTextSegments(
+    ['hyperlink', 'fontSize', 'lineHeight', 'letterSpacing'],
+  );
+
+  // Collect only segments that carry a URL hyperlink.
+  const linkSegments = segments.filter(
+    (seg) => seg.hyperlink && seg.hyperlink.type === 'URL' && (seg.hyperlink as { value: string }).value,
+  );
+  if (linkSegments.length === 0) return [];
+
+  const fullText = textNode.characters;
+  const nodeX = textNode.absoluteTransform[0][2];
+  const nodeY = textNode.absoluteTransform[1][2];
+  const nodeW = textNode.width;
+  const align = textNode.textAlignHorizontal; // LEFT | CENTER | RIGHT | JUSTIFIED
+
+  // Average char width heuristic (proportional fonts).
+  const AVG_CHAR_WIDTH_FACTOR = 0.55;
+
+  // Build visual lines that account for both hard breaks (\n) and soft wraps.
+  // First split by explicit '\n' into paragraphs, then subdivide each
+  // paragraph into visual lines based on the container width.
+  interface VisualLine { start: number; end: number; fontSize: number; lineHeight: number }
+  const visualLines: VisualLine[] = [];
+
+  // Split into paragraphs by '\n'.
+  const paragraphs: { start: number; end: number }[] = [];
+  let pStart = 0;
+  for (let ci = 0; ci <= fullText.length; ci++) {
+    if (ci === fullText.length || fullText[ci] === '\n') {
+      paragraphs.push({ start: pStart, end: ci });
+      pStart = ci + 1;
+    }
+  }
+
+  for (const para of paragraphs) {
+    // Find dominant font metrics for this paragraph.
+    const overlapping = segments.find(
+      (seg) => seg.start < para.end && seg.end > para.start,
+    );
+    const fSize = overlapping ? overlapping.fontSize : 12;
+    const lhPx = overlapping
+      ? resolveLineHeightPx(overlapping.lineHeight, fSize)
+      : fSize * 1.2;
+    const charW = fSize * AVG_CHAR_WIDTH_FACTOR;
+
+    const paraLen = para.end - para.start;
+    if (paraLen === 0) {
+      // Empty paragraph (blank line) still occupies one visual line.
+      visualLines.push({ start: para.start, end: para.end, fontSize: fSize, lineHeight: lhPx });
+      continue;
+    }
+
+    // Estimate how many characters fit per visual line.
+    const charsPerLine = Math.max(1, Math.floor(nodeW / charW));
+
+    // Subdivide paragraph into visual lines.
+    let offset = para.start;
+    while (offset < para.end) {
+      const lineEnd = Math.min(offset + charsPerLine, para.end);
+      visualLines.push({ start: offset, end: lineEnd, fontSize: fSize, lineHeight: lhPx });
+      offset = lineEnd;
+    }
+  }
+
+  // Compute cumulative y-offsets per visual line.
+  const lineYOffsets: number[] = [];
+  let cumulativeY = 0;
+  for (const vl of visualLines) {
+    lineYOffsets.push(cumulativeY);
+    cumulativeY += vl.lineHeight;
+  }
+
+  const results: LinkInfo[] = [];
+
+  // No URL deduplication: each occurrence of a hyperlink segment gets its own
+  // hitbox so that repeated links in the same text node are all annotated.
+  for (const seg of linkSegments) {
+    const url = (seg.hyperlink as { value: string }).value;
+    const fSize = seg.fontSize;
+    const charW = fSize * AVG_CHAR_WIDTH_FACTOR;
+    const lhPx = resolveLineHeightPx(seg.lineHeight, fSize);
+
+    // Find which visual line(s) this segment spans.
+    for (let li = 0; li < visualLines.length; li++) {
+      const vl = visualLines[li];
+      const overlapStart = Math.max(seg.start, vl.start);
+      const overlapEnd = Math.min(seg.end, vl.end);
+      if (overlapStart >= overlapEnd) continue;
+
+      // Characters before the link on this visual line.
+      const charsBeforeOnLine = overlapStart - vl.start;
+      const linkCharCount = overlapEnd - overlapStart;
+      const lineCharCount = vl.end - vl.start;
+
+      // Estimated full line width & link width.
+      const estLineWidth = lineCharCount * charW;
+      const estLinkWidth = Math.min(linkCharCount * charW, nodeW);
+
+      // X offset depends on text alignment.
+      let lineStartX = 0;
+      if (align === 'CENTER') {
+        lineStartX = (nodeW - estLineWidth) / 2;
+      } else if (align === 'RIGHT') {
+        lineStartX = nodeW - estLineWidth;
+      }
+      // LEFT and JUSTIFIED start at 0.
+
+      const linkX = Math.max(0, lineStartX + charsBeforeOnLine * charW);
+      const linkY = lineYOffsets[li] ?? 0;
+
+      results.push({
+        url,
+        x: (nodeX - frameX) + linkX,
+        y: (nodeY - frameY) + linkY,
+        width: Math.min(estLinkWidth, nodeW - linkX),
+        height: lhPx,
+      });
+    }
+  }
+
+  return results;
+}
+
 function extractLinks(frame: SceneNode): LinkInfo[] {
   const links: LinkInfo[] = [];
   const frameX = frame.absoluteTransform[0][2];
@@ -563,43 +713,11 @@ function extractLinks(frame: SceneNode): LinkInfo[] {
 
     if (node.type === 'TEXT') {
       const textNode = node as TextNode;
-      const len = textNode.characters.length;
-      if (len === 0) return;
+      if (textNode.characters.length === 0) return;
 
-      // Deduplicate URLs per text node: the Figma API does not expose
-      // per-character bounding boxes, so all links in a node share the same
-      // fallback hitbox (the node's full bounds). Emitting the same hitbox
-      // for every contiguous URL run would produce overlapping duplicate
-      // rectangles in the PDF for any URL that appears more than once.
-      const seenUrls = new Set<string>();
-      const nodeX = node.absoluteTransform[0][2];
-      const nodeY = node.absoluteTransform[1][2];
-
-      let i = 0;
-      while (i < len) {
-        const link = textNode.getRangeHyperlink(i, i + 1) as { type: string; value: string } | null | symbol;
-        if (link && typeof link === 'object' && link.type === 'URL' && link.value) {
-          const url = link.value;
-          // Advance past all characters that share this URL.
-          while (i < len) {
-            const nextLink = textNode.getRangeHyperlink(i, i + 1) as { type: string; value: string } | null | symbol;
-            if (!nextLink || typeof nextLink !== 'object' || nextLink.type !== 'URL' || nextLink.value !== url) break;
-            i++;
-          }
-          // Only push the first occurrence of each URL per text node.
-          if (!seenUrls.has(url)) {
-            seenUrls.add(url);
-            links.push({
-              url,
-              x: nodeX - frameX,
-              y: nodeY - frameY,
-              width: node.width,
-              height: node.height,
-            });
-          }
-        } else {
-          i++;
-        }
+      const segmentLinks = extractTextNodeLinks(textNode, frameX, frameY);
+      if (segmentLinks.length > 0) {
+        links.push(...segmentLinks);
       }
     }
 
@@ -737,16 +855,24 @@ figma.ui.onmessage = async (rawMsg: unknown) => {
     const runRecord = normalizeSpendRunRecord(msg?.run);
     if (!runRecord) return;
     const existingRuns = await loadRecentSpendRuns();
-    // Check before deduplication: if the run_id is already in the recent list
-    // it has already been recorded, so skip the all-time summary update to
-    // avoid double-counting on duplicate/retried record-run-spend messages.
-    const isKnownRun = existingRuns.some(run => run.run_id === runRecord.run_id);
+    // Global idempotency: maintain a persistent set of all known run IDs
+    // (capped at 200) so that even after a run falls out of the recent-10
+    // window, reposting the same run_id will not be double-counted.
+    const rawKnownIds = await figma.clientStorage.getAsync(SPEND_KNOWN_RUN_IDS_KEY);
+    const knownRunIds: string[] = Array.isArray(rawKnownIds)
+      ? rawKnownIds.filter((id: unknown) => typeof id === 'string')
+      : [];
+    const knownSet = new Set(knownRunIds);
+    const isKnownRun = knownSet.has(runRecord.run_id);
     const deduped = existingRuns.filter(run => run.run_id !== runRecord.run_id);
     const recentRuns = [runRecord, ...deduped].slice(0, SPEND_RECENT_RUN_LIMIT);
     await figma.clientStorage.setAsync(SPEND_RECENT_RUNS_KEY, recentRuns);
     const allTimeSummary = await loadAllTimeSpendSummary();
     const nextAllTimeSummary = isKnownRun ? allTimeSummary : mergeSummaryWithRun(allTimeSummary, runRecord);
     if (!isKnownRun) {
+      knownSet.add(runRecord.run_id);
+      const updatedIds = Array.from(knownSet).slice(-SPEND_KNOWN_RUN_IDS_LIMIT);
+      await figma.clientStorage.setAsync(SPEND_KNOWN_RUN_IDS_KEY, updatedIds);
       await figma.clientStorage.setAsync(SPEND_ALL_TIME_SUMMARY_KEY, nextAllTimeSummary);
     }
     figma.ui.postMessage({
@@ -1146,13 +1272,13 @@ figma.ui.onmessage = async (rawMsg: unknown) => {
 
     for (const [cloneFrameId, clonePatches] of patchesByClone) {
       const cloneNode = await figma.getNodeByIdAsync(cloneFrameId);
-      if (!cloneNode || cloneNode.type !== 'FRAME') {
+      if (!cloneNode || (cloneNode.type !== 'FRAME' && cloneNode.type !== 'COMPONENT')) {
         for (const p of clonePatches) {
           patchErrors.push({ mappingKey: p.mappingKey, error: 'Clone frame not found or wrong type' });
         }
         continue;
       }
-      const cloneFrame = cloneNode as FrameNode;
+      const cloneFrame = cloneNode as FrameLike;
       const languageName = cloneFrame.getPluginData('pdf-pilot-clone-language-name') || '';
       const sourceName = cloneFrame.getPluginData('pdf-pilot-clone-source-name') || cloneFrame.name;
 

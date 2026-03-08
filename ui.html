@@ -2354,6 +2354,10 @@
       tier3: { rpm: 30000, tpm: 30000000, rpd: null },
     };
     let translationRunSeq = 0;
+    let overflowRetryCount = 0;
+    const OVERFLOW_RETRY_MAX = 2;
+    let nodesByMappingKey = new Map();
+    let lastCreatedFrameCount = 0;
     const MAX_DEBUG_LOG_ENTRIES = 1200;
     const debugLogEntries = [];
 
@@ -2919,7 +2923,7 @@ CRITICAL RULES:
 5. Return a JSON array with the exact same mappingKey values
 
 Texts to translate:
-${JSON.stringify(batch.map(t => ({ mappingKey: t.mappingKey, text: t.text, charBudget: Math.ceil(t.charCount * 1.3) })))}
+${JSON.stringify(batch.map(t => ({ mappingKey: t.mappingKey, text: t.text, charBudget: t.charBudget !== undefined ? t.charBudget : computeCharBudget(t, targetLang) })))}
 
 Respond with ONLY a valid JSON array, no markdown, no explanation:
 [{"mappingKey":"...","translation":"..."},...]`;
@@ -2974,7 +2978,7 @@ Return ONLY a valid JSON object with this exact shape:
 {"translations":[{"mappingKey":"...","translation":"..."},...]}
 
 Texts:
-${JSON.stringify(batch.map(t => ({ mappingKey: t.mappingKey, text: t.text, charBudget: Math.ceil(t.charCount * 1.3) })))}`;
+${JSON.stringify(batch.map(t => ({ mappingKey: t.mappingKey, text: t.text, charBudget: t.charBudget !== undefined ? t.charBudget : computeCharBudget(t, targetLang) })))}`;
 
             const res = await fetchWithTimeout('https://api.openai.com/v1/chat/completions', {
               method: 'POST',
@@ -3991,6 +3995,25 @@ ${JSON.stringify(batch.map(t => ({ mappingKey: t.mappingKey, text: t.text, charB
       } else if (msg.type === 'audit-action-error') {
         const btn = document.querySelector(`.audit-action-btn[data-node-id="${msg.nodeId}"][data-action="${msg.action}"]`);
         if (btn) { btn.textContent = 'Failed'; btn.style.color = '#e88'; }
+      } else if (msg.type === 'patch-complete') {
+        // Merge patched overflows back into lastOverflowEntries:
+        // keep entries that still overflow after the patch, remove ones that resolved.
+        const patchedOverflows = Array.isArray(msg.overflows) ? msg.overflows : [];
+        const patchErrors = Array.isArray(msg.errors) ? msg.errors : [];
+        uiLog('patch-complete received', { remainingOverflows: patchedOverflows.length, patchErrors: patchErrors.length });
+
+        // Replace lastOverflowEntries with those that still overflow
+        lastOverflowEntries = patchedOverflows;
+
+        if (patchedOverflows.length > 0 && overflowRetryCount < OVERFLOW_RETRY_MAX) {
+          // Still overflows and retries remain — run another retry
+          setProgress('apply', 92, `Overflow retry ${overflowRetryCount + 1}/${OVERFLOW_RETRY_MAX}`, `${patchedOverflows.length} overflow(s) remain; retrying`);
+          runOverflowRetry(patchedOverflows);
+        } else {
+          // Done retrying — show final panel
+          setProgress('apply', 100, 'Translation Complete', 'All selected languages processed');
+          finishDisplayAfterRetries(lastCreatedFrameCount);
+        }
       }
     };
 
@@ -4260,8 +4283,11 @@ ${JSON.stringify(batch.map(t => ({ mappingKey: t.mappingKey, text: t.text, charB
         lastApiErrorDetails = [];
         lastApplyErrorDetails = [];
         lastOverflowEntries = [];
+        overflowRetryCount = 0;
         issueFilter = 'all';
         resolvedOverflowNodeIds.clear();
+        // Build lookup map for overflow retry: original text and dimensions by mappingKey.
+        nodesByMappingKey = new Map(scopedNodes.map(n => [n.mappingKey, n]));
         const retryScopeApplied = retryFrameScope && retryFrameScope.size > 0;
         retryFrameScope = null;
         const langs = getSelectedLangs();
@@ -4898,22 +4924,11 @@ ${JSON.stringify(batch.map(t => ({ mappingKey: t.mappingKey, text: t.text, charB
       });
     }
 
-    function handleTranslationComplete(created, errors, overflows) {
-      lastApplyErrorDetails = Array.isArray(errors)
-        ? errors.map(item => ({
-          mappingKey: typeof item?.mappingKey === 'string' ? item.mappingKey : '',
-          error: typeof item?.error === 'string' ? item.error : 'Unknown apply error',
-        }))
-        : [];
-      lastOverflowEntries = Array.isArray(overflows) ? overflows : [];
-
-      uiLog('Translation apply completed', {
-        created,
-        applyErrorCount: lastApplyErrorDetails.length,
-        apiErrorCount: lastApiErrors.length,
-        overflowCount: lastOverflowEntries.length,
-      });
-      setProgress('apply', 100, 'Translation Complete', 'All selected languages processed');
+    function finishDisplayAfterRetries(created) {
+      const applyErrors = lastApplyErrorDetails.length;
+      const apiErrorCount = lastApiErrors.length;
+      const overflowCount = lastOverflowEntries.length;
+      const summary = summarizeDiagnostics();
 
       isTranslating = false;
       translateButtonDone = true;
@@ -4921,24 +4936,14 @@ ${JSON.stringify(batch.map(t => ({ mappingKey: t.mappingKey, text: t.text, charB
       completionSection.open = true;
       updateTranslateUI();
 
-      const applyErrors = lastApplyErrorDetails.length;
-      const apiErrorCount = lastApiErrors.length;
-      const overflowCount = lastOverflowEntries.length;
-      const summary = summarizeDiagnostics();
-      uiLog('Phase 2 overflow detection summary', {
-        phase2Active: true,
-        overflowCount,
-        status: overflowCount > 0 ? 'issues-found' : 'no-overflow',
-      });
-
       if (applyErrors === 0 && apiErrorCount === 0 && overflowCount === 0) {
         completionSection.className = 'completion-section success';
-        document.getElementById('resultTitle').textContent = `Completed successfully`;
+        document.getElementById('resultTitle').textContent = 'Completed successfully';
         document.getElementById('resultDetail').textContent = `${created} created · 0 partial fallbacks · 0 apply failures · 0 overflows`;
         document.getElementById('resultErrors').textContent = '';
       } else {
         completionSection.className = 'completion-section warning';
-        document.getElementById('resultTitle').textContent = `Completed with issues`;
+        document.getElementById('resultTitle').textContent = 'Completed with issues';
         document.getElementById('resultDetail').textContent = `${created} created · ${summary.partialFallbackCount} partial fallbacks · ${applyErrors} apply failures · ${overflowCount} overflows`;
         document.getElementById('resultErrors').textContent = '';
       }
@@ -4957,6 +4962,122 @@ ${JSON.stringify(batch.map(t => ({ mappingKey: t.mappingKey, text: t.text, charB
         }, 120);
       }
       lastApiErrors = [];
+    }
+
+    async function runOverflowRetry(overflows) {
+      overflowRetryCount++;
+      const attempt = overflowRetryCount;
+      const budgetScale = attempt === 1 ? 0.80 : 0.65;
+
+      uiLog('Overflow retry pass started', { attempt, budgetScale, overflowCount: overflows.length });
+      setProgress('apply', 95, `Overflow retry ${attempt}/${OVERFLOW_RETRY_MAX}`, `Re-translating ${overflows.length} overflowing node(s) with tighter budget`);
+
+      // Group overflows by language code
+      const byLang = new Map();
+      for (const entry of overflows) {
+        const langCode = entry.languageCode || entry.language || '';
+        if (!langCode) continue;
+        if (!byLang.has(langCode)) byLang.set(langCode, []);
+        byLang.get(langCode).push(entry);
+      }
+
+      const provider = PROVIDERS[currentSettings.provider];
+      if (!provider) {
+        uiWarn('Overflow retry: no provider configured, skipping');
+        finishDisplayAfterRetries(lastCreatedFrameCount);
+        return;
+      }
+
+      const allPatches = [];
+
+      for (const [langCode, entries] of byLang) {
+        const langObj = ALL_LANGUAGES.find(l => l.code === langCode);
+        const langName = langObj ? langObj.name : langCode;
+
+        // Build items to retranslate with tighter budget
+        const items = entries.map(entry => {
+          const original = nodesByMappingKey.get(entry.mappingKey);
+          const charCount = original ? original.charCount : (entry.originalText ? entry.originalText.length : 20);
+          const base = original
+            ? computeCharBudget(original, langCode, entry.containerWidth, entry.containerHeight, entry.textAutoResize)
+            : Math.ceil(charCount * 1.3);
+          return {
+            mappingKey: entry.mappingKey,
+            text: original ? original.text : (entry.originalText || ''),
+            charCount,
+            charBudget: Math.max(charCount, Math.ceil(base * budgetScale)),
+            cloneFrameId: entry.cloneFrameId,
+          };
+        }).filter(item => item.text && item.mappingKey);
+
+        if (items.length === 0) continue;
+
+        try {
+          const apiKey = getActiveApiKey();
+          const model = currentSettings.model;
+          const result = await provider.translate(apiKey, model, items, langCode);
+          const translations = Array.isArray(result?.translations)
+            ? result.translations
+            : (Array.isArray(result) ? result : []);
+          for (const t of translations) {
+            if (t.mappingKey && t.translation !== null && t.translation !== undefined) {
+              const entry = entries.find(e => e.mappingKey === t.mappingKey);
+              allPatches.push({
+                cloneFrameId: entry ? entry.cloneFrameId : '',
+                mappingKey: t.mappingKey,
+                translatedText: t.translation,
+              });
+            }
+          }
+        } catch (err) {
+          uiWarn('Overflow retry batch failed', { langCode, error: getErrorMessage(err) });
+        }
+      }
+
+      if (allPatches.length === 0) {
+        uiLog('Overflow retry: no valid patches, finishing');
+        finishDisplayAfterRetries(lastCreatedFrameCount);
+        return;
+      }
+
+      // Send patches to plugin; patch-complete handler will continue
+      parent.postMessage({ pluginMessage: { type: 'patch-node-translations', patches: allPatches } }, '*');
+    }
+
+        function handleTranslationComplete(created, errors, overflows) {
+      lastApplyErrorDetails = Array.isArray(errors)
+        ? errors.map(item => ({
+          mappingKey: typeof item?.mappingKey === 'string' ? item.mappingKey : '',
+          error: typeof item?.error === 'string' ? item.error : 'Unknown apply error',
+        }))
+        : [];
+      lastOverflowEntries = Array.isArray(overflows) ? overflows : [];
+      lastCreatedFrameCount = typeof created === 'number' ? created : 0;
+
+      uiLog('Translation apply completed', {
+        created,
+        applyErrorCount: lastApplyErrorDetails.length,
+        apiErrorCount: lastApiErrors.length,
+        overflowCount: lastOverflowEntries.length,
+      });
+
+      const overflowCount = lastOverflowEntries.length;
+      uiLog('Phase 2 overflow detection summary', {
+        phase2Active: true,
+        overflowCount,
+        status: overflowCount > 0 ? 'issues-found' : 'no-overflow',
+      });
+
+      // If there are overflows and retries remain, run the auto-retry pipeline.
+      // The panel is suppressed until all retry attempts complete.
+      if (overflowCount > 0 && overflowRetryCount < OVERFLOW_RETRY_MAX) {
+        setProgress('apply', 90, 'Overflow detected — auto-retrying', `${overflowCount} overflow(s) found; retrying with tighter budget`);
+        runOverflowRetry(lastOverflowEntries);
+        return;
+      }
+
+      setProgress('apply', 100, 'Translation Complete', 'All selected languages processed');
+      finishDisplayAfterRetries(lastCreatedFrameCount);
     }
 
     // ── Init ──

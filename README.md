@@ -8,7 +8,7 @@ Figma plugin for:
 ## Features
 
 ### Translate (AI)
-- Select one or more `Frame` / `Component` / `Instance` nodes
+- Select one or more `Frame` / `Component` nodes
 - Choose target languages (FR/DE/ES/IT/TR/AR)
 - Calls AI provider from plugin UI and applies translations to duplicated designs
 - Uses stable mapping keys (`sourceFrameId::nodePath`) so text maps correctly after duplication
@@ -22,7 +22,7 @@ Figma plugin for:
   - overflow audit actions (Phase 2)
 
 ### Export PDF
-- Select one or more `Frame` / `Component` / `Instance` nodes
+- Select one or more `Frame` / `Component` nodes
 - Export to PDF from the `Export PDF` tab
 - Preserves URL links detected in text and node reactions
 
