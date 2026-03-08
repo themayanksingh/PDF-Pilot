@@ -37,8 +37,8 @@ function pluginWarn(...args: unknown[]) {
 }
 
 function pluginError(...args: unknown[]) {
-  if (!pluginDebugMode) return;
   console.error('[PDF Pilot Plugin]', ...args);
+  if (!pluginDebugMode) return;
   emitPluginDebugLog('error', args);
 }
 
@@ -110,6 +110,12 @@ function parseTargetLanguagesPayload(value: unknown): string[] {
 }
 
 interface TranslationNodePayload {
+  mappingKey: string;
+  translatedText: string;
+}
+
+interface PatchNodePayload {
+  cloneFrameId: string;
   mappingKey: string;
   translatedText: string;
 }
@@ -347,8 +353,10 @@ function parseTranslationPayloads(value: unknown): TranslationPayload[] {
   return parsed;
 }
 
-function isAllowedSelectionNode(node: SceneNode): node is FrameNode {
-  return node.type === 'FRAME';
+type FrameLike = FrameNode | ComponentNode;
+
+function isAllowedSelectionNode(node: SceneNode): node is FrameLike {
+  return node.type === 'FRAME' || node.type === 'COMPONENT';
 }
 
 function getSelectedFrames(): { id: string; name: string; width: number; height: number }[] {
@@ -362,7 +370,7 @@ function getSelectedFrames(): { id: string; name: string; width: number; height:
     }));
 }
 
-function getSelectionTextStats(frames: FrameNode[]): {
+function getSelectionTextStats(frames: FrameLike[]): {
   textNodeCount: number;
   totalCharCount: number;
   truncatedNodeCount: number;
@@ -558,26 +566,37 @@ function extractLinks(frame: SceneNode): LinkInfo[] {
       const len = textNode.characters.length;
       if (len === 0) return;
 
+      // Deduplicate URLs per text node: the Figma API does not expose
+      // per-character bounding boxes, so all links in a node share the same
+      // fallback hitbox (the node's full bounds). Emitting the same hitbox
+      // for every contiguous URL run would produce overlapping duplicate
+      // rectangles in the PDF for any URL that appears more than once.
+      const seenUrls = new Set<string>();
+      const nodeX = node.absoluteTransform[0][2];
+      const nodeY = node.absoluteTransform[1][2];
+
       let i = 0;
       while (i < len) {
         const link = textNode.getRangeHyperlink(i, i + 1) as { type: string; value: string } | null | symbol;
         if (link && typeof link === 'object' && link.type === 'URL' && link.value) {
           const url = link.value;
+          // Advance past all characters that share this URL.
           while (i < len) {
             const nextLink = textNode.getRangeHyperlink(i, i + 1) as { type: string; value: string } | null | symbol;
             if (!nextLink || typeof nextLink !== 'object' || nextLink.type !== 'URL' || nextLink.value !== url) break;
             i++;
           }
-          // Use the absolute bounding box of the text node as fallback
-          const nodeX = node.absoluteTransform[0][2];
-          const nodeY = node.absoluteTransform[1][2];
-          links.push({
-            url,
-            x: nodeX - frameX,
-            y: nodeY - frameY,
-            width: node.width,
-            height: node.height,
-          });
+          // Only push the first occurrence of each URL per text node.
+          if (!seenUrls.has(url)) {
+            seenUrls.add(url);
+            links.push({
+              url,
+              x: nodeX - frameX,
+              y: nodeY - frameY,
+              width: node.width,
+              height: node.height,
+            });
+          }
         } else {
           i++;
         }
@@ -644,7 +663,7 @@ figma.ui.onmessage = async (rawMsg: unknown) => {
     const allLinks: LinkInfo[][] = [];
 
     for (const frame of frames) {
-      const bytes = await (frame as FrameNode).exportAsync({
+      const bytes = await (frame as FrameLike).exportAsync({
         format: 'PNG',
         constraint: { type: 'SCALE', value: scale },
       });
@@ -718,12 +737,18 @@ figma.ui.onmessage = async (rawMsg: unknown) => {
     const runRecord = normalizeSpendRunRecord(msg?.run);
     if (!runRecord) return;
     const existingRuns = await loadRecentSpendRuns();
+    // Check before deduplication: if the run_id is already in the recent list
+    // it has already been recorded, so skip the all-time summary update to
+    // avoid double-counting on duplicate/retried record-run-spend messages.
+    const isKnownRun = existingRuns.some(run => run.run_id === runRecord.run_id);
     const deduped = existingRuns.filter(run => run.run_id !== runRecord.run_id);
     const recentRuns = [runRecord, ...deduped].slice(0, SPEND_RECENT_RUN_LIMIT);
     await figma.clientStorage.setAsync(SPEND_RECENT_RUNS_KEY, recentRuns);
     const allTimeSummary = await loadAllTimeSpendSummary();
-    const nextAllTimeSummary = mergeSummaryWithRun(allTimeSummary, runRecord);
-    await figma.clientStorage.setAsync(SPEND_ALL_TIME_SUMMARY_KEY, nextAllTimeSummary);
+    const nextAllTimeSummary = isKnownRun ? allTimeSummary : mergeSummaryWithRun(allTimeSummary, runRecord);
+    if (!isKnownRun) {
+      await figma.clientStorage.setAsync(SPEND_ALL_TIME_SUMMARY_KEY, nextAllTimeSummary);
+    }
     figma.ui.postMessage({
       type: 'dashboard-data',
       recent_runs: recentRuns,
@@ -737,7 +762,7 @@ figma.ui.onmessage = async (rawMsg: unknown) => {
       ? (msg?.frameIds as unknown[]).filter(item => typeof item === 'string') as string[]
       : null;
     const selectedFrames = figma.currentPage.selection.filter(isAllowedSelectionNode);
-    let frames: FrameNode[] = selectedFrames;
+    let frames: FrameLike[] = selectedFrames;
     if (frameIdScope && frameIdScope.length > 0) {
       const idSet = new Set(frameIdScope);
       frames = selectedFrames.filter(frame => idSet.has(frame.id));
@@ -822,21 +847,21 @@ figma.ui.onmessage = async (rawMsg: unknown) => {
         }
       }
 
-      const sourceFramesById = new Map<string, FrameNode>();
+      const sourceFramesById = new Map<string, FrameLike>();
       for (const t of translations) {
         if (sourceFramesById.has(t.sourceFrameId)) continue;
         const sourceNode = await figma.getNodeByIdAsync(t.sourceFrameId);
         if (!sourceNode) continue;
-        if (sourceNode.type !== 'FRAME') continue;
-        sourceFramesById.set(t.sourceFrameId, sourceNode);
+        if (sourceNode.type !== 'FRAME' && sourceNode.type !== 'COMPONENT') continue;
+        sourceFramesById.set(t.sourceFrameId, sourceNode as FrameLike);
       }
 
       const sourceFrames = Array.from(sourceFramesById.values());
-      const layoutAnchorFrames: FrameNode[] = [];
+      const layoutAnchorFrames: FrameLike[] = [];
       if (layoutFrameIds.length > 0) {
         for (const frameId of layoutFrameIds) {
           const node = await figma.getNodeByIdAsync(frameId);
-          if (node && node.type === 'FRAME') layoutAnchorFrames.push(node);
+          if (node && (node.type === 'FRAME' || node.type === 'COMPONENT')) layoutAnchorFrames.push(node as FrameLike);
         }
       }
       const framesForLayout = layoutAnchorFrames.length > 0 ? layoutAnchorFrames : sourceFrames;
@@ -858,12 +883,18 @@ figma.ui.onmessage = async (rawMsg: unknown) => {
         const sourceFrame = sourceFramesById.get(translation.sourceFrameId);
         if (!sourceFrame) continue;
 
-        // Remove any existing clone for this frame+language (e.g. from a previous failed run).
-        const expectedCloneName = `${sourceFrame.name} — ${translation.language}`;
+        // Remove any existing plugin-created clone for this frame+language
+        // (e.g. from a previous failed run). Match by plugin metadata rather
+        // than name to avoid accidentally deleting user frames that happen to
+        // share the same naming pattern.
         const parent = sourceFrame.parent;
         if (parent && 'children' in parent) {
           for (const child of [...parent.children]) {
-            if (child.name === expectedCloneName && child.id !== sourceFrame.id) {
+            if (
+              child.id !== sourceFrame.id &&
+              child.getPluginData('pdf-pilot-clone-source-id') === sourceFrame.id &&
+              child.getPluginData('pdf-pilot-clone-language-code') === translation.languageCode
+            ) {
               child.remove();
             }
           }
@@ -873,7 +904,13 @@ figma.ui.onmessage = async (rawMsg: unknown) => {
         const langIdx = languageIndices.get(translation.languageCode) ?? languageIndices.get(translation.language) ?? 0;
         clone.x = sourceFrame.x;
         clone.y = sourceFrame.y + rowStride * (langIdx + 1);
-        clone.name = expectedCloneName;
+        clone.name = `${sourceFrame.name} — ${translation.language}`;
+        // Tag the clone so future runs can identify and replace it by metadata
+        // instead of name, preventing accidental deletion of user frames.
+        clone.setPluginData('pdf-pilot-clone-source-id', sourceFrame.id);
+        clone.setPluginData('pdf-pilot-clone-language-code', translation.languageCode);
+        clone.setPluginData('pdf-pilot-clone-language-name', translation.language);
+        clone.setPluginData('pdf-pilot-clone-source-name', sourceFrame.name);
         totalFramesCreated++;
         for (const nodeTranslation of translation.nodes) {
           if (!nodeTranslation.mappingKey.includes('::')) {
@@ -965,6 +1002,28 @@ figma.ui.onmessage = async (rawMsg: unknown) => {
         detectOverflows(clone as SceneNode, clone as SceneNode);
         _totalOverflowScannedNodes += scannedInClone;
         if (foundInClone > 0) _clonesWithOverflow++;
+
+        // Apply RTL text alignment for Arabic clones.
+        // Figma's text engine renders Arabic script RTL automatically, but
+        // alignment stays LEFT unless corrected. Flip LEFT → RIGHT so the
+        // text sits at the correct edge of each text box.
+        if (translation.languageCode.split('-')[0] === 'ar') {
+          const applyRtlAlignment = (node: SceneNode): void => {
+            if (node.type === 'TEXT') {
+              const textNode = node as TextNode;
+              if (textNode.textAlignHorizontal === 'LEFT') {
+                textNode.textAlignHorizontal = 'RIGHT';
+              }
+            }
+            if ('children' in node) {
+              for (const child of (node as FrameNode).children) {
+                applyRtlAlignment(child);
+              }
+            }
+          };
+          applyRtlAlignment(clone as SceneNode);
+        }
+
         completedTranslationUnits++;
         figma.ui.postMessage({
           type: 'translation-apply-progress',
@@ -1039,5 +1098,107 @@ figma.ui.onmessage = async (rawMsg: unknown) => {
     if (!node) return;
     figma.viewport.scrollAndZoomIntoView([node as SceneNode]);
     figma.currentPage.selection = [node as SceneNode];
+  }
+
+  if (type === 'patch-node-translations') {
+    // Re-apply specific translated texts to existing clone frames and
+    // re-detect overflows, without creating new clones. Used by the
+    // overflow auto-retry pipeline (up to 2 attempts per run).
+    const patchErrors: { mappingKey: string; error: string }[] = [];
+    const patchOverflows: OverflowInfo[] = [];
+
+    const rawPatches = asArray(msg?.patches);
+    const patches: PatchNodePayload[] = [];
+    for (const p of rawPatches) {
+      const pObj = asObject(p);
+      if (!pObj) continue;
+      const cloneFrameId = asString(pObj.cloneFrameId);
+      const mappingKey = asString(pObj.mappingKey);
+      const translatedText = asString(pObj.translatedText);
+      if (!cloneFrameId || !mappingKey || translatedText === null) continue;
+      patches.push({ cloneFrameId, mappingKey, translatedText });
+    }
+
+    // Group patches by clone so we look up each clone only once.
+    const patchesByClone = new Map<string, PatchNodePayload[]>();
+    for (const patch of patches) {
+      const list = patchesByClone.get(patch.cloneFrameId) ?? [];
+      list.push(patch);
+      patchesByClone.set(patch.cloneFrameId, list);
+    }
+
+    const loadedFontKeys = new Set<string>();
+    const patchEnsureFontLoaded = async (font: FontName): Promise<void> => {
+      const key = `${font.family}::${font.style}`;
+      if (loadedFontKeys.has(key)) return;
+      await figma.loadFontAsync(font);
+      loadedFontKeys.add(key);
+    };
+    const patchEnsureTextNodeFontsLoaded = async (textNode: TextNode): Promise<void> => {
+      const fontName = textNode.fontName;
+      if (fontName === figma.mixed) {
+        const segments = textNode.getStyledTextSegments(['fontName']);
+        for (const seg of segments) await patchEnsureFontLoaded(seg.fontName as FontName);
+        return;
+      }
+      await patchEnsureFontLoaded(fontName);
+    };
+
+    for (const [cloneFrameId, clonePatches] of patchesByClone) {
+      const cloneNode = await figma.getNodeByIdAsync(cloneFrameId);
+      if (!cloneNode || cloneNode.type !== 'FRAME') {
+        for (const p of clonePatches) {
+          patchErrors.push({ mappingKey: p.mappingKey, error: 'Clone frame not found or wrong type' });
+        }
+        continue;
+      }
+      const cloneFrame = cloneNode as FrameNode;
+      const languageName = cloneFrame.getPluginData('pdf-pilot-clone-language-name') || '';
+      const sourceName = cloneFrame.getPluginData('pdf-pilot-clone-source-name') || cloneFrame.name;
+
+      for (const patch of clonePatches) {
+        const parts = patch.mappingKey.split('::');
+        if (parts.length < 2 || !parts[1]) {
+          patchErrors.push({ mappingKey: patch.mappingKey, error: 'Invalid mappingKey format' });
+          continue;
+        }
+        const indices = parts[1].split('/').map(Number);
+        if (indices.some(idx => !Number.isInteger(idx) || idx < 0)) {
+          patchErrors.push({ mappingKey: patch.mappingKey, error: 'Invalid path indices' });
+          continue;
+        }
+
+        let current: SceneNode = cloneFrame as SceneNode;
+        let found = true;
+        for (const idx of indices) {
+          if ('children' in current && idx < current.children.length) {
+            current = current.children[idx];
+          } else {
+            found = false;
+            break;
+          }
+        }
+
+        if (!found || current.type !== 'TEXT') {
+          patchErrors.push({ mappingKey: patch.mappingKey, error: 'Node not found or not TEXT in clone' });
+          continue;
+        }
+
+        const textNode = current as TextNode;
+        try {
+          await patchEnsureTextNodeFontsLoaded(textNode);
+          textNode.characters = patch.translatedText;
+        } catch (e: unknown) {
+          const message = e instanceof Error ? e.message : String(e);
+          patchErrors.push({ mappingKey: patch.mappingKey, error: message });
+          continue;
+        }
+
+        const overflow = checkOverflow(textNode, patch.mappingKey, languageName, sourceName, cloneFrameId);
+        if (overflow) patchOverflows.push(overflow);
+      }
+    }
+
+    figma.ui.postMessage({ type: 'patch-complete', errors: patchErrors, overflows: patchOverflows });
   }
 };

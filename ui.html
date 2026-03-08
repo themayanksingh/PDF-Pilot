@@ -592,12 +592,19 @@
 
     .filename-row input {
       flex: 1;
-      background: transparent;
-      border: none;
+      background: #1e1e1e;
+      border: 1px solid #444;
+      border-radius: 6px;
       outline: none;
       color: #ccc;
       font-size: 13px;
       font-family: inherit;
+      padding: 6px 10px;
+      transition: border-color 0.1s;
+    }
+
+    .filename-row input:focus {
+      border-color: #888;
     }
 
     .filename-row .ext {
@@ -954,6 +961,74 @@
 
     .lang-search:focus {
       border-color: #888;
+    }
+
+    /* Select with custom caret */
+    .select-wrap {
+      position: relative;
+    }
+
+    .select-wrap .field-select {
+      padding-right: 30px;
+    }
+
+    .select-caret {
+      position: absolute;
+      right: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 12px;
+      height: 12px;
+      stroke: #888;
+      fill: none;
+      stroke-width: 1.8;
+      stroke-linecap: round;
+      pointer-events: none;
+    }
+
+    /* Lang accordion JS toggle */
+    .lang-accordion-head {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #2a2a2a;
+      border: 1px solid #3a3a3a;
+      border-radius: 8px;
+      padding: 8px 10px;
+      cursor: pointer;
+      color: #ccc;
+      font-size: 12px;
+      font-family: inherit;
+      transition: background 0.1s;
+    }
+
+    .lang-accordion-head:hover {
+      background: #333;
+    }
+
+    .lang-accordion-head.is-open {
+      border-bottom-left-radius: 0;
+      border-bottom-right-radius: 0;
+      border-bottom-color: transparent;
+    }
+
+    .lang-accordion-body {
+      background: #222;
+      border: 1px solid #3a3a3a;
+      border-top: none;
+      border-bottom-left-radius: 8px;
+      border-bottom-right-radius: 8px;
+      overflow: hidden;
+    }
+
+    .lang-accordion-head .lang-accordion-caret {
+      transition: transform 0.2s;
+      flex: 0 0 12px;
+    }
+
+    .lang-accordion-head.is-open .lang-accordion-caret {
+      transform: rotate(180deg);
     }
 
     .lang-list {
@@ -1989,44 +2064,50 @@
       <div class="selected-frames-list" id="translateFramesList" style="display:none;"></div>
     </div>
 
+
+
     <div class="lang-config-row">
       <div class="lang-config-col">
         <div class="section-label">Source Language</div>
-        <details class="lang-accordion" id="sourceLangAccordion">
-          <summary>
+        <div class="lang-accordion" id="sourceLangAccordion">
+          <button type="button" class="lang-accordion-head" id="sourceLangToggleBtn" aria-expanded="false">
             <span class="lang-accordion-title" id="sourceLangLabel">English</span>
             <svg class="lang-accordion-caret" viewBox="0 0 12 12" aria-hidden="true">
               <path d="M2.5 4.5L6 8l3.5-3.5"></path>
             </svg>
-          </summary>
-          <div class="lang-grid source-lang-grid">
-            <label class="lang-check"><input type="radio" name="sourceLangOption" value="en" checked> English</label>
+          </button>
+          <div class="lang-accordion-body" id="sourceLangBody" style="display:none;">
+            <div class="lang-grid source-lang-grid">
+              <label class="lang-check"><input type="radio" name="sourceLangOption" value="en" checked> English</label>
+            </div>
           </div>
-        </details>
+        </div>
         <input type="hidden" id="sourceLang" value="en">
       </div>
       <div class="lang-config-col">
         <div class="section-label">Target Languages</div>
-        <details class="lang-accordion" id="langAccordion">
-          <summary>
+        <div class="lang-accordion" id="langAccordion">
+          <button type="button" class="lang-accordion-head" id="langToggleBtn" aria-expanded="false">
             <span class="lang-accordion-title" id="langAccordionLabel">Customize target languages</span>
             <svg class="lang-accordion-caret" viewBox="0 0 12 12" aria-hidden="true">
               <path d="M2.5 4.5L6 8l3.5-3.5"></path>
             </svg>
-          </summary>
-          <div class="lang-picker" id="langGrid">
-            <div class="lang-chips" id="langChips"></div>
-            <div class="lang-search-wrap">
-              <svg viewBox="0 0 24 24" aria-hidden="true">
-                <circle cx="11" cy="11" r="7"></circle>
-                <path d="M21 21l-4.35-4.35"></path>
-              </svg>
-              <input class="lang-search" id="langSearch" type="text" placeholder="Search languages..."
-                autocomplete="off" spellcheck="false">
+          </button>
+          <div class="lang-accordion-body" id="langAccordionBody" style="display:none;">
+            <div class="lang-picker" id="langGrid">
+              <div class="lang-chips" id="langChips"></div>
+              <div class="lang-search-wrap">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <circle cx="11" cy="11" r="7"></circle>
+                  <path d="M21 21l-4.35-4.35"></path>
+                </svg>
+                <input class="lang-search" id="langSearch" type="text" placeholder="Search languages..."
+                  autocomplete="off" spellcheck="false">
+              </div>
+              <div class="lang-list" id="langList"></div>
             </div>
-            <div class="lang-list" id="langList"></div>
           </div>
-        </details>
+        </div>
       </div>
     </div>
 
@@ -2076,113 +2157,113 @@
       </div>
 
       <div class="dashboard-stack">
-        <div class="dashboard-card dashboard-toggle is-open" id="dashboardSectionLlm">
-          <button type="button" class="dashboard-toggle-head" data-target="dashboardSectionLlm" aria-expanded="true">
-            <span class="dashboard-toggle-left">
-              <span class="dashboard-toggle-caret" aria-hidden="true"></span>
-              <span class="dashboard-section-title">1. LLM Settings</span>
-            </span>
-          </button>
-          <div class="dashboard-toggle-body">
-            <div class="field-group">
-              <div class="field-label">AI Provider</div>
-              <select class="field-select" id="settingsProvider">
-                <option value="gemini">Gemini</option>
-                <option value="openai">OpenAI</option>
-              </select>
-            </div>
-            <div class="dashboard-provider-meta" id="activeProviderMeta">Active provider: Gemini</div>
-
-            <div class="dashboard-subsection" id="geminiKeySection">
-              <div class="dashboard-subsection-title">Gemini API Key</div>
-              <div class="field-group" id="geminiKeyGroup">
-                <div class="api-key-row">
-                  <input type="password" class="field-input" id="settingsGeminiKey" placeholder="Enter Gemini API key">
-                  <button class="toggle-vis-btn" id="toggleGeminiKey" type="button" aria-label="Show Gemini API key">
-                    <span class="toggle-vis-icon" aria-hidden="true"></span>
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            <div class="dashboard-subsection" id="openaiKeySection" style="display:none;">
-              <div class="dashboard-subsection-title">OpenAI API Key</div>
-              <div class="field-group" id="openaiKeyGroup">
-                <div class="api-key-row">
-                  <input type="password" class="field-input" id="settingsOpenaiKey" placeholder="Enter OpenAI API key">
-                  <button class="toggle-vis-btn" id="toggleOpenaiKey" type="button" aria-label="Show OpenAI API key">
-                    <span class="toggle-vis-icon" aria-hidden="true"></span>
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            <div class="dashboard-subsection" id="modelSettingsSection">
-              <div class="dashboard-subsection-title">Model Settings</div>
-              <div class="field-help" id="modelSettingsDescription">Gemini model: gemini-2.5-flash-lite (fixed)</div>
-              <div class="field-group" id="quotaProfileGroup">
-                <div class="field-label">Gemini Quota Tier</div>
-                <select class="field-select" id="settingsQuotaProfile">
-                  <option value="auto">Auto (safe default)</option>
-                  <option value="free">Free Tier</option>
-                  <option value="tier1">Paid Tier 1</option>
-                  <option value="tier2">Paid Tier 2</option>
-                  <option value="tier3">Paid Tier 3</option>
-                </select>
-                <div class="field-help">Gemini-only throughput control. Set this to your actual Gemini quota tier for
-                  best speed and fewer rate-limit errors.</div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="dashboard-card dashboard-toggle is-open" id="dashboardSectionSpend">
-          <button type="button" class="dashboard-toggle-head" data-target="dashboardSectionSpend" aria-expanded="true">
-            <span class="dashboard-toggle-left">
-              <span class="dashboard-toggle-caret" aria-hidden="true"></span>
-              <span class="dashboard-section-title">2. Spend</span>
-            </span>
-          </button>
-          <div class="dashboard-toggle-body">
-            <div class="dashboard-summaries">
-              <div class="dashboard-summary-card">
-                <div class="dashboard-summary-title">Last Run</div>
-                <div class="dashboard-summary-line" id="summaryLastRunCost">$0.00 · ₹0.00</div>
-                <div class="dashboard-summary-line dashboard-summary-muted" id="summaryLastRunMeta">No runs yet</div>
-              </div>
-              <div class="dashboard-summary-card">
-                <div class="dashboard-summary-title">Last 10 Totals</div>
-                <div class="dashboard-summary-line" id="summaryLast10Cost">$0.00 · ₹0.00</div>
-                <div class="dashboard-summary-line dashboard-summary-muted" id="summaryLast10Meta">0 runs · 0 tokens
-                </div>
-              </div>
-              <div class="dashboard-summary-card">
-                <div class="dashboard-summary-title">All-time Totals</div>
-                <div class="dashboard-summary-line" id="summaryAllTimeCost">$0.00 · ₹0.00</div>
-                <div class="dashboard-summary-line dashboard-summary-muted" id="summaryAllTimeMeta">0 runs · 0 tokens
-                </div>
-              </div>
-            </div>
-            <div class="dashboard-runs-title" style="margin-top:10px;">Recent Runs (Last 10)</div>
-            <div class="dashboard-runs-list" id="dashboardRunsList"></div>
-          </div>
-        </div>
-
         <section class="dashboard-card" id="dashboardSectionTranslation">
-          <div class="dashboard-card-plain-title">3. Translation (Beta)</div>
+          <div class="dashboard-card-plain-title">1. Translation (Beta)</div>
           <div class="dashboard-card-plain-body">
             <div class="field-group">
               <label class="field-toggle">
                 <input type="checkbox" id="settingsEnableTranslation">
                 Enable Translation tab
               </label>
-              <div class="field-help">When enabled, the Translate tab is visible. Off by default for public users.</div>
+              <div class="field-help">Off by default. Uses LLM API key for translation. 30 languages supported,
+                multi-language translation as well.</div>
+            </div>
+
+            <div id="translationSubSettings"
+              style="display:none; margin-top:20px; border-top:1px solid #333; padding-top:16px;">
+              <div style="margin-bottom: 12px; font-weight: 500; font-size: 13px; color: #fff;">LLM Settings</div>
+              <div class="field-group">
+                <div class="field-label">AI Provider</div>
+                <div class="select-wrap">
+                  <select class="field-select" id="settingsProvider">
+                    <option value="gemini">Gemini</option>
+                    <option value="openai">OpenAI</option>
+                  </select>
+                  <svg class="select-caret" viewBox="0 0 12 12" aria-hidden="true">
+                    <path d="M2.5 4.5L6 8l3.5-3.5"></path>
+                  </svg>
+                </div>
+              </div>
+              <div class="dashboard-provider-meta" id="activeProviderMeta" style="margin-bottom:12px;">Active provider:
+                Gemini</div>
+
+              <div class="dashboard-subsection" id="geminiKeySection">
+                <div class="dashboard-subsection-title">Gemini API Key</div>
+                <div class="field-group" id="geminiKeyGroup">
+                  <div class="api-key-row">
+                    <input type="password" class="field-input" id="settingsGeminiKey"
+                      placeholder="Enter Gemini API key">
+                    <button class="toggle-vis-btn" id="toggleGeminiKey" type="button" aria-label="Show Gemini API key">
+                      <span class="toggle-vis-icon" aria-hidden="true"></span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div class="dashboard-subsection" id="openaiKeySection" style="display:none;">
+                <div class="dashboard-subsection-title">OpenAI API Key</div>
+                <div class="field-group" id="openaiKeyGroup">
+                  <div class="api-key-row">
+                    <input type="password" class="field-input" id="settingsOpenaiKey"
+                      placeholder="Enter OpenAI API key">
+                    <button class="toggle-vis-btn" id="toggleOpenaiKey" type="button" aria-label="Show OpenAI API key">
+                      <span class="toggle-vis-icon" aria-hidden="true"></span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div class="dashboard-subsection" id="modelSettingsSection" style="margin-bottom:0; border-bottom:none;">
+                <div class="dashboard-subsection-title">Model Settings</div>
+                <div class="field-help" id="modelSettingsDescription">Gemini model: gemini-2.5-flash-lite (fixed)</div>
+                <div class="field-group" id="quotaProfileGroup">
+                  <div class="field-label">Gemini Quota Tier</div>
+                  <div class="select-wrap">
+                    <select class="field-select" id="settingsQuotaProfile">
+                      <option value="auto">Auto (safe default)</option>
+                      <option value="free">Free Tier</option>
+                      <option value="tier1">Paid Tier 1</option>
+                      <option value="tier2">Paid Tier 2</option>
+                      <option value="tier3">Paid Tier 3</option>
+                    </select>
+                    <svg class="select-caret" viewBox="0 0 12 12" aria-hidden="true">
+                      <path d="M2.5 4.5L6 8l3.5-3.5"></path>
+                    </svg>
+                  </div>
+                  <div class="field-help" style="margin-bottom:0;">Gemini-only throughput control. Set this to your
+                    actual Gemini quota tier for best speed and fewer rate-limit errors.</div>
+                </div>
+              </div>
+
+              <div style="margin-top: 24px; margin-bottom: 12px; font-weight: 500; font-size: 13px; color: #fff;">Spend
+                Analytics</div>
+              <div class="dashboard-summaries">
+                <div class="dashboard-summary-card">
+                  <div class="dashboard-summary-title">Last Run</div>
+                  <div class="dashboard-summary-line" id="summaryLastRunCost">$0.00</div>
+                  <div class="dashboard-summary-line dashboard-summary-muted" id="summaryLastRunMeta">No runs yet</div>
+                </div>
+                <div class="dashboard-summary-card">
+                  <div class="dashboard-summary-title">Last 10 Totals</div>
+                  <div class="dashboard-summary-line" id="summaryLast10Cost">$0.00</div>
+                  <div class="dashboard-summary-line dashboard-summary-muted" id="summaryLast10Meta">0 runs · 0 tokens
+                  </div>
+                </div>
+                <div class="dashboard-summary-card">
+                  <div class="dashboard-summary-title">All-time</div>
+                  <div class="dashboard-summary-line" id="summaryAllTimeCost">$0.00</div>
+                  <div class="dashboard-summary-line dashboard-summary-muted" id="summaryAllTimeMeta">0 runs · 0 tokens
+                  </div>
+                </div>
+              </div>
+              <div class="dashboard-runs-title" style="margin-top:10px;">Recent Runs (Last 10)</div>
+              <div class="dashboard-runs-list" id="dashboardRunsList"></div>
             </div>
           </div>
         </section>
 
         <section class="dashboard-card" id="dashboardSectionSupport">
-          <div class="dashboard-card-plain-title">4. Support &amp; Feedback</div>
+          <div class="dashboard-card-plain-title">2. Support &amp; Feedback</div>
           <div class="dashboard-card-plain-body">
             <div class="field-help" style="margin-bottom:8px;">Built by <strong>Mayank Singh</strong>. Report bugs or
               share feedback:</div>
@@ -2206,7 +2287,8 @@
                 <input type="checkbox" id="settingsDebugMode">
                 Enable debug mode
               </label>
-              <div class="field-help">Off by default. When enabled, detailed logs are captured during translation runs
+              <div class="field-help" style="padding-left: 2px;">Off by default. When enabled, detailed logs are
+                captured during translation runs
                 and appear in the Debug Logs panel (the <strong>ⓘ</strong> button in the header). Useful for diagnosing
                 API and apply issues.</div>
             </div>
@@ -2353,6 +2435,15 @@
         return;
       }
       console.log('[PDF Pilot UI]', label, rows);
+    }
+
+    function escapeHtml(str) {
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
     }
 
     function sanitizeUrlForLogs(rawUrl) {
@@ -2609,7 +2700,7 @@
     const NON_LATIN_LANGS = new Set(['ar', 'zh', 'ja', 'ko', 'hi', 'th', 'he', 'fa', 'ur', 'bn', 'ta', 'te', 'ml', 'ka', 'am', 'my', 'km', 'lo', 'si', 'ne']);
 
     function getLanguageTokenProfile(targetLang) {
-      if (NON_LATIN_LANGS.has(targetLang)) {
+      if (NON_LATIN_LANGS.has(targetLang.split('-')[0])) {
         // Non-Latin scripts: higher expansion, much fewer chars per token.
         // Empirical: Arabic JSON output tokenizes at ~1.7 chars/token in Gemini.
         return { expansionFactor: 1.8, charsPerToken: 1.8 };
@@ -2617,6 +2708,36 @@
       // Latin-script languages (French, German, Spanish, etc.)
       return { expansionFactor: 1.4, charsPerToken: 3 };
     }
+
+    // Compute a dimension-aware character budget for a text node.
+    // Used in translation prompts to prevent overflow before it happens.
+    // containerW/containerH/autoResize override node fields (used during retry
+    // when overflow data already has container dimensions).
+    function computeCharBudget(node, langCode, containerW, containerH, autoResize) {
+      const width = (containerW !== undefined && containerW > 0) ? containerW : node.width;
+      const height = (containerH !== undefined && containerH > 0) ? containerH : node.height;
+      const mode = autoResize !== undefined ? autoResize : (node.textAutoResize || 'HEIGHT');
+      const fSize = typeof node.fontSize === 'number' && node.fontSize > 0 ? node.fontSize : 12;
+      const isNonLatin = NON_LATIN_LANGS.has(langCode.split('-')[0]);
+      const avgCharWidth = isNonLatin ? fSize * 0.95 : fSize * 0.52;
+      const lineHeightPx = fSize * 1.3;
+      const charsPerLine = Math.max(4, Math.floor(width / avgCharWidth));
+
+      if (mode === 'WIDTH_AND_HEIGHT') {
+        // Fully auto-sizing — no spatial constraint, use expansion factor only.
+        const { expansionFactor } = getLanguageTokenProfile(langCode);
+        return Math.ceil(node.charCount * expansionFactor);
+      }
+      if (mode === 'NONE' || mode === 'TRUNCATE') {
+        // Fixed box — hard limit based on how much text fits.
+        const maxLines = Math.max(1, Math.floor(height / lineHeightPx));
+        return Math.max(node.charCount, Math.floor(charsPerLine * maxLines));
+      }
+      // HEIGHT mode: width fixed, height expands — bound by width × reasonable lines.
+      const { expansionFactor } = getLanguageTokenProfile(langCode);
+      return Math.max(node.charCount, Math.ceil(node.charCount * Math.min(expansionFactor, 2.0)));
+    }
+
 
     function estimateOutputTokensForGeminiBatch(texts, targetLang) {
       if (!Array.isArray(texts) || texts.length === 0) return 1024;
@@ -3004,10 +3125,6 @@ ${JSON.stringify(batch.map(t => ({ mappingKey: t.mappingKey, text: t.text, charB
       return `$${safeNumber(value).toFixed(4)}`;
     }
 
-    function formatInr(value) {
-      return `₹${safeNumber(value).toFixed(2)}`;
-    }
-
     function formatTokenCount(value) {
       return `${Math.round(safeNumber(value)).toLocaleString()} tokens`;
     }
@@ -3100,15 +3217,15 @@ ${JSON.stringify(batch.map(t => ({ mappingKey: t.mappingKey, text: t.text, charB
       const last10 = spendDashboardState.summary_last_10;
       const allTime = spendDashboardState.summary_all_time;
       if (latestRun) {
-        summaryLastRunCost.textContent = `${formatUsd(latestRun.total_cost_usd)} · ${formatInr(latestRun.total_cost_inr)}`;
+        summaryLastRunCost.textContent = `${formatUsd(latestRun.total_cost_usd)}`;
         summaryLastRunMeta.textContent = `${formatRunDateTime(latestRun.last_run_at)} · ${formatTokenCount(latestRun.total_tokens)}`;
       } else {
-        summaryLastRunCost.textContent = '$0.00 · ₹0.00';
+        summaryLastRunCost.textContent = '$0.00';
         summaryLastRunMeta.textContent = 'No runs yet';
       }
-      summaryLast10Cost.textContent = `${formatUsd(last10.total_cost_usd)} · ${formatInr(last10.total_cost_inr)}`;
+      summaryLast10Cost.textContent = `${formatUsd(last10.total_cost_usd)}`;
       summaryLast10Meta.textContent = `${Math.round(last10.count)} runs · ${Math.round(last10.total_tokens).toLocaleString()} tokens`;
-      summaryAllTimeCost.textContent = `${formatUsd(allTime.total_cost_usd)} · ${formatInr(allTime.total_cost_inr)}`;
+      summaryAllTimeCost.textContent = `${formatUsd(allTime.total_cost_usd)}`;
       summaryAllTimeMeta.textContent = `${Math.round(allTime.count)} runs · ${Math.round(allTime.total_tokens).toLocaleString()} tokens`;
 
       dashboardRunsList.innerHTML = '';
@@ -3127,7 +3244,7 @@ ${JSON.stringify(batch.map(t => ({ mappingKey: t.mappingKey, text: t.text, charB
         time.textContent = formatRunDateTime(run.last_run_at);
         const meta = document.createElement('div');
         meta.className = 'dashboard-run-meta';
-        meta.textContent = `${formatUsd(run.total_cost_usd)} · ${formatInr(run.total_cost_inr)} · ${formatTokenCount(run.total_tokens)}`;
+        meta.textContent = `${formatUsd(run.total_cost_usd)} · ${formatTokenCount(run.total_tokens)}`;
         item.appendChild(time);
         item.appendChild(meta);
         dashboardRunsList.appendChild(item);
@@ -3482,14 +3599,16 @@ ${JSON.stringify(batch.map(t => ({ mappingKey: t.mappingKey, text: t.text, charB
           const description = buildPlainIssueDescription(key);
           const technicalLines = items.slice(0, 2).map(item => item.rawError || item.userMessage || item.error || '').filter(Boolean);
           const more = items.length - technicalLines.length;
+          const safeLines = technicalLines.map(l => escapeHtml(l));
+          const moreText = more > 0 ? `<br>...and ${more} more issue(s).` : '';
           cards.push(`
         <div class="issue-group">
           <div class="issue-group-title">${title}</div>
           <div class="issue-group-body">${description}</div>
-          ${technicalLines.length > 0 ? `
+          ${safeLines.length > 0 ? `
             <details class="issue-group-tech-toggle">
               <summary>Show technical details</summary>
-              <div class="issue-group-tech-content">${technicalLines.join('\n')}${more > 0 ? `\n...and ${more} more issue(s).` : ''}</div>
+              <div class="issue-group-tech-content">${safeLines.join('<br>')}${moreText}</div>
             </details>
           ` : ''}
         </div>
@@ -3503,13 +3622,11 @@ ${JSON.stringify(batch.map(t => ({ mappingKey: t.mappingKey, text: t.text, charB
 
     function selectOnlyLanguages(langCodes) {
       const wanted = new Set(langCodes);
-      const checkboxes = Array.from(document.querySelectorAll('#langGrid input'));
-      let checkedCount = 0;
-      for (const cb of checkboxes) {
-        cb.checked = wanted.has(cb.value);
-        if (cb.checked) checkedCount += 1;
-      }
-      if (checkedCount === 0 && checkboxes.length > 0) checkboxes[0].checked = true;
+      // The picker is chip-based (no <input> elements inside #langGrid).
+      // Update selectedLangCodes directly and re-render the picker.
+      const valid = ALL_LANGUAGES.filter(l => wanted.has(l.code)).map(l => l.code);
+      selectedLangCodes = valid.length > 0 ? valid : selectedLangCodes.slice(0, 1);
+      renderLangPicker();
       updateTranslateUI();
     }
 
@@ -3578,8 +3695,8 @@ ${JSON.stringify(batch.map(t => ({ mappingKey: t.mappingKey, text: t.text, charB
       container.innerHTML = frames.map(f =>
         `<div class="frame-item">
       ${frameIconSvg}
-      <span class="frame-name">${f.name}</span>
-      ${showSize ? `<span class="frame-size">${f.width} × ${f.height}</span>` : ''}
+      <span class="frame-name">${escapeHtml(f.name)}</span>
+      ${showSize ? `<span class="frame-size">${escapeHtml(f.width)} × ${escapeHtml(f.height)}</span>` : ''}
     </div>`
       ).join('');
     }
@@ -3595,7 +3712,7 @@ ${JSON.stringify(batch.map(t => ({ mappingKey: t.mappingKey, text: t.text, charB
         emptyText.style.display = 'none';
         framesList.style.display = '';
         previewArea.classList.add('has-selection');
-        exportBtn.textContent = `Export ${selectedFrames.length} frame${selectedFrames.length > 1 ? 's' : ''}`;
+        exportBtn.textContent = `Export ${selectedFrames.length} frame${selectedFrames.length > 1 ? 's' : ''} as PDF`;
         exportBtn.className = 'action-btn active';
         renderFramesList(framesList, selectedFrames, { showSize: true });
       }
@@ -3758,16 +3875,11 @@ ${JSON.stringify(batch.map(t => ({ mappingKey: t.mappingKey, text: t.text, charB
       }
     }
 
-    document.querySelectorAll('#langGrid input').forEach(cb => {
-      cb.addEventListener('change', () => {
-        persistTargetLanguages();
-        if (!isTranslating && !hasVisibleRunReview()) {
-          translateButtonDone = false;
-
-        }
-        updateTranslateUI();
-      });
-    });
+    // Language change events are handled inside renderLangPicker() via
+    // direct click listeners on chip-remove buttons and list items.
+    // The legacy #langGrid input listener is a no-op because the picker
+    // no longer contains <input> elements; persistTargetLanguages() is
+    // called from within renderLangPicker() on every mutation.
 
     document.querySelectorAll('input[name="sourceLangOption"]').forEach(radio => {
       radio.addEventListener('change', () => {
@@ -3775,8 +3887,33 @@ ${JSON.stringify(batch.map(t => ({ mappingKey: t.mappingKey, text: t.text, charB
       });
     });
     updateSourceLangLabel();
+
+    // JS accordion toggles for LLM and lang sections
+    function bindLangAccordion(btnId, bodyId) {
+      const btn = document.getElementById(btnId);
+      const body = document.getElementById(bodyId);
+      if (!btn || !body) return;
+      btn.addEventListener('click', () => {
+        const opening = body.style.display === 'none';
+        body.style.display = opening ? 'block' : 'none';
+        btn.classList.toggle('is-open', opening);
+        btn.setAttribute('aria-expanded', opening ? 'true' : 'false');
+      });
+    }
+    bindLangAccordion('sourceLangToggleBtn', 'sourceLangBody');
+    bindLangAccordion('langToggleBtn', 'langAccordionBody');
+
     openDashboardLink.addEventListener('click', () => {
       openDashboard();
+
+      const transToggle = document.getElementById('settingsEnableTranslation');
+      if (transToggle && !transToggle.checked) {
+        transToggle.checked = true;
+        transToggle.dispatchEvent(new Event('change'));
+      }
+
+      const stack = document.querySelector('.dashboard-stack');
+      if (stack) stack.scrollTop = 0;
     });
     toggleResolvedOverflowsBtn.addEventListener('click', () => {
       showResolvedOverflows = !showResolvedOverflows;
@@ -4039,6 +4176,12 @@ ${JSON.stringify(batch.map(t => ({ mappingKey: t.mappingKey, text: t.text, charB
       const enabled = currentSettings.enableTranslation === true;
       const translateTabBtn = document.querySelector('[data-tab="translate"]');
       const translateTabContent = document.getElementById('tab-translate');
+      const translationSubSettings = document.getElementById('translationSubSettings');
+
+      if (translationSubSettings) {
+        translationSubSettings.style.display = enabled ? 'block' : 'none';
+      }
+
       if (translateTabBtn) translateTabBtn.style.display = enabled ? '' : 'none';
       if (!enabled && translateTabContent && translateTabContent.classList.contains('active')) {
         // Switch to export tab
@@ -4232,7 +4375,7 @@ ${JSON.stringify(batch.map(t => ({ mappingKey: t.mappingKey, text: t.text, charB
         for (const lang of langs) {
           const langName = LANGUAGE_NAMES[lang] || lang;
           const pooledNodes = languageNodePool.get(lang) || [];
-          const langBatchSize = NON_LATIN_LANGS.has(lang)
+          const langBatchSize = NON_LATIN_LANGS.has(lang.split('-')[0])
             ? Math.min(translationBatchSize, 40)
             : translationBatchSize;
           const batches = chunkArray(pooledNodes, langBatchSize);
@@ -4600,16 +4743,19 @@ ${JSON.stringify(batch.map(t => ({ mappingKey: t.mappingKey, text: t.text, charB
           payloadItems: allTranslations.length,
           apiErrorCount: apiErrorDetails.length,
         });
+        // Fetch FX rate for INR conversion but do not let a failure block
+        // spend recording — USD totals and token counts are always available.
+        let usdToInrRate = null;
         try {
-          const usdToInrRate = await fetchUsdToInrRate(DEFAULT_FX_CACHE_TTL_SECONDS);
-          const runSpendRecord = buildRunSpendRecord(runId, runStartedAtIso, modelSpendTotals, usdToInrRate);
-          parent.postMessage({ pluginMessage: { type: 'record-run-spend', run: runSpendRecord } }, '*');
+          usdToInrRate = await fetchUsdToInrRate(DEFAULT_FX_CACHE_TTL_SECONDS);
         } catch (fxError) {
-          uiWarn('Spend recording skipped due to FX fetch issue', {
+          uiWarn('FX rate fetch failed; spend recorded without INR conversion', {
             runId,
             error: getErrorMessage(fxError),
           });
         }
+        const runSpendRecord = buildRunSpendRecord(runId, runStartedAtIso, modelSpendTotals, usdToInrRate);
+        parent.postMessage({ pluginMessage: { type: 'record-run-spend', run: runSpendRecord } }, '*');
 
         setProgress('apply', APPLY_STAGE_START, 'Applying Translations', 'Creating translated rows under your original frames');
         lastApiErrorDetails = apiErrorDetails;
