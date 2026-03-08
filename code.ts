@@ -870,8 +870,34 @@ figma.ui.onmessage = async (rawMsg: unknown) => {
     const recentRuns = [runRecord, ...deduped].slice(0, SPEND_RECENT_RUN_LIMIT);
     await figma.clientStorage.setAsync(SPEND_RECENT_RUNS_KEY, recentRuns);
     const allTimeSummary = await loadAllTimeSpendSummary();
-    const nextAllTimeSummary = isKnownRun ? allTimeSummary : mergeSummaryWithRun(allTimeSummary, runRecord);
-    if (!isKnownRun) {
+    let nextAllTimeSummary: SpendSummary;
+    if (isKnownRun) {
+      // Run already counted in all-time summary. Compute the delta between the
+      // updated record and the previously stored one and add only the difference.
+      const oldRun = existingRuns.find(r => r.run_id === runRecord.run_id);
+      if (oldRun) {
+        const deltaCostUsd = runRecord.total_cost_usd - oldRun.total_cost_usd;
+        const deltaCostInr = runRecord.total_cost_inr - oldRun.total_cost_inr;
+        const deltaTokens = runRecord.total_tokens - oldRun.total_tokens;
+        if (deltaCostUsd > 0 || deltaCostInr > 0 || deltaTokens > 0) {
+          nextAllTimeSummary = {
+            total_cost_usd: allTimeSummary.total_cost_usd + Math.max(0, deltaCostUsd),
+            total_cost_inr: allTimeSummary.total_cost_inr + Math.max(0, deltaCostInr),
+            total_tokens: allTimeSummary.total_tokens + Math.max(0, deltaTokens),
+            count: allTimeSummary.count,
+          };
+          await figma.clientStorage.setAsync(SPEND_ALL_TIME_SUMMARY_KEY, nextAllTimeSummary);
+        } else {
+          nextAllTimeSummary = allTimeSummary;
+        }
+      } else {
+        // Edge case: known ID but not found in recent runs (rotated out).
+        // Treat as new to avoid losing spend.
+        nextAllTimeSummary = mergeSummaryWithRun(allTimeSummary, runRecord);
+        await figma.clientStorage.setAsync(SPEND_ALL_TIME_SUMMARY_KEY, nextAllTimeSummary);
+      }
+    } else {
+      nextAllTimeSummary = mergeSummaryWithRun(allTimeSummary, runRecord);
       knownSet.add(runRecord.run_id);
       const updatedIds = Array.from(knownSet).slice(-SPEND_KNOWN_RUN_IDS_LIMIT);
       await figma.clientStorage.setAsync(SPEND_KNOWN_RUN_IDS_KEY, updatedIds);

@@ -779,10 +779,9 @@
 
     .lang-accordion {
       margin-bottom: 0;
-      background: #202020;
-      border: 1px solid #3a3a3a;
-      border-radius: 6px;
-      overflow: hidden;
+      background: transparent;
+      border: none;
+      border-radius: 8px;
     }
 
     .lang-accordion summary {
@@ -801,11 +800,11 @@
       text-overflow: ellipsis;
     }
 
-    .lang-accordion:hover {
+    .lang-accordion:hover .lang-accordion-head {
       border-color: #666;
     }
 
-    .lang-accordion:focus-within {
+    .lang-accordion:focus-within .lang-accordion-head {
       border-color: #7a7a7a;
     }
 
@@ -5044,15 +5043,16 @@ ${JSON.stringify(batch.map(t => ({ mappingKey: t.mappingKey, text: t.text, charB
 
         if (items.length === 0) continue;
 
-        // Mark all items in this batch as attempted before the API call.
-        for (const item of items) attemptedKeys.add(item.mappingKey);
-
         try {
           const apiKey = getActiveApiKey();
           const model = currentSettings.model;
           const result = await provider.translate(apiKey, model, items, langCode);
           // Accumulate retry usage into the run-level spend totals.
           addUsageToModelTotals(currentRunModelSpendTotals, model, result?.usage);
+          // Mark keys as attempted only after a successful API response.
+          // If the batch throws, its overflow items stay "unattempted" and will
+          // be preserved by the patch-complete handler.
+          for (const item of items) attemptedKeys.add(item.mappingKey);
           const translations = Array.isArray(result?.translations)
             ? result.translations
             : (Array.isArray(result) ? result : []);
