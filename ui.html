@@ -546,15 +546,9 @@
       border-color: #666;
     }
 
-    .preview-area .empty-text {
-      color: #777;
-      font-size: 14px;
-    }
-
     .preview-area .empty-hint {
-      color: #555;
+      color: #777;
       font-size: 12px;
-      margin-top: -4px;
     }
 
     .selected-frames-list {
@@ -2182,7 +2176,6 @@
   <!-- Export PDF tab (existing) -->
   <div class="tab-content active" id="tab-export">
     <div class="preview-area" id="previewArea">
-      <span class="empty-text" id="emptyText">Nothing selected</span>
       <span class="empty-hint" id="emptyHint">Select frames in Figma to export</span>
       <div class="selected-frames-list" id="framesList" style="display:none;"></div>
     </div>
@@ -2221,7 +2214,6 @@
   <!-- Translate tab -->
   <div class="tab-content" id="tab-translate">
     <div class="preview-area" id="translatePreviewArea">
-      <span class="empty-text" id="translateEmptyText">Nothing selected</span>
       <span class="empty-hint" id="translateEmptyHint">Select frames in Figma to translate</span>
       <div class="selected-frames-list" id="translateFramesList" style="display:none;"></div>
     </div>
@@ -3187,12 +3179,12 @@ ${JSON.stringify(batch.map(t => ({ mappingKey: t.mappingKey, text: t.text, charB
 
     // ── DOM refs ──
     const previewArea = document.getElementById('previewArea');
-    const emptyText = document.getElementById('emptyText');
+
     const emptyHint = document.getElementById('emptyHint');
     const framesList = document.getElementById('framesList');
     const exportBtn = document.getElementById('exportBtn');
     const translatePreviewArea = document.getElementById('translatePreviewArea');
-    const translateEmptyText = document.getElementById('translateEmptyText');
+
     const translateEmptyHint = document.getElementById('translateEmptyHint');
     const translateFramesList = document.getElementById('translateFramesList');
     const translateBtn = document.getElementById('translateBtn');
@@ -3864,14 +3856,12 @@ ${JSON.stringify(batch.map(t => ({ mappingKey: t.mappingKey, text: t.text, charB
 
     function updateExportUI() {
       if (selectedFrames.length === 0) {
-        emptyText.style.display = '';
         emptyHint.style.display = '';
         framesList.style.display = 'none';
         previewArea.classList.remove('has-selection');
         exportBtn.textContent = 'Select frames in Figma to export';
         exportBtn.className = 'action-btn disabled';
       } else {
-        emptyText.style.display = 'none';
         emptyHint.style.display = 'none';
         framesList.style.display = '';
         previewArea.classList.add('has-selection');
@@ -3995,7 +3985,6 @@ ${JSON.stringify(batch.map(t => ({ mappingKey: t.mappingKey, text: t.text, charB
       translateApiHint.classList.toggle('hidden', hasApiKey);
       if (selectedFrames.length === 0) {
         translateButtonDone = false;
-        translateEmptyText.style.display = '';
         translateEmptyHint.style.display = '';
         translateFramesList.style.display = 'none';
         translatePreviewArea.classList.remove('has-selection');
@@ -4004,7 +3993,6 @@ ${JSON.stringify(batch.map(t => ({ mappingKey: t.mappingKey, text: t.text, charB
         translateBtn.style.setProperty('--progress', '0%');
         progressMetaInline.classList.add('hidden');
       } else {
-        translateEmptyText.style.display = 'none';
         translateEmptyHint.style.display = 'none';
         translateFramesList.style.display = '';
         translatePreviewArea.classList.add('has-selection');

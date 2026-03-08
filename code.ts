@@ -759,7 +759,13 @@ function sendSelection() {
   figma.ui.postMessage({ type: 'selection-update', frames, selectionStats });
 }
 
-figma.on('selectionchange', sendSelection);
+let selectionDebounceTimer: ReturnType<typeof setTimeout> | null = null;
+function debouncedSendSelection() {
+  if (selectionDebounceTimer) clearTimeout(selectionDebounceTimer);
+  selectionDebounceTimer = setTimeout(sendSelection, 150);
+}
+
+figma.on('selectionchange', debouncedSendSelection);
 
 figma.ui.onmessage = async (rawMsg: unknown) => {
   const msg = asObject(rawMsg);
