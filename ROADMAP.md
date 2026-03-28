@@ -1,12 +1,12 @@
 # Roadmap
-Last Updated: 2026-02-23
+Last Updated: 2026-03-29
 
 ## Current Focus
 Stabilize translation operations and dashboard telemetry in the Figma plugin (recent work includes spend analytics, autosave behavior, and translation review-state preservation).
 
 ## Next Up
 - Constraint-aware overflow mitigation during translation runs
-- RTL handling improvements for Arabic output
+- Better frame-level debugging for partial translation/apply failures
 - Continued UX reliability improvements in translation workflows
 
 ## Backlog

@@ -989,6 +989,11 @@
       color: #000;
     }
 
+    .lang-chip-remove:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+
     .lang-chips-empty {
       font-size: 11px;
       color: #666;
@@ -1036,6 +1041,11 @@
       border-color: #888;
     }
 
+    .lang-search:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
     /* Select with custom caret */
     .select-wrap {
       position: relative;
@@ -1078,6 +1088,11 @@
 
     .lang-accordion-head:hover {
       background: #333;
+    }
+
+    .lang-accordion-head:disabled {
+      opacity: 0.65;
+      cursor: not-allowed;
     }
 
     .lang-accordion-head.is-open {
@@ -1146,6 +1161,16 @@
     .lang-list-item:hover {
       background: #2c2c2c;
       color: #fff;
+    }
+
+    .lang-list-item.disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .lang-list-item.disabled:hover {
+      background: transparent;
+      color: #ccc;
     }
 
     .lang-list-empty {
@@ -1255,6 +1280,38 @@
       color: #9ca3af;
       margin-top: 8px;
       min-height: 14px;
+    }
+
+    .translate-helper-inline {
+      font-size: 11px;
+      color: #8f949c;
+      margin-top: 8px;
+      min-height: 14px;
+    }
+
+    .translate-cancel-btn {
+      width: 100%;
+      margin-top: 8px;
+      border: 1px solid #3b4250;
+      border-radius: 8px;
+      background: #222936;
+      color: #d9e2f2;
+      font-size: 12px;
+      font-family: inherit;
+      font-weight: 600;
+      padding: 10px 12px;
+      cursor: pointer;
+      transition: background 0.15s, border-color 0.15s;
+    }
+
+    .translate-cancel-btn:hover {
+      background: #293244;
+      border-color: #526179;
+    }
+
+    .translate-cancel-btn:disabled {
+      opacity: 0.65;
+      cursor: progress;
     }
 
     .completion-section {
@@ -2287,6 +2344,8 @@
     <button class="action-btn disabled translate-progress-btn" id="translateBtn">Select frames in Figma to
       start</button>
     <div class="progress-meta-inline hidden" id="progressMetaInline"></div>
+    <div class="translate-helper-inline" id="translateHelperInline">Original frames stay unchanged. New translated frames appear below.</div>
+    <button type="button" class="translate-cancel-btn hidden" id="translateCancelBtn">Cancel Translation</button>
 
     <details class="completion-section" id="completionSection" style="display:none;">
       <summary class="completion-summary" id="completionSummary">
@@ -2505,6 +2564,8 @@
     let currentSettings = { provider: 'gemini', model: 'gemini-2.5-flash-lite', apiKeyGemini: '', apiKeyOpenai: '', debugMode: false, quotaProfile: 'auto' };
     let isExporting = false;
     let isTranslating = false;
+    let translationPhase = 'idle';
+    let translationCancelRequested = false;
     let translateButtonDone = false;
     let lastApiErrors = [];
     let lastApiErrorDetails = [];
@@ -2857,7 +2918,7 @@
         requestIntervalMs = Math.ceil(60000 / Math.max(1, limits.rpm));
         // RPM-derived practical parallelism cap; paid tiers effectively hit MAX_DYNAMIC_CONCURRENCY.
         const rpmConcurrencyCap = Math.max(1, Math.ceil(limits.rpm / 60));
-        concurrency = Math.max(1, Math.min(MAX_DYNAMIC_CONCURRENCY, safeLangCount, rpmConcurrencyCap));
+        concurrency = Math.max(1, Math.min(MAX_DYNAMIC_CONCURRENCY, rpmConcurrencyCap));
         modelLimits = {
           inputTokenLimit: GEMINI_FLASH_LITE_INPUT_TOKEN_LIMIT,
           outputTokenLimit: GEMINI_FLASH_LITE_OUTPUT_TOKEN_LIMIT,
@@ -2957,7 +3018,7 @@
       );
     }
 
-    async function runWithConcurrency(items, concurrency, worker, onItemDone, onItemStart) {
+    async function runWithConcurrency(items, concurrency, worker, onItemDone, onItemStart, shouldStop) {
       if (!Array.isArray(items) || items.length === 0) return;
 
       const maxWorkers = Math.max(1, Math.min(concurrency, items.length));
@@ -2966,6 +3027,7 @@
 
       async function runWorker(workerId) {
         while (true) {
+          if (typeof shouldStop === 'function' && shouldStop()) return;
           const idx = nextIndex;
           nextIndex += 1;
           if (idx >= items.length) return;
@@ -3219,6 +3281,8 @@ ${JSON.stringify(batch.map(t => ({ mappingKey: t.mappingKey, text: t.text, charB
     const translateEmptyHint = document.getElementById('translateEmptyHint');
     const translateFramesList = document.getElementById('translateFramesList');
     const translateBtn = document.getElementById('translateBtn');
+    const translateHelperInline = document.getElementById('translateHelperInline');
+    const translateCancelBtn = document.getElementById('translateCancelBtn');
     const debugLogBtn = document.getElementById('debugLogBtn');
     const translateApiHint = document.getElementById('translateApiHint');
     const openDashboardLink = document.getElementById('openDashboardLink');
@@ -3302,7 +3366,6 @@ ${JSON.stringify(batch.map(t => ({ mappingKey: t.mappingKey, text: t.text, charB
       summary_last_10: { total_cost_usd: 0, total_tokens: 0, count: 0 },
       summary_all_time: { total_cost_usd: 0, total_tokens: 0, count: 0 },
     };
-
     function getQuotaTierLabel(value) {
       const key = normalizeQuotaProfile(value);
       return QUOTA_TIER_LABELS[key] || 'Auto';
@@ -3515,6 +3578,43 @@ ${JSON.stringify(batch.map(t => ({ mappingKey: t.mappingKey, text: t.text, charB
     function setTranslateButtonText(label) {
       const safeLabel = String(label);
       translateBtn.innerHTML = `<span class="btn-label">${safeLabel}</span>`;
+    }
+
+    function setTranslateCancelState() {
+      if (!translateCancelBtn) return;
+      const showCancel = isTranslating;
+      translateCancelBtn.classList.toggle('hidden', !showCancel);
+      translateCancelBtn.disabled = !showCancel || translationCancelRequested;
+      translateCancelBtn.textContent = translationCancelRequested ? 'Canceling...' : 'Cancel Translation';
+    }
+
+    function showCanceledBeforeApplySummary() {
+      isTranslating = false;
+      translationPhase = 'idle';
+      translateButtonDone = false;
+      completionSection.style.display = '';
+      completionSection.open = true;
+      completionSection.className = 'completion-section warning';
+      document.getElementById('resultTitle').textContent = 'Translation canceled';
+      document.getElementById('resultDetail').textContent = 'Canceled before creating translated frames.';
+      document.getElementById('resultErrors').textContent = '';
+      auditBlock.style.display = 'none';
+      progressMetaInline.classList.add('hidden');
+      translationCancelRequested = false;
+      renderIssueGroups();
+      updateTranslateUI();
+    }
+
+    function requestTranslationCancel() {
+      if (!isTranslating || translationCancelRequested) return;
+      translationCancelRequested = true;
+      setTranslateCancelState();
+      if (translationPhase === 'apply') {
+        progressMetaInline.textContent = 'Stopping after the current frame finishes';
+        parent.postMessage({ pluginMessage: { type: 'cancel-translation' } }, '*');
+        return;
+      }
+      progressMetaInline.textContent = 'Canceling before new requests start';
     }
 
     function formatDebugLogEntry(entry) {
@@ -3890,6 +3990,7 @@ ${JSON.stringify(batch.map(t => ({ mappingKey: t.mappingKey, text: t.text, charB
       const list = document.getElementById('langList');
       const search = document.getElementById('langSearch');
       if (!chips || !list) return;
+      if (search) search.disabled = isTranslating;
 
       const query = (search ? search.value : '').toLowerCase().trim();
 
@@ -3902,7 +4003,9 @@ ${JSON.stringify(batch.map(t => ({ mappingKey: t.mappingKey, text: t.text, charB
           return `<span class="lang-chip" data-code="${code}">${name}<button class="lang-chip-remove" data-code="${code}" aria-label="Remove ${name}">&times;</button></span>`;
         }).join('');
         chips.querySelectorAll('.lang-chip-remove').forEach(btn => {
+          btn.disabled = isTranslating;
           btn.addEventListener('click', (e) => {
+            if (isTranslating) return;
             e.stopPropagation();
             const code = btn.dataset.code;
             selectedLangCodes = selectedLangCodes.filter(c => c !== code);
@@ -3927,7 +4030,9 @@ ${JSON.stringify(batch.map(t => ({ mappingKey: t.mappingKey, text: t.text, charB
           `<div class="lang-list-item" data-code="${l.code}">${l.name}</div>`
         ).join('');
         list.querySelectorAll('.lang-list-item').forEach(item => {
+          if (isTranslating) item.classList.add('disabled');
           item.addEventListener('click', () => {
+            if (isTranslating) return;
             const code = item.dataset.code;
             if (!selectedLangCodes.includes(code)) {
               selectedLangCodes = [...selectedLangCodes, code];
@@ -3990,9 +4095,33 @@ ${JSON.stringify(batch.map(t => ({ mappingKey: t.mappingKey, text: t.text, charB
     function updateTranslateUI() {
       const langs = getSelectedLangs();
       const hasApiKey = hasActiveApiKey();
+      const langToggleBtn = document.getElementById('langToggleBtn');
       updateLangAccordionLabel();
       updateDebugUI();
+      renderLangPicker();
+      setTranslateCancelState();
+      if (langToggleBtn) langToggleBtn.disabled = false;
       translateApiHint.classList.toggle('hidden', hasApiKey);
+
+      if (isTranslating) {
+        if (translateHelperInline) translateHelperInline.classList.add('hidden');
+        if (selectedFrames.length === 0) {
+          translateEmptyHint.style.display = '';
+          translateFramesList.style.display = 'none';
+          translatePreviewArea.classList.remove('has-selection');
+        } else {
+          translateEmptyHint.style.display = 'none';
+          translateFramesList.style.display = '';
+          translatePreviewArea.classList.add('has-selection');
+          renderFramesList(translateFramesList, selectedFrames, { showSize: true });
+        }
+        translateBtn.className = 'action-btn translate-progress-btn translating';
+        progressMetaInline.classList.remove('hidden');
+        return;
+      }
+
+      if (translateHelperInline) translateHelperInline.classList.remove('hidden');
+
       if (selectedFrames.length === 0) {
         translateButtonDone = false;
         translateEmptyHint.style.display = '';
@@ -4002,6 +4131,7 @@ ${JSON.stringify(batch.map(t => ({ mappingKey: t.mappingKey, text: t.text, charB
         translateBtn.className = 'action-btn disabled translate-progress-btn';
         translateBtn.style.setProperty('--progress', '0%');
         progressMetaInline.classList.add('hidden');
+        if (translateHelperInline) translateHelperInline.textContent = 'Original frames stay unchanged. New translated frames appear below.';
       } else {
         translateEmptyHint.style.display = 'none';
         translateFramesList.style.display = '';
@@ -4014,17 +4144,17 @@ ${JSON.stringify(batch.map(t => ({ mappingKey: t.mappingKey, text: t.text, charB
           translateBtn.className = 'action-btn disabled translate-progress-btn';
           translateBtn.style.setProperty('--progress', '0%');
           progressMetaInline.classList.add('hidden');
+          if (translateHelperInline) translateHelperInline.textContent = 'Original frames stay unchanged. New translated frames appear below.';
         } else if (langs.length === 0) {
           translateButtonDone = false;
           setTranslateButtonText('Select at least one language');
           translateBtn.className = 'action-btn disabled translate-progress-btn';
           translateBtn.style.setProperty('--progress', '0%');
           progressMetaInline.classList.add('hidden');
+          if (translateHelperInline) translateHelperInline.textContent = 'Original frames stay unchanged. New translated frames appear below.';
         } else {
           const defaultLabel = getTranslateActionLabel(selectedFrames.length, langs.length);
-          if (isTranslating) {
-            translateBtn.className = 'action-btn translate-progress-btn translating';
-          } else if (translateButtonDone) {
+          if (translateButtonDone) {
             setTranslateButtonText('Done \u2713');
             translateBtn.className = 'action-btn active translate-progress-btn';
             translateBtn.style.setProperty('--progress', '0%');
@@ -4035,6 +4165,7 @@ ${JSON.stringify(batch.map(t => ({ mappingKey: t.mappingKey, text: t.text, charB
             translateBtn.style.setProperty('--progress', '0%');
             progressMetaInline.classList.add('hidden');
           }
+          if (translateHelperInline) translateHelperInline.textContent = 'Original frames stay unchanged. New translated frames appear below.';
         }
       }
     }
@@ -4144,14 +4275,12 @@ ${JSON.stringify(batch.map(t => ({ mappingKey: t.mappingKey, text: t.text, charB
         const completed = Math.min(total, Math.max(0, Number(msg.completed) || 0));
         const pct = APPLY_STAGE_START + ((completed / total) * (APPLY_STAGE_END - APPLY_STAGE_START));
         const label = typeof msg.language === 'string'
-          ? `Applying ${msg.language} layout (${completed}/${total})`
-          : `Applying translated layouts (${completed}/${total})`;
-        const meta = typeof msg.frameName === 'string'
-          ? `Updating frame: ${msg.frameName}`
-          : 'Writing translated text and preserving design';
+          ? `Creating ${msg.language} copies ${Math.round((completed / total) * 100)}%`
+          : `Creating translated copies ${Math.round((completed / total) * 100)}%`;
+        const meta = `${completed} of ${total} translated frames placed`;
         setProgress('apply', pct, label, meta);
       } else if (msg.type === 'translation-complete') {
-        handleTranslationComplete(msg.created, msg.errors, msg.overflows);
+        handleTranslationComplete(msg.created, msg.errors, msg.overflows, msg.canceled === true);
       } else if (msg.type === 'audit-action-done') {
         const btn = document.querySelector(`.audit-action-btn[data-node-id="${msg.nodeId}"][data-action="${msg.action}"]`);
         if (btn) { btn.textContent = '✓ Done'; btn.classList.add('done'); btn.disabled = true; }
@@ -4191,7 +4320,7 @@ ${JSON.stringify(batch.map(t => ({ mappingKey: t.mappingKey, text: t.text, charB
 
         if (lastOverflowEntries.length > 0 && overflowRetryCount < OVERFLOW_RETRY_MAX) {
           // Still overflows and retries remain — run another retry
-          setProgress('apply', 92, `Overflow retry ${overflowRetryCount + 1}/${OVERFLOW_RETRY_MAX}`, `${lastOverflowEntries.length} overflow(s) remain; retrying`);
+          setProgress('apply', 92, `Fixing text overflows`, 'Some translated text needs a second pass to fit the layout.');
           runOverflowRetry(lastOverflowEntries);
         } else {
           // Done retrying — show final panel
@@ -4445,6 +4574,8 @@ ${JSON.stringify(batch.map(t => ({ mappingKey: t.mappingKey, text: t.text, charB
       completionSection.className = 'completion-section';
       translateButtonDone = false;
       isTranslating = true;
+      translationPhase = 'extract';
+      translationCancelRequested = false;
       uiLog('Translate started', {
         reason,
         selectedFrames: selectedFrames.length,
@@ -4468,8 +4599,18 @@ ${JSON.stringify(batch.map(t => ({ mappingKey: t.mappingKey, text: t.text, charB
       startTranslationRun();
     });
 
+    if (translateCancelBtn) {
+      translateCancelBtn.addEventListener('click', () => {
+        requestTranslationCancel();
+      });
+    }
+
     async function handleTextData(nodes, frameCount, extractedFrames) {
       try {
+        if (translationCancelRequested) {
+          showCanceledBeforeApplySummary();
+          return;
+        }
         const scopedNodes = retryFrameScope && retryFrameScope.size > 0
           ? nodes.filter(node => retryFrameScope.has(node.frameId))
           : nodes;
@@ -4514,6 +4655,7 @@ ${JSON.stringify(batch.map(t => ({ mappingKey: t.mappingKey, text: t.text, charB
           languageCount: langs.length,
           quotaProfile: currentSettings.quotaProfile,
         });
+        translationPhase = 'translate';
         const dynamicConcurrency = tuning.concurrency;
         const translationBatchSize = tuning.batchSize;
         const waitForApiStartSlot = createRequestStartLimiter(tuning.requestIntervalMs);
@@ -4559,6 +4701,8 @@ ${JSON.stringify(batch.map(t => ({ mappingKey: t.mappingKey, text: t.text, charB
 
         const frameEntries = Object.entries(frameGroups);
         const jobs = [];
+        const jobExpectedCounts = new Map();
+        const completedJobIds = new Set();
         const translatedByJob = new Map();
         const languageNodePool = new Map();
         const apiTasks = [];
@@ -4592,6 +4736,8 @@ ${JSON.stringify(batch.map(t => ({ mappingKey: t.mappingKey, text: t.text, charB
               frameIndex,
               truncated,
             });
+            jobExpectedCounts.set(jobId, nonTruncated.length);
+            if (nonTruncated.length === 0) completedJobIds.add(jobId);
             translatedByJob.set(jobId, []);
             pooledNodes.push(...nonTruncated);
           }
@@ -4603,6 +4749,15 @@ ${JSON.stringify(batch.map(t => ({ mappingKey: t.mappingKey, text: t.text, charB
           const idx = mappingKey.indexOf('::');
           if (idx <= 0) return null;
           return mappingKey.slice(0, idx);
+        };
+
+        const markCompletedJobsForFrames = (lang, frameIds) => {
+          for (const frameId of frameIds) {
+            const jobId = `${lang}::${frameId}`;
+            const expected = jobExpectedCounts.get(jobId) || 0;
+            const translatedNodes = translatedByJob.get(jobId) || [];
+            if (translatedNodes.length >= expected) completedJobIds.add(jobId);
+          }
         };
 
         for (const lang of langs) {
@@ -4624,14 +4779,12 @@ ${JSON.stringify(batch.map(t => ({ mappingKey: t.mappingKey, text: t.text, charB
           }
         }
 
-        const dispatchMeta = tuning.requestIntervalMs > 0
-          ? `${apiTasks.length} API batch(es), concurrency ${dynamicConcurrency}, batch ${translationBatchSize}, interval ${Math.round(tuning.requestIntervalMs / 1000)}s`
-          : `${apiTasks.length} API batch(es), concurrency ${dynamicConcurrency}, batch ${translationBatchSize}`;
+        const totalTranslatedFrames = jobs.length;
         setProgress(
           'translate',
           TRANSLATE_STAGE_START,
           'Dispatching Translation Requests',
-          dispatchMeta
+          `0 of ${totalTranslatedFrames} translated frames ready`
         );
         if (apiTasks.length > 0) {
           let startedBatches = 0;
@@ -4655,15 +4808,13 @@ ${JSON.stringify(batch.map(t => ({ mappingKey: t.mappingKey, text: t.text, charB
 
           const buildEtaMeta = () => {
             if (!etaState) return '';
-            const tierLabel = getQuotaTierLabel(currentSettings.quotaProfile);
-            const overallLabel = `Overall ${etaState.completedBatches}/${etaState.totalBatches} batches`;
-            const languageLabel = `${etaState.langName} ${etaState.langBatchIndex}/${etaState.langBatchTotal}`;
+            const frameLabel = `${completedJobIds.size} of ${jobs.length} translated frames ready`;
             let etaLabel = '';
             if (etaProjectedFinishAt > 0) {
               const remainingSeconds = Math.max(0, Math.ceil((etaProjectedFinishAt - Date.now()) / 1000));
-              etaLabel = remainingSeconds > 0 ? ` · ~${remainingSeconds}s remaining` : '';
+              etaLabel = remainingSeconds > 0 ? ` · About ${remainingSeconds}s left` : '';
             }
-            return `${overallLabel} · Language ${languageLabel} · Tier: ${tierLabel}${etaLabel}`;
+            return `${frameLabel}${etaLabel}`;
           };
 
           const pushEtaMetaIfChanged = () => {
@@ -4686,6 +4837,7 @@ ${JSON.stringify(batch.map(t => ({ mappingKey: t.mappingKey, text: t.text, charB
               apiTasks,
               dynamicConcurrency,
               async (task, taskIndex, workerId) => {
+                if (translationCancelRequested) return;
                 const requestId = `${task.lang.toUpperCase()}-${task.batchIndex + 1}/${task.batchTotal}-T${task.taskId}`;
                 const startedAt = taskStartedAt.get(task.taskId) || Date.now();
                 const maxAttempts = TRANSLATION_MAX_RETRIES + 1;
@@ -4694,6 +4846,10 @@ ${JSON.stringify(batch.map(t => ({ mappingKey: t.mappingKey, text: t.text, charB
                 let terminalBatchError = null;
 
                 for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+                  if (translationCancelRequested) {
+                    terminalBatchError = new Error('Translation canceled');
+                    break;
+                  }
                   if (hardQuotaError) {
                     terminalBatchError = hardQuotaError;
                     break;
@@ -4808,6 +4964,12 @@ ${JSON.stringify(batch.map(t => ({ mappingKey: t.mappingKey, text: t.text, charB
                     if (!translatedNodes) continue;
                     translatedNodes.push(item);
                   }
+                  const resolvedFrameIds = Array.from(new Set(
+                    translatedItems
+                      .map(item => getFrameIdFromMappingKey(item.mappingKey))
+                      .filter(Boolean)
+                  ));
+                  markCompletedJobsForFrames(task.lang, resolvedFrameIds);
                   const langStats = perLanguageStats.get(task.lang);
                   if (langStats) {
                     langStats.succeeded += 1;
@@ -4815,6 +4977,11 @@ ${JSON.stringify(batch.map(t => ({ mappingKey: t.mappingKey, text: t.text, charB
                   }
                 } catch (e) {
                   const errorText = getErrorMessage(e);
+                  if (translationCancelRequested && /translation canceled/i.test(errorText)) {
+                    inFlightBatches = Math.max(0, inFlightBatches - 1);
+                    taskStartedAt.delete(task.taskId);
+                    return;
+                  }
                   let userMessage = getUserErrorMessage(e);
                   if (/incomplete translations|missing/i.test(errorText)) {
                     userMessage = 'Model skipped some text entries. Missing entries were kept in source language.';
@@ -4862,6 +5029,7 @@ ${JSON.stringify(batch.map(t => ({ mappingKey: t.mappingKey, text: t.text, charB
                     if (!translatedNodes) continue;
                     translatedNodes.push({ mappingKey: item.mappingKey, translation: item.text });
                   }
+                  markCompletedJobsForFrames(task.lang, frameIds);
                 }
                 inFlightBatches = Math.max(0, inFlightBatches - 1);
                 taskStartedAt.delete(task.taskId);
@@ -4904,11 +5072,12 @@ ${JSON.stringify(batch.map(t => ({ mappingKey: t.mappingKey, text: t.text, charB
                 setProgress(
                   'translate',
                   pct,
-                  `Translating ${task.langName}`,
+                  `Translating to ${task.langName}`,
                   metaText
                 );
               },
               (_nextIndex, totalBatches, task, workerId) => {
+                if (translationCancelRequested) return;
                 startedBatches += 1;
                 inFlightBatches += 1;
                 maxObservedInFlight = Math.max(maxObservedInFlight, inFlightBatches);
@@ -4918,7 +5087,8 @@ ${JSON.stringify(batch.map(t => ({ mappingKey: t.mappingKey, text: t.text, charB
                   langStats.started += 1;
                   langStats.items += task.batch.length;
                 }
-              }
+              },
+              () => translationCancelRequested
             );
           } finally {
             stopEtaTicker();
@@ -4953,8 +5123,13 @@ ${JSON.stringify(batch.map(t => ({ mappingKey: t.mappingKey, text: t.text, charB
             'No API Calls Needed',
             scopedNodes.length === 0
               ? 'No text layers found; duplicating selected frames for the chosen languages'
-              : 'Only truncate-protected text was found; source text will be reused'
+            : 'Only truncate-protected text was found; source text will be reused'
           );
+        }
+
+        if (translationCancelRequested) {
+          showCanceledBeforeApplySummary();
+          return;
         }
 
         for (const job of jobs) {
@@ -4981,6 +5156,7 @@ ${JSON.stringify(batch.map(t => ({ mappingKey: t.mappingKey, text: t.text, charB
         const runSpendRecord = buildRunSpendRecord(runId, runStartedAtIso, modelSpendTotals);
         parent.postMessage({ pluginMessage: { type: 'record-run-spend', run: runSpendRecord } }, '*');
 
+        translationPhase = 'apply';
         setProgress('apply', APPLY_STAGE_START, 'Applying Translations', 'Creating translated rows under your original frames');
         lastApiErrorDetails = apiErrorDetails;
         lastApiErrors = apiErrorDetails.map(item => `${item.langName}: ${item.userMessage}`);
@@ -5014,6 +5190,8 @@ ${JSON.stringify(batch.map(t => ({ mappingKey: t.mappingKey, text: t.text, charB
         uiError('Translation pipeline failed', { error: userError, rawError: getErrorMessage(e) });
         setProgress('translate', 100, 'Translation Failed', getUserErrorSummary(e));
         isTranslating = false;
+        translationPhase = 'idle';
+        translationCancelRequested = false;
         translateButtonDone = false;
         completionSection.style.display = '';
         completionSection.open = true;
@@ -5129,6 +5307,8 @@ ${JSON.stringify(batch.map(t => ({ mappingKey: t.mappingKey, text: t.text, charB
       const summary = summarizeDiagnostics();
 
       isTranslating = false;
+      translationPhase = 'idle';
+      translationCancelRequested = false;
       translateButtonDone = true;
       completionSection.style.display = '';
       completionSection.open = true;
@@ -5168,7 +5348,7 @@ ${JSON.stringify(batch.map(t => ({ mappingKey: t.mappingKey, text: t.text, charB
       const budgetScale = attempt === 1 ? 0.80 : 0.65;
 
       uiLog('Overflow retry pass started', { attempt, budgetScale, overflowCount: overflows.length });
-      setProgress('apply', 95, `Overflow retry ${attempt}/${OVERFLOW_RETRY_MAX}`, `Re-translating ${overflows.length} overflowing node(s) with tighter budget`);
+      setProgress('apply', 95, 'Fixing text overflows', 'Some translated text needs a second pass to fit the layout.');
 
       // Group overflows by language code
       const byLang = new Map();
@@ -5264,7 +5444,7 @@ ${JSON.stringify(batch.map(t => ({ mappingKey: t.mappingKey, text: t.text, charB
       parent.postMessage({ pluginMessage: { type: 'patch-node-translations', patches: allPatches } }, '*');
     }
 
-    function handleTranslationComplete(created, errors, overflows) {
+    function handleTranslationComplete(created, errors, overflows, canceled = false) {
       lastApplyErrorDetails = Array.isArray(errors)
         ? errors.map(item => ({
           mappingKey: typeof item?.mappingKey === 'string' ? item.mappingKey : '',
@@ -5279,7 +5459,25 @@ ${JSON.stringify(batch.map(t => ({ mappingKey: t.mappingKey, text: t.text, charB
         applyErrorCount: lastApplyErrorDetails.length,
         apiErrorCount: lastApiErrors.length,
         overflowCount: lastOverflowEntries.length,
+        canceled,
       });
+
+      if (canceled) {
+        isTranslating = false;
+        translationPhase = 'idle';
+        translateButtonDone = false;
+        completionSection.style.display = '';
+        completionSection.open = true;
+        completionSection.className = 'completion-section warning';
+        document.getElementById('resultTitle').textContent = 'Translation canceled';
+        document.getElementById('resultDetail').textContent = `${lastCreatedFrameCount} translated frames created before canceling`;
+        document.getElementById('resultErrors').textContent = '';
+        renderIssueGroups();
+        renderAuditPanel(lastOverflowEntries);
+        translationCancelRequested = false;
+        updateTranslateUI();
+        return;
+      }
 
       const overflowCount = lastOverflowEntries.length;
       uiLog('Phase 2 overflow detection summary', {
@@ -5291,7 +5489,7 @@ ${JSON.stringify(batch.map(t => ({ mappingKey: t.mappingKey, text: t.text, charB
       // If there are overflows and retries remain, run the auto-retry pipeline.
       // The panel is suppressed until all retry attempts complete.
       if (overflowCount > 0 && overflowRetryCount < OVERFLOW_RETRY_MAX) {
-        setProgress('apply', 90, 'Overflow detected — auto-retrying', `${overflowCount} overflow(s) found; retrying with tighter budget`);
+        setProgress('apply', 90, 'Fixing text overflows', 'Some translated text needs a second pass to fit the layout.');
         runOverflowRetry(lastOverflowEntries);
         return;
       }

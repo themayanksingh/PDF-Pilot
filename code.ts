@@ -185,7 +185,14 @@ function expandTextNodeLayer(textNode: TextNode): void {
     textNode.textAutoResize = 'HEIGHT';
     return;
   }
-  textNode.resize(textNode.width + 40, textNode.height);
+  const widthDelta = 40;
+  const parent = textNode.parent;
+  const parentUsesAutoLayout = !!parent && 'layoutMode' in parent && parent.layoutMode !== 'NONE';
+  const preserveRightEdge = textNode.textAlignHorizontal === 'RIGHT' && !parentUsesAutoLayout;
+  textNode.resize(textNode.width + widthDelta, textNode.height);
+  if (preserveRightEdge) {
+    textNode.x -= widthDelta;
+  }
 }
 
 function asObject(value: unknown): Record<string, unknown> | null {
@@ -756,6 +763,7 @@ function sendSelection() {
 }
 
 let selectionDebounceTimer: ReturnType<typeof setTimeout> | null = null;
+let translationCancelRequested = false;
 function debouncedSendSelection() {
   if (selectionDebounceTimer) clearTimeout(selectionDebounceTimer);
   selectionDebounceTimer = setTimeout(sendSelection, 150);
@@ -827,6 +835,11 @@ figma.ui.onmessage = async (rawMsg: unknown) => {
 
   if (type === 'cancel') {
     figma.closePlugin();
+  }
+
+  if (type === 'cancel-translation') {
+    translationCancelRequested = true;
+    pluginLog('Translation cancel requested');
   }
 
   if (type === 'get-settings') {
@@ -979,6 +992,7 @@ figma.ui.onmessage = async (rawMsg: unknown) => {
   }
 
   if (type === 'apply-translations') {
+    translationCancelRequested = false;
     const errors: { mappingKey: string; error: string }[] = [];
     const overflows: OverflowInfo[] = [];
     let totalFramesCreated = 0;
@@ -1082,7 +1096,29 @@ figma.ui.onmessage = async (rawMsg: unknown) => {
       const totalTranslationUnits = Math.max(1, translations.length);
       let completedTranslationUnits = 0;
 
+      const applyRtlAlignment = async (node: SceneNode): Promise<void> => {
+        if (node.type === 'TEXT') {
+          const textNode = node as TextNode;
+          if (textNode.textAlignHorizontal === 'LEFT') {
+            try {
+              await ensureTextNodeFontsLoaded(textNode);
+              textNode.textAlignHorizontal = 'RIGHT';
+            } catch (e: unknown) {
+              const message = e instanceof Error ? e.message : String(e);
+              errors.push({ mappingKey: `__rtl__::${textNode.id}`, error: message });
+              pluginWarn('RTL alignment skipped for text node', { nodeId: textNode.id, error: message });
+            }
+          }
+        }
+        if ('children' in node) {
+          for (const child of (node as FrameNode).children) {
+            await applyRtlAlignment(child);
+          }
+        }
+      };
+
       for (const translation of translations) {
+        if (translationCancelRequested) break;
         const sourceFrame = sourceFramesById.get(translation.sourceFrameId);
         if (!sourceFrame) continue;
 
@@ -1165,20 +1201,7 @@ figma.ui.onmessage = async (rawMsg: unknown) => {
         // This must happen before overflow detection so the audit uses
         // post-alignment geometry.
         if (translation.languageCode.split('-')[0] === 'ar') {
-          const applyRtlAlignment = (node: SceneNode): void => {
-            if (node.type === 'TEXT') {
-              const textNode = node as TextNode;
-              if (textNode.textAlignHorizontal === 'LEFT') {
-                textNode.textAlignHorizontal = 'RIGHT';
-              }
-            }
-            if ('children' in node) {
-              for (const child of (node as FrameNode).children) {
-                applyRtlAlignment(child);
-              }
-            }
-          };
-          applyRtlAlignment(clone as SceneNode);
+          await applyRtlAlignment(clone as SceneNode);
         }
 
         // Overflow detection for this clone
@@ -1237,8 +1260,12 @@ figma.ui.onmessage = async (rawMsg: unknown) => {
       pluginError('Apply translations crashed', { error: message });
     }
 
-    figma.ui.postMessage({ type: 'translation-complete', created: totalFramesCreated, errors, overflows });
-    figma.notify(errors.length > 0 ? 'Translation completed with issues ⚠️' : 'Translation complete! ✅');
+    figma.ui.postMessage({ type: 'translation-complete', created: totalFramesCreated, errors, overflows, canceled: translationCancelRequested });
+    if (translationCancelRequested) {
+      figma.notify('Translation canceled ⚠️');
+    } else {
+      figma.notify(errors.length > 0 ? 'Translation completed with issues ⚠️' : 'Translation complete! ✅');
+    }
   }
 
   if (type === 'decrease-font') {
