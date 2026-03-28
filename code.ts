@@ -1,4 +1,4 @@
-figma.showUI(__html__, { width: 440, height: 660, themeColors: true });
+figma.showUI(__html__, { width: 480, height: 620, themeColors: true });
 let pluginDebugMode = false;
 
 void figma.clientStorage.getAsync('debug-mode')
@@ -362,27 +362,6 @@ function getSelectedFrames(): { id: string; name: string; width: number; height:
     }));
 }
 
-function getSelectionTextStats(frames: FrameLike[]): {
-  textNodeCount: number;
-  totalCharCount: number;
-  truncatedNodeCount: number;
-} {
-  let textNodeCount = 0;
-  let totalCharCount = 0;
-  let truncatedNodeCount = 0;
-
-  for (const frame of frames) {
-    const textNodes = extractTextNodes(frame);
-    textNodeCount += textNodes.length;
-    for (const textNode of textNodes) {
-      totalCharCount += textNode.charCount;
-      if (textNode.truncated) truncatedNodeCount += 1;
-    }
-  }
-
-  return { textNodeCount, totalCharCount, truncatedNodeCount };
-}
-
 function getNodePath(node: BaseNode, rootFrame: BaseNode): string {
   const indices: number[] = [];
   let current = node;
@@ -742,10 +721,8 @@ function extractLinks(frame: SceneNode): LinkInfo[] {
 }
 
 function sendSelection() {
-  const selectedFrameNodes = figma.currentPage.selection.filter(isAllowedSelectionNode);
   const frames = getSelectedFrames();
-  const selectionStats = getSelectionTextStats(selectedFrameNodes);
-  figma.ui.postMessage({ type: 'selection-update', frames, selectionStats });
+  figma.ui.postMessage({ type: 'selection-update', frames });
 }
 
 let selectionDebounceTimer: ReturnType<typeof setTimeout> | null = null;

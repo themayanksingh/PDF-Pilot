@@ -6,6 +6,7 @@ Updated By: Codex
 - Monitor translation reliability and backlog items after the latest retry/spend fixes
 
 ## Completed
+- Removed expensive text-stat recomputation from the `selectionchange` path so selecting frames while the plugin is open no longer lags the canvas
 - Increased the default Figma plugin window to `440 × 760` so the Translate language picker no longer hides the primary CTA below the fold
 - Added export progress/loading feedback so the Export PDF button shows active work while frames are rendered and the PDF is compiled
 - Switched project package-manager guidance from `npm` to `pnpm`
