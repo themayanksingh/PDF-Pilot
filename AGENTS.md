@@ -1,5 +1,5 @@
 # Project: pdf-pilot
-Last Updated: 2026-03-08
+Last Updated: 2026-03-28
 Updated By: Codex
 
 ## What This Project Does
@@ -20,7 +20,7 @@ Single app (no monorepo)
 - Never remove or overwrite existing agent instructions; append and preserve history.
 
 ## Always Do
-- Run `npm run build` after TypeScript/plugin logic changes.
+- Run `pnpm build` after TypeScript/plugin logic changes.
 - Keep `code.ts` and `ui.html` message contracts in sync when changing plugin actions.
 - Keep `figma.clientStorage` payload handling defensive and validated.
 - Update `STATE.md`, `ROADMAP.md`, and architecture/learnings docs during normal task completion.

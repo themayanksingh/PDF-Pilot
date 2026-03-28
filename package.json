@@ -3,11 +3,12 @@
   "version": "1.0.0",
   "description": "PDF Pilot - Figma export and translation plugin",
   "main": "code.js",
+  "packageManager": "pnpm@10.30.3",
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "lint": "eslint --ext .ts,.tsx --ignore-pattern node_modules .",
     "lint:fix": "eslint --ext .ts,.tsx --ignore-pattern node_modules --fix .",
-    "watch": "npm run build -- --watch"
+    "watch": "pnpm run build -- --watch"
   },
   "author": "",
   "license": "",

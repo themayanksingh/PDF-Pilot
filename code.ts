@@ -1,4 +1,4 @@
-figma.showUI(__html__, { width: 400, height: 520, themeColors: true });
+figma.showUI(__html__, { width: 440, height: 660, themeColors: true });
 let pluginDebugMode = false;
 
 void figma.clientStorage.getAsync('debug-mode')
@@ -777,17 +777,41 @@ figma.ui.onmessage = async (rawMsg: unknown) => {
     const images: string[] = [];
     const allLinks: LinkInfo[][] = [];
 
-    for (const frame of frames) {
-      const bytes = await (frame as FrameLike).exportAsync({
-        format: 'PNG',
-        constraint: { type: 'SCALE', value: scale },
-      });
-      const base64 = 'data:image/png;base64,' + figma.base64Encode(bytes);
-      images.push(base64);
-      allLinks.push(extractLinks(frame));
-    }
+    try {
+      for (let index = 0; index < frames.length; index++) {
+        const frame = frames[index];
+        figma.ui.postMessage({
+          type: 'export-progress',
+          completed: index,
+          total: frames.length,
+          frameName: frame.name,
+          stage: 'render',
+        });
 
-    figma.ui.postMessage({ type: 'export-data', images, links: allLinks });
+        const bytes = await (frame as FrameLike).exportAsync({
+          format: 'PNG',
+          constraint: { type: 'SCALE', value: scale },
+        });
+        const base64 = 'data:image/png;base64,' + figma.base64Encode(bytes);
+        images.push(base64);
+        allLinks.push(extractLinks(frame));
+
+        figma.ui.postMessage({
+          type: 'export-progress',
+          completed: index + 1,
+          total: frames.length,
+          frameName: frame.name,
+          stage: 'render',
+        });
+      }
+
+      figma.ui.postMessage({ type: 'export-data', images, links: allLinks });
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : String(error);
+      figma.ui.postMessage({ type: 'export-error', error: message });
+      figma.notify('PDF export failed ⚠️');
+      pluginError('Export failed', { error: message });
+    }
   }
 
   if (type === 'export-done') {

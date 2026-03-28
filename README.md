@@ -60,17 +60,17 @@ Note: README is public-facing. Internal implementation details live in `docs/pri
 
 1. Install dependencies:
 ```bash
-npm install
+pnpm install
 ```
 
 2. Build:
 ```bash
-npm run build
+pnpm build
 ```
 
 3. (Optional) Watch mode during development:
 ```bash
-npm run watch
+pnpm watch
 ```
 
 4. Load plugin in Figma from this directory.
@@ -78,8 +78,8 @@ npm run watch
 ## Dev Checks
 
 ```bash
-npm run build
-npm run lint
+pnpm build
+pnpm lint
 ```
 
 ## Usage

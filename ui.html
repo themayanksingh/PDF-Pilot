@@ -743,6 +743,36 @@
       background: #e0e0e0;
     }
 
+    .action-btn.exporting {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      background: #d9d9d9;
+      color: #111;
+      cursor: progress;
+    }
+
+    .action-btn.exporting::before {
+      content: '';
+      width: 14px;
+      height: 14px;
+      border-radius: 999px;
+      border: 2px solid rgba(0, 0, 0, 0.18);
+      border-top-color: #111;
+      animation: export-spin 0.8s linear infinite;
+    }
+
+    @keyframes export-spin {
+      from {
+        transform: rotate(0deg);
+      }
+
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
     /* Translate tab */
     .frame-summary {
       width: 100%;
@@ -2198,6 +2228,7 @@
         <div class="scale-label">Scale</div>
         <select id="scale">
           <option value="1">1x</option>
+          <option value="1.5">1.5x</option>
           <option value="2" selected>2x</option>
           <option value="3">3x</option>
           <option value="4">4x</option>
@@ -2472,6 +2503,7 @@
     let frameImages = [];
     let frameLinks = [];
     let currentSettings = { provider: 'gemini', model: 'gemini-2.5-flash-lite', apiKeyGemini: '', apiKeyOpenai: '', debugMode: false, quotaProfile: 'auto' };
+    let isExporting = false;
     let isTranslating = false;
     let translateButtonDone = false;
     let lastApiErrors = [];
@@ -3809,6 +3841,22 @@ ${JSON.stringify(batch.map(t => ({ mappingKey: t.mappingKey, text: t.text, charB
     }
 
     function updateExportUI() {
+      if (isExporting) {
+        emptyHint.style.display = selectedFrames.length === 0 ? '' : 'none';
+        framesList.style.display = selectedFrames.length === 0 ? 'none' : '';
+        previewArea.classList.toggle('has-selection', selectedFrames.length > 0);
+        if (selectedFrames.length > 0) {
+          renderFramesList(framesList, selectedFrames, { showSize: true });
+        }
+        exportBtn.textContent = '';
+        exportBtn.setAttribute('aria-label', 'Exporting PDF');
+        exportBtn.className = 'action-btn exporting';
+        exportBtn.disabled = true;
+        return;
+      }
+
+      exportBtn.removeAttribute('aria-label');
+      exportBtn.disabled = false;
       if (selectedFrames.length === 0) {
         emptyHint.style.display = '';
         framesList.style.display = 'none';
@@ -3823,6 +3871,11 @@ ${JSON.stringify(batch.map(t => ({ mappingKey: t.mappingKey, text: t.text, charB
         exportBtn.className = 'action-btn active';
         renderFramesList(framesList, selectedFrames, { showSize: true });
       }
+    }
+
+    function setExportState(active) {
+      isExporting = active;
+      updateExportUI();
     }
 
     // ── Language picker state ──
@@ -3855,6 +3908,7 @@ ${JSON.stringify(batch.map(t => ({ mappingKey: t.mappingKey, text: t.text, charB
             selectedLangCodes = selectedLangCodes.filter(c => c !== code);
             renderLangPicker();
             updateLangAccordionLabel();
+            updateTranslateUI();
             persistTargetLanguages();
           });
         });
@@ -3880,6 +3934,7 @@ ${JSON.stringify(batch.map(t => ({ mappingKey: t.mappingKey, text: t.text, charB
               if (search) search.value = '';
               renderLangPicker();
               updateLangAccordionLabel();
+              updateTranslateUI();
               persistTargetLanguages();
             }
           });
@@ -3911,6 +3966,7 @@ ${JSON.stringify(batch.map(t => ({ mappingKey: t.mappingKey, text: t.text, charB
         selectedLangCodes = filtered.length > 0 ? filtered : fallback;
       }
       renderLangPicker();
+      updateTranslateUI();
     }
 
     // Init picker on load
@@ -4034,10 +4090,23 @@ ${JSON.stringify(batch.map(t => ({ mappingKey: t.mappingKey, text: t.text, charB
         }
         updateExportUI();
         updateTranslateUI();
+      } else if (msg.type === 'export-progress') {
+        const total = Math.max(1, Number(msg.total) || 1);
+        const completed = Math.min(total, Math.max(0, Number(msg.completed) || 0));
+        const frameName = typeof msg.frameName === 'string' ? msg.frameName : '';
+        const stage = typeof msg.stage === 'string' ? msg.stage : 'render';
+        const prefix = stage === 'compile' ? 'Compiling PDF' : 'Rendering frames';
+        const frameSuffix = frameName ? ` · ${frameName}` : '';
+        setExportState(true);
       } else if (msg.type === 'export-data') {
         frameImages = msg.images;
         frameLinks = msg.links || [];
+        setExportState(true);
         generatePDF();
+      } else if (msg.type === 'export-error') {
+        const errorText = typeof msg.error === 'string' ? msg.error : 'Unknown export error';
+        setExportState(false);
+        uiError('PDF export failed', { error: errorText });
       } else if (msg.type === 'settings-loaded') {
         currentSettings = normalizeSettings(msg.settings);
         populateSettingsModal();
@@ -4134,38 +4203,49 @@ ${JSON.stringify(batch.map(t => ({ mappingKey: t.mappingKey, text: t.text, charB
 
     // ── Export PDF (unchanged logic) ──
     exportBtn.addEventListener('click', () => {
-      if (selectedFrames.length === 0) return;
-      const scale = parseInt(document.getElementById('scale').value, 10);
+      if (selectedFrames.length === 0 || isExporting) return;
+      const scale = parseFloat(document.getElementById('scale').value);
+      setExportState(true);
       parent.postMessage({ pluginMessage: { type: 'export', scale } }, '*');
     });
 
     function generatePDF() {
-      if (frameImages.length === 0) return;
-      const scale = parseInt(document.getElementById('scale').value, 10);
-      const filename = document.getElementById('filename').value || 'Document';
-      const firstFrame = selectedFrames[0];
-      const pdfW = firstFrame.width * scale;
-      const pdfH = firstFrame.height * scale;
-      const orientation = pdfW > pdfH ? 'landscape' : 'portrait';
-      const doc = new jsPDF({ orientation, unit: 'pt', format: [pdfW, pdfH] });
-
-      for (let i = 0; i < frameImages.length; i++) {
-        const frame = selectedFrames[i];
-        const imgData = frameImages[i];
-        const w = frame.width * scale;
-        const h = frame.height * scale;
-        if (i > 0) {
-          const orient = w > h ? 'landscape' : 'portrait';
-          doc.addPage([w, h], orient);
-        }
-        doc.addImage(imgData, 'PNG', 0, 0, w, h);
-        const pageLinks = frameLinks[i] || [];
-        for (const link of pageLinks) {
-          doc.link(link.x * scale, link.y * scale, link.width * scale, link.height * scale, { url: link.url });
-        }
+      if (frameImages.length === 0) {
+        setExportState(false);
+        return;
       }
-      doc.save(`${filename}.pdf`);
-      parent.postMessage({ pluginMessage: { type: 'export-done' } }, '*');
+
+      try {
+        const scale = parseFloat(document.getElementById('scale').value);
+        const filename = document.getElementById('filename').value || 'Document';
+        const firstFrame = selectedFrames[0];
+        const pdfW = firstFrame.width * scale;
+        const pdfH = firstFrame.height * scale;
+        const orientation = pdfW > pdfH ? 'landscape' : 'portrait';
+        const doc = new jsPDF({ orientation, unit: 'pt', format: [pdfW, pdfH] });
+
+        for (let i = 0; i < frameImages.length; i++) {
+          const frame = selectedFrames[i];
+          const imgData = frameImages[i];
+          const w = frame.width * scale;
+          const h = frame.height * scale;
+          if (i > 0) {
+            const orient = w > h ? 'landscape' : 'portrait';
+            doc.addPage([w, h], orient);
+          }
+          doc.addImage(imgData, 'PNG', 0, 0, w, h);
+          const pageLinks = frameLinks[i] || [];
+          for (const link of pageLinks) {
+            doc.link(link.x * scale, link.y * scale, link.width * scale, link.height * scale, { url: link.url });
+          }
+        }
+        doc.save(`${filename}.pdf`);
+        parent.postMessage({ pluginMessage: { type: 'export-done' } }, '*');
+      } catch (error) {
+        uiError('PDF compilation failed', { error: getErrorMessage(error) });
+      } finally {
+        setExportState(false);
+      }
     }
 
     // ── Dashboard modal ──
