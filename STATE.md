@@ -6,6 +6,10 @@ Updated By: Codex
 - Monitor translation reliability and backlog items after the latest retry/spend fixes
 
 ## Completed
+- Switched translated-frame placement to create a fresh page-level block below existing canvas content, preserving relative layout while avoiding overlap with older translations and unrelated frames
+- Changed rerun behavior so existing translated frames are preserved and new translations for the same source/language get versioned names like `v2` instead of deleting prior output
+- Fixed translation extraction to resolve the exact frame IDs chosen in the plugin UI instead of re-reading the live Figma selection, preventing selected frames from being dropped at run start
+- Fixed translation job construction so every selected frame is duplicated for each target language, even when some selected frames contain no extracted text nodes
 - Removed expensive text-stat recomputation from the `selectionchange` path so selecting frames while the plugin is open no longer lags the canvas
 - Increased the default Figma plugin window to `440 × 760` so the Translate language picker no longer hides the primary CTA below the fold
 - Added export progress/loading feedback so the Export PDF button shows active work while frames are rendered and the PDF is compiled

@@ -4128,7 +4128,7 @@ ${JSON.stringify(batch.map(t => ({ mappingKey: t.mappingKey, text: t.text, charB
           else console.log('[PDF Pilot Plugin]', message, msg.payload);
         }
       } else if (msg.type === 'text-data') {
-        handleTextData(msg.nodes, msg.frameCount);
+        handleTextData(msg.nodes, msg.frameCount, msg.frames);
       } else if (msg.type === 'extract-progress') {
         const total = Math.max(1, Number(msg.total) || 1);
         const completed = Math.min(total, Math.max(0, Number(msg.completed) || 0));
@@ -4458,9 +4458,9 @@ ${JSON.stringify(batch.map(t => ({ mappingKey: t.mappingKey, text: t.text, charB
       updateTranslateUI();
 
       const extractPayload = { type: 'extract-text' };
-      if (retryFrameScope && retryFrameScope.size > 0) {
-        extractPayload.frameIds = Array.from(retryFrameScope);
-      }
+      extractPayload.frameIds = retryFrameScope && retryFrameScope.size > 0
+        ? Array.from(retryFrameScope)
+        : selectedFrames.map(frame => frame.id);
       parent.postMessage({ pluginMessage: extractPayload }, '*');
     }
 
@@ -4468,11 +4468,17 @@ ${JSON.stringify(batch.map(t => ({ mappingKey: t.mappingKey, text: t.text, charB
       startTranslationRun();
     });
 
-    async function handleTextData(nodes, frameCount) {
+    async function handleTextData(nodes, frameCount, extractedFrames) {
       try {
         const scopedNodes = retryFrameScope && retryFrameScope.size > 0
           ? nodes.filter(node => retryFrameScope.has(node.frameId))
           : nodes;
+        const allExtractedFrames = Array.isArray(extractedFrames)
+          ? extractedFrames.filter(frame => frame && typeof frame.id === 'string')
+          : [];
+        const scopedFrames = retryFrameScope && retryFrameScope.size > 0
+          ? allExtractedFrames.filter(frame => retryFrameScope.has(frame.id))
+          : allExtractedFrames;
         pendingTextNodes = scopedNodes;
         lastApiErrors = [];
         lastApiErrorDetails = [];
@@ -4516,13 +4522,16 @@ ${JSON.stringify(batch.map(t => ({ mappingKey: t.mappingKey, text: t.text, charB
         let adaptiveSuccessStreak = 0;
 
         const frameGroups = {};
+        for (const frame of scopedFrames) {
+          if (!frameGroups[frame.id]) frameGroups[frame.id] = [];
+        }
         for (const node of scopedNodes) {
           if (!frameGroups[node.frameId]) frameGroups[node.frameId] = [];
           frameGroups[node.frameId].push(node);
         }
 
         if (Object.keys(frameGroups).length === 0) {
-          throw new Error('No translatable text nodes found in selected layers.');
+          throw new Error('No selected frames were available for translation.');
         }
 
         uiLog('Translation run config', {
@@ -4942,7 +4951,9 @@ ${JSON.stringify(batch.map(t => ({ mappingKey: t.mappingKey, text: t.text, charB
             'translate',
             TRANSLATE_STAGE_END,
             'No API Calls Needed',
-            'Only truncate-protected text was found; source text will be reused'
+            scopedNodes.length === 0
+              ? 'No text layers found; duplicating selected frames for the chosen languages'
+              : 'Only truncate-protected text was found; source text will be reused'
           );
         }
 

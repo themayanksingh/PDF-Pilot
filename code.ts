@@ -362,6 +362,36 @@ function getSelectedFrames(): { id: string; name: string; width: number; height:
     }));
 }
 
+function getNodeAbsolutePosition(node: SceneNode): { x: number; y: number } {
+  return {
+    x: node.absoluteTransform[0][2],
+    y: node.absoluteTransform[1][2],
+  };
+}
+
+function getUniqueCloneName(sourceFrameName: string, language: string, parent: BaseNode | null): string {
+  const baseName = `${sourceFrameName} — ${language}`;
+  if (!parent || !('children' in parent)) return baseName;
+
+  const siblingNames = new Set(parent.children.map(child => child.name));
+  if (!siblingNames.has(baseName)) return baseName;
+
+  let version = 2;
+  while (siblingNames.has(`${baseName} v${version}`)) {
+    version += 1;
+  }
+  return `${baseName} v${version}`;
+}
+
+function getCanvasPlacementStartY(page: PageNode, gap: number): number {
+  if (page.children.length === 0) return gap;
+  const maxBottom = Math.max(...page.children.map(child => {
+    const pos = getNodeAbsolutePosition(child);
+    return pos.y + child.height;
+  }));
+  return maxBottom + gap;
+}
+
 function getNodePath(node: BaseNode, rootFrame: BaseNode): string {
   const indices: number[] = [];
   let current = node;
@@ -909,11 +939,16 @@ figma.ui.onmessage = async (rawMsg: unknown) => {
     const frameIdScope = Array.isArray(msg?.frameIds)
       ? (msg?.frameIds as unknown[]).filter(item => typeof item === 'string') as string[]
       : null;
-    const selectedFrames = figma.currentPage.selection.filter(isAllowedSelectionNode);
-    let frames: FrameLike[] = selectedFrames;
+    let frames: FrameLike[] = [];
     if (frameIdScope && frameIdScope.length > 0) {
-      const idSet = new Set(frameIdScope);
-      frames = selectedFrames.filter(frame => idSet.has(frame.id));
+      for (const frameId of frameIdScope) {
+        const node = await figma.getNodeByIdAsync(frameId);
+        if (node && (node.type === 'FRAME' || node.type === 'COMPONENT')) {
+          frames.push(node as FrameLike);
+        }
+      }
+    } else {
+      frames = figma.currentPage.selection.filter(isAllowedSelectionNode);
     }
 
     if (frames.length === 0) {
@@ -935,7 +970,12 @@ figma.ui.onmessage = async (rawMsg: unknown) => {
       });
     }
 
-    figma.ui.postMessage({ type: 'text-data', nodes: allNodes, frameCount: frames.length });
+    figma.ui.postMessage({
+      type: 'text-data',
+      nodes: allNodes,
+      frameCount: frames.length,
+      frames: frames.map(frame => ({ id: frame.id, name: frame.name })),
+    });
   }
 
   if (type === 'apply-translations') {
@@ -1013,16 +1053,31 @@ figma.ui.onmessage = async (rawMsg: unknown) => {
         }
       }
       const framesForLayout = layoutAnchorFrames.length > 0 ? layoutAnchorFrames : sourceFrames;
-      const sourceTop = framesForLayout.length > 0 ? Math.min(...framesForLayout.map(frame => frame.y)) : 0;
-      const sourceBottom = framesForLayout.length > 0 ? Math.max(...framesForLayout.map(frame => frame.y + frame.height)) : 0;
-      const sourceRowHeight = Math.max(0, sourceBottom - sourceTop);
+      const sourceLeft = framesForLayout.length > 0
+        ? Math.min(...framesForLayout.map(frame => getNodeAbsolutePosition(frame).x))
+        : 0;
+      const sourceTop = framesForLayout.length > 0
+        ? Math.min(...framesForLayout.map(frame => getNodeAbsolutePosition(frame).y))
+        : 0;
+      const sourceRight = framesForLayout.length > 0
+        ? Math.max(...framesForLayout.map(frame => getNodeAbsolutePosition(frame).x + frame.width))
+        : 0;
+      const sourceBottom = framesForLayout.length > 0
+        ? Math.max(...framesForLayout.map(frame => getNodeAbsolutePosition(frame).y + frame.height))
+        : 0;
+      const sourceBlockWidth = Math.max(0, sourceRight - sourceLeft);
+      const sourceBlockHeight = Math.max(0, sourceBottom - sourceTop);
+      const translationBlockGap = 160;
       const rowGap = 120;
-      const rowStride = sourceRowHeight + rowGap;
+      const rowStride = sourceBlockHeight + rowGap;
+      const translationStartY = getCanvasPlacementStartY(figma.currentPage, translationBlockGap);
       pluginLog('Clone layout anchors', {
         translationFrameCount: sourceFrames.length,
         layoutAnchorFrameCount: layoutAnchorFrames.length,
-        sourceRowHeight: Math.round(sourceRowHeight),
+        sourceBlockWidth: Math.round(sourceBlockWidth),
+        sourceBlockHeight: Math.round(sourceBlockHeight),
         rowStride: Math.round(rowStride),
+        translationStartY: Math.round(translationStartY),
       });
       const totalTranslationUnits = Math.max(1, translations.length);
       let completedTranslationUnits = 0;
@@ -1031,30 +1086,22 @@ figma.ui.onmessage = async (rawMsg: unknown) => {
         const sourceFrame = sourceFramesById.get(translation.sourceFrameId);
         if (!sourceFrame) continue;
 
-        // Remove any existing plugin-created clone for this frame+language
-        // (e.g. from a previous failed run). Match by plugin metadata rather
-        // than name to avoid accidentally deleting user frames that happen to
-        // share the same naming pattern.
-        const parent = sourceFrame.parent;
-        if (parent && 'children' in parent) {
-          for (const child of [...parent.children]) {
-            if (
-              child.id !== sourceFrame.id &&
-              child.getPluginData('pdf-pilot-clone-source-id') === sourceFrame.id &&
-              child.getPluginData('pdf-pilot-clone-language-code') === translation.languageCode
-            ) {
-              child.remove();
-            }
-          }
-        }
-
         const clone = sourceFrame.clone();
         const langIdx = languageIndices.get(translation.languageCode) ?? languageIndices.get(translation.language) ?? 0;
-        clone.x = sourceFrame.x;
-        clone.y = sourceFrame.y + rowStride * (langIdx + 1);
-        clone.name = `${sourceFrame.name} — ${translation.language}`;
-        // Tag the clone so future runs can identify and replace it by metadata
-        // instead of name, preventing accidental deletion of user frames.
+        const sourcePos = getNodeAbsolutePosition(sourceFrame);
+        const relativeX = sourcePos.x - sourceLeft;
+        const relativeY = sourcePos.y - sourceTop;
+
+        clone.name = getUniqueCloneName(sourceFrame.name, translation.language, figma.currentPage);
+        // Always place translated output at the page level in a fresh block
+        // below existing canvas content. This avoids re-inserting selected
+        // child frames back into auto-layout parents and prevents reruns from
+        // stacking directly on top of older translated versions.
+        figma.currentPage.appendChild(clone);
+        clone.x = sourceLeft + relativeX;
+        clone.y = translationStartY + relativeY + rowStride * langIdx;
+        // Tag the clone so future runs can still identify its source/language
+        // without treating older runs as replaceable output.
         clone.setPluginData('pdf-pilot-clone-source-id', sourceFrame.id);
         clone.setPluginData('pdf-pilot-clone-language-code', translation.languageCode);
         clone.setPluginData('pdf-pilot-clone-language-name', translation.language);
