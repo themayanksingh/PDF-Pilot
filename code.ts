@@ -764,6 +764,7 @@ function sendSelection() {
 
 let selectionDebounceTimer: ReturnType<typeof setTimeout> | null = null;
 let translationCancelRequested = false;
+const EXPORT_CONCURRENCY = 3;
 function debouncedSendSelection() {
   if (selectionDebounceTimer) clearTimeout(selectionDebounceTimer);
   selectionDebounceTimer = setTimeout(sendSelection, 150);
@@ -783,42 +784,71 @@ figma.ui.onmessage = async (rawMsg: unknown) => {
   if (type === 'export') {
     const rawScale = msg?.scale;
     const scale = typeof rawScale === 'number' && rawScale > 0 ? rawScale : 2;
+    const exportQuality = asString(msg?.exportQuality);
+    const exportFormat = exportQuality === 'best' ? 'PNG' : 'JPG';
     const frames = figma.currentPage.selection.filter(isAllowedSelectionNode);
 
     if (frames.length === 0) {
       figma.notify('No frames selected');
       return;
     }
-    const images: string[] = [];
-    const allLinks: LinkInfo[][] = [];
+    const images = new Array<string>(frames.length);
+    const allLinks = new Array<LinkInfo[]>(frames.length);
 
     try {
-      for (let index = 0; index < frames.length; index++) {
-        const frame = frames[index];
-        figma.ui.postMessage({
-          type: 'export-progress',
-          completed: index,
-          total: frames.length,
-          frameName: frame.name,
-          stage: 'render',
-        });
+      let completed = 0;
+      let nextIndex = 0;
+      const workerCount = Math.max(1, Math.min(EXPORT_CONCURRENCY, frames.length));
 
-        const bytes = await (frame as FrameLike).exportAsync({
-          format: 'PNG',
-          constraint: { type: 'SCALE', value: scale },
-        });
-        const base64 = 'data:image/png;base64,' + figma.base64Encode(bytes);
-        images.push(base64);
-        allLinks.push(extractLinks(frame));
+      const runWorker = async (): Promise<void> => {
+        while (nextIndex < frames.length) {
+          const index = nextIndex;
+          nextIndex += 1;
+          if (index >= frames.length) break;
 
-        figma.ui.postMessage({
-          type: 'export-progress',
-          completed: index + 1,
-          total: frames.length,
-          frameName: frame.name,
-          stage: 'render',
-        });
+          const frame = frames[index];
+          const bytes = await (frame as FrameLike).exportAsync({
+            format: exportFormat,
+            constraint: { type: 'SCALE', value: scale },
+          });
+          images[index] = exportFormat === 'PNG'
+            ? 'data:image/png;base64,' + figma.base64Encode(bytes)
+            : 'data:image/jpeg;base64,' + figma.base64Encode(bytes);
+          const extractedLinks = extractLinks(frame);
+          allLinks[index] = extractedLinks;
+          pluginLog('Export frame links extracted', {
+            frameId: frame.id,
+            frameName: frame.name,
+            linkCount: extractedLinks.length,
+            scale,
+            exportQuality,
+            exportFormat,
+          });
+
+          completed += 1;
+          figma.ui.postMessage({
+            type: 'export-progress',
+            completed,
+            total: frames.length,
+            frameName: frame.name,
+            stage: 'render',
+          });
+        }
+      };
+
+      const workers: Promise<void>[] = [];
+      for (let workerIndex = 0; workerIndex < workerCount; workerIndex++) {
+        workers.push(runWorker());
       }
+      await Promise.all(workers);
+
+      pluginLog('Export link extraction summary', {
+        frameCount: frames.length,
+        totalLinkCount: allLinks.reduce((sum, links) => sum + (Array.isArray(links) ? links.length : 0), 0),
+        scale,
+        exportQuality,
+        exportFormat,
+      });
 
       figma.ui.postMessage({ type: 'export-data', images, links: allLinks });
     } catch (error: unknown) {

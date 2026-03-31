@@ -1,11 +1,14 @@
 # State
-Last Updated: 2026-03-29
+Last Updated: 2026-03-31
 Updated By: Codex
 
 ## Active Tasks
 - Monitor remaining translation reliability gaps after the Arabic RTL/apply and cancel-flow fixes
 
 ## Completed
+- Replaced the visible PDF optimize toggle with user-facing export quality presets while keeping lossless PDF compression always enabled internally
+- Added export-link debug logs so debug mode now reports per-frame extracted link counts and final PDF annotation counts during export
+- Parallelized frame raster export in `code.ts` so PDF export no longer waits for every selected frame to render strictly one-by-one
 - Clarified the overflow-retry progress copy so users are told a second layout-fit pass is running instead of seeing an unexplained near-complete progress state
 - Fixed Arabic overflow auto-fix / expand-layer behavior so right-aligned text expands leftward instead of drifting outside the frame
 - Removed the rotating translation quote/fade UI entirely and restored a cleaner progress area

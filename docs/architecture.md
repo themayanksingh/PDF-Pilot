@@ -1,5 +1,5 @@
 # Architecture: PDF Pilot
-Last Updated: 2026-03-29
+Last Updated: 2026-03-31
 
 ## System Overview
 PDF Pilot is a single Figma plugin with two execution contexts:
@@ -8,6 +8,12 @@ PDF Pilot is a single Figma plugin with two execution contexts:
 
 ## UI Shell Notes
 - The plugin UI is opened at `440 × 760` from `code.ts` so the Translate tab can keep the language picker and primary CTA visible at the same time without collapsing important controls below the fold.
+
+## Export Notes
+- PDF export rasterizes each selected frame in `code.ts` and assembles the PDF in `ui.html` with `jsPDF`.
+- Frame raster export now runs with a small parallel worker pool in `code.ts` instead of strictly sequential PNG generation, which reduces total wait time for multi-frame exports at the same scale.
+- Lossless PDF stream compression is always enabled in `ui.html`; the Export tab now surfaces user-facing `Export quality` presets instead of a raw optimization toggle.
+- `Export quality` is separate from `Scale`: presets choose the image encoding/compression strategy, while scale still controls raster sharpness and remains the main size driver.
 
 ## Translation Placement Notes
 - Translated outputs are placed as page-level frames on the current Figma page, not reinserted into the original parent container.
