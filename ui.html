@@ -716,6 +716,18 @@
       letter-spacing: 0.3px;
     }
 
+    .quality-select select {
+      min-width: 150px;
+      height: 100%;
+    }
+
+    .export-setting-help {
+      font-size: 11px;
+      line-height: 1.4;
+      color: #9ca3af;
+      margin: -4px 0 14px;
+    }
+
     .action-btn {
       width: 100%;
       padding: 12px;
@@ -2294,7 +2306,20 @@
           <path d="M2.5 4.5L6 8l3.5-3.5"></path>
         </svg>
       </div>
+      <div class="option-select quality-select">
+        <div class="scale-label">Export quality</div>
+        <select id="exportQuality">
+          <option value="best">Best quality</option>
+          <option value="recommended" selected>Recommended</option>
+          <option value="smaller">Smaller file</option>
+        </select>
+        <svg class="select-caret" viewBox="0 0 12 12" aria-hidden="true">
+          <path d="M2.5 4.5L6 8l3.5-3.5"></path>
+        </svg>
+      </div>
     </div>
+
+    <div class="export-setting-help" id="exportQualityHelp">Recommended uses compressed images for a smaller PDF while keeping output sharp for most exports.</div>
 
     <button class="action-btn disabled" id="exportBtn">Select frames in Figma to export</button>
   </div>
@@ -3298,6 +3323,8 @@ ${JSON.stringify(batch.map(t => ({ mappingKey: t.mappingKey, text: t.text, charB
     const summaryAllTimeMeta = document.getElementById('summaryAllTimeMeta');
     const langAccordionLabel = document.getElementById('langAccordionLabel');
     const progressMetaInline = document.getElementById('progressMetaInline');
+    const exportQualitySelect = document.getElementById('exportQuality');
+    const exportQualityHelp = document.getElementById('exportQualityHelp');
     const completionSection = document.getElementById('completionSection');
     const issueChips = document.getElementById('issueChips');
     const issueGroups = document.getElementById('issueGroups');
@@ -3978,6 +4005,26 @@ ${JSON.stringify(batch.map(t => ({ mappingKey: t.mappingKey, text: t.text, charB
       updateExportUI();
     }
 
+    function getExportQualityPreset() {
+      const value = exportQualitySelect?.value;
+      if (value === 'best' || value === 'smaller') return value;
+      return 'recommended';
+    }
+
+    function updateExportQualityHelp() {
+      if (!exportQualityHelp) return;
+      const preset = getExportQualityPreset();
+      if (preset === 'best') {
+        exportQualityHelp.textContent = 'Best quality keeps lossless images for maximum fidelity and the largest file size.';
+        return;
+      }
+      if (preset === 'smaller') {
+        exportQualityHelp.textContent = 'Smaller file uses more aggressive image compression to reduce PDF size the most.';
+        return;
+      }
+      exportQualityHelp.textContent = 'Balanced quality and file size for most exports.';
+    }
+
     // ── Language picker state ──
     let selectedLangCodes = ['fr', 'de', 'es', 'it', 'tr'];
 
@@ -4331,14 +4378,48 @@ ${JSON.stringify(batch.map(t => ({ mappingKey: t.mappingKey, text: t.text, charB
     };
 
     // ── Export PDF (unchanged logic) ──
+    if (exportQualitySelect) {
+      exportQualitySelect.addEventListener('change', updateExportQualityHelp);
+      updateExportQualityHelp();
+    }
+
     exportBtn.addEventListener('click', () => {
       if (selectedFrames.length === 0 || isExporting) return;
       const scale = parseFloat(document.getElementById('scale').value);
+      const exportQuality = getExportQualityPreset();
       setExportState(true);
-      parent.postMessage({ pluginMessage: { type: 'export', scale } }, '*');
+      parent.postMessage({ pluginMessage: { type: 'export', scale, exportQuality } }, '*');
     });
 
-    function generatePDF() {
+    async function recompressImageDataUrl(dataUrl, quality) {
+      return new Promise((resolve, reject) => {
+        const image = new Image();
+        image.onload = () => {
+          try {
+            const canvas = document.createElement('canvas');
+            canvas.width = image.naturalWidth || image.width;
+            canvas.height = image.naturalHeight || image.height;
+            const context = canvas.getContext('2d');
+            if (!context) {
+              resolve(dataUrl);
+              return;
+            }
+            context.drawImage(image, 0, 0);
+            resolve(canvas.toDataURL('image/jpeg', quality));
+          } catch (error) {
+            reject(error);
+          }
+        };
+        image.onerror = () => reject(new Error('Failed to decode export image for PDF assembly'));
+        image.src = dataUrl;
+      });
+    }
+
+    function inferPdfImageFormat(dataUrl) {
+      return /^data:image\/jpe?g/i.test(String(dataUrl || '')) ? 'JPEG' : 'PNG';
+    }
+
+    async function generatePDF() {
       if (frameImages.length === 0) {
         setExportState(false);
         return;
@@ -4347,27 +4428,56 @@ ${JSON.stringify(batch.map(t => ({ mappingKey: t.mappingKey, text: t.text, charB
       try {
         const scale = parseFloat(document.getElementById('scale').value);
         const filename = document.getElementById('filename').value || 'Document';
+        const exportQuality = getExportQualityPreset();
         const firstFrame = selectedFrames[0];
         const pdfW = firstFrame.width * scale;
         const pdfH = firstFrame.height * scale;
         const orientation = pdfW > pdfH ? 'landscape' : 'portrait';
-        const doc = new jsPDF({ orientation, unit: 'pt', format: [pdfW, pdfH] });
+        const doc = new jsPDF({
+          orientation,
+          unit: 'pt',
+          format: [pdfW, pdfH],
+          compress: true,
+          putOnlyUsedFonts: true,
+        });
+        let totalAnnotatedLinks = 0;
 
         for (let i = 0; i < frameImages.length; i++) {
           const frame = selectedFrames[i];
-          const imgData = frameImages[i];
+          const originalImgData = frameImages[i];
+          let imgData = originalImgData;
+          if (exportQuality === 'smaller' && inferPdfImageFormat(originalImgData) === 'JPEG') {
+            imgData = await recompressImageDataUrl(originalImgData, 0.76);
+          }
+          const imageFormat = inferPdfImageFormat(imgData);
           const w = frame.width * scale;
           const h = frame.height * scale;
           if (i > 0) {
             const orient = w > h ? 'landscape' : 'portrait';
             doc.addPage([w, h], orient);
           }
-          doc.addImage(imgData, 'PNG', 0, 0, w, h);
+          doc.addImage(imgData, imageFormat, 0, 0, w, h);
           const pageLinks = frameLinks[i] || [];
+          uiLog('Export PDF page assembly', {
+            frameId: frame?.id,
+            frameName: frame?.name,
+            pageIndex: i,
+            linkCount: pageLinks.length,
+            scale,
+            exportQuality,
+            imageFormat,
+          });
           for (const link of pageLinks) {
             doc.link(link.x * scale, link.y * scale, link.width * scale, link.height * scale, { url: link.url });
+            totalAnnotatedLinks += 1;
           }
         }
+        uiLog('Export PDF link annotation summary', {
+          pageCount: frameImages.length,
+          totalAnnotatedLinks,
+          scale,
+          exportQuality,
+        });
         doc.save(`${filename}.pdf`);
         parent.postMessage({ pluginMessage: { type: 'export-done' } }, '*');
       } catch (error) {
