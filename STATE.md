@@ -6,7 +6,7 @@ Updated By: Codex
 - Monitor remaining translation reliability gaps after the Arabic RTL/apply and cancel-flow fixes
 
 ## Completed
-- Shortened visible dropdown option labels in export/settings menus so select values fit more cleanly without truncation
+- Shortened the export-quality helper copy to concise one-line descriptions while restoring the full dropdown option labels
 - Reduced dropdown/select text sizing in the plugin UI so export and settings menus fit more cleanly without changing surrounding body copy
 - Replaced the visible PDF optimize toggle with user-facing export quality presets while keeping lossless PDF compression always enabled internally
 - Added export-link debug logs so debug mode now reports per-frame extracted link counts and final PDF annotation counts during export

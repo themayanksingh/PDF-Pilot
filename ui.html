@@ -2309,9 +2309,9 @@
       <div class="option-select quality-select">
         <div class="scale-label">Export quality</div>
         <select id="exportQuality">
-          <option value="best">Best</option>
+          <option value="best">Best quality</option>
           <option value="recommended" selected>Recommended</option>
-          <option value="smaller">Smaller</option>
+          <option value="smaller">Smaller file</option>
         </select>
         <svg class="select-caret" viewBox="0 0 12 12" aria-hidden="true">
           <path d="M2.5 4.5L6 8l3.5-3.5"></path>
@@ -2471,11 +2471,11 @@
                   <div class="field-label">API Quota Tier</div>
                   <div class="select-wrap">
                     <select class="field-select" id="settingsQuotaProfile">
-                      <option value="auto">Auto</option>
-                      <option value="free">Free</option>
-                      <option value="tier1">Tier 1</option>
-                      <option value="tier2">Tier 2</option>
-                      <option value="tier3">Tier 3</option>
+                      <option value="auto">Auto (Recommended)</option>
+                      <option value="free">Free Tier</option>
+                      <option value="tier1">Paid Tier 1</option>
+                      <option value="tier2">Paid Tier 2</option>
+                      <option value="tier3">Paid Tier 3</option>
                     </select>
                     <svg class="select-caret" viewBox="0 0 12 12" aria-hidden="true">
                       <path d="M2.5 4.5L6 8l3.5-3.5"></path>
@@ -4015,11 +4015,11 @@ ${JSON.stringify(batch.map(t => ({ mappingKey: t.mappingKey, text: t.text, charB
       if (!exportQualityHelp) return;
       const preset = getExportQualityPreset();
       if (preset === 'best') {
-        exportQualityHelp.textContent = 'Best quality keeps lossless images for maximum fidelity and the largest file size.';
+        exportQualityHelp.textContent = 'Maximum fidelity and largest file size.';
         return;
       }
       if (preset === 'smaller') {
-        exportQualityHelp.textContent = 'Smaller file uses more aggressive image compression to reduce PDF size the most.';
+        exportQualityHelp.textContent = 'More compression for the smallest PDF size.';
         return;
       }
       exportQualityHelp.textContent = 'Balanced quality and file size for most exports.';
