@@ -101,6 +101,20 @@ const SPEND_ALL_TIME_SUMMARY_KEY = 'spend-all-time-summary-v1';
 const SPEND_KNOWN_RUN_IDS_KEY = 'spend-known-run-ids-v1';
 const SPEND_RECENT_RUN_LIMIT = 10;
 const SPEND_KNOWN_RUN_IDS_LIMIT = 200;
+const EXPORT_SCALE_KEY = 'export-scale';
+const EXPORT_QUALITY_KEY = 'export-quality';
+const VALID_EXPORT_SCALES = new Set([1, 1.5, 2, 3, 4]);
+const VALID_EXPORT_QUALITIES = new Set(['best', 'recommended', 'smaller']);
+
+function normalizeExportScale(value: unknown): number {
+  const numeric = asNumber(value);
+  return numeric !== null && VALID_EXPORT_SCALES.has(numeric) ? numeric : 2;
+}
+
+function normalizeExportQuality(value: unknown): string {
+  const quality = asString(value);
+  return quality && VALID_EXPORT_QUALITIES.has(quality) ? quality : 'recommended';
+}
 
 function parseTargetLanguagesPayload(value: unknown): string[] {
   if (!Array.isArray(value)) return [];
@@ -361,12 +375,30 @@ function isAllowedSelectionNode(node: SceneNode): node is FrameLike {
 function getSelectedFrames(): { id: string; name: string; width: number; height: number }[] {
   return figma.currentPage.selection
     .filter(isAllowedSelectionNode)
-    .map(node => ({
-      id: node.id,
-      name: node.name,
-      width: Math.round(node.width),
-      height: Math.round(node.height),
-    }));
+    .map(serializeFrame);
+}
+
+function serializeFrame(frame: FrameLike): { id: string; name: string; width: number; height: number } {
+  return {
+    id: frame.id,
+    name: frame.name,
+    width: Math.round(frame.width),
+    height: Math.round(frame.height),
+  };
+}
+
+async function getFramesFromIds(frameIds: string[]): Promise<FrameLike[]> {
+  const frames: FrameLike[] = [];
+  const seen = new Set<string>();
+  for (const frameId of frameIds) {
+    if (seen.has(frameId)) continue;
+    seen.add(frameId);
+    const node = await figma.getNodeByIdAsync(frameId);
+    if (node && 'type' in node && isAllowedSelectionNode(node as SceneNode)) {
+      frames.push(node as FrameLike);
+    }
+  }
+  return frames;
 }
 
 function getNodeAbsolutePosition(node: SceneNode): { x: number; y: number } {
@@ -786,7 +818,12 @@ figma.ui.onmessage = async (rawMsg: unknown) => {
     const scale = typeof rawScale === 'number' && rawScale > 0 ? rawScale : 2;
     const exportQuality = asString(msg?.exportQuality);
     const exportFormat = exportQuality === 'best' ? 'PNG' : 'JPG';
-    const frames = figma.currentPage.selection.filter(isAllowedSelectionNode);
+    const frameIds = Array.isArray(msg?.frameIds)
+      ? (msg?.frameIds as unknown[]).filter(item => typeof item === 'string') as string[]
+      : [];
+    const frames = frameIds.length > 0
+      ? await getFramesFromIds(frameIds)
+      : figma.currentPage.selection.filter(isAllowedSelectionNode);
 
     if (frames.length === 0) {
       figma.notify('No frames selected');
@@ -850,7 +887,7 @@ figma.ui.onmessage = async (rawMsg: unknown) => {
         exportFormat,
       });
 
-      figma.ui.postMessage({ type: 'export-data', images, links: allLinks });
+      figma.ui.postMessage({ type: 'export-data', images, links: allLinks, frames: frames.map(serializeFrame) });
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : String(error);
       figma.ui.postMessage({ type: 'export-error', error: message });
@@ -861,6 +898,22 @@ figma.ui.onmessage = async (rawMsg: unknown) => {
 
   if (type === 'export-done') {
     figma.notify('PDF exported successfully! ✅');
+  }
+
+  if (type === 'get-export-settings') {
+    const scale = normalizeExportScale(await figma.clientStorage.getAsync(EXPORT_SCALE_KEY));
+    const exportQuality = normalizeExportQuality(await figma.clientStorage.getAsync(EXPORT_QUALITY_KEY));
+    figma.ui.postMessage({
+      type: 'export-settings-loaded',
+      settings: { scale, exportQuality },
+    });
+  }
+
+  if (type === 'save-export-settings') {
+    const scale = normalizeExportScale(msg?.scale);
+    const exportQuality = normalizeExportQuality(msg?.exportQuality);
+    await figma.clientStorage.setAsync(EXPORT_SCALE_KEY, scale);
+    await figma.clientStorage.setAsync(EXPORT_QUALITY_KEY, exportQuality);
   }
 
   if (type === 'cancel') {
