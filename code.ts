@@ -72,6 +72,13 @@ interface SettingsPayload {
   enableTranslation?: boolean;
 }
 
+interface PdfImportPagePayload {
+  pageNumber: number;
+  width: number;
+  height: number;
+  imageBase64: string;
+}
+
 interface ModelSpendBreakdown {
   model: string;
   prompt_tokens: number;
@@ -103,8 +110,10 @@ const SPEND_RECENT_RUN_LIMIT = 10;
 const SPEND_KNOWN_RUN_IDS_LIMIT = 200;
 const EXPORT_SCALE_KEY = 'export-scale';
 const EXPORT_QUALITY_KEY = 'export-quality';
-const VALID_EXPORT_SCALES = new Set([1, 1.5, 2, 3, 4]);
+const IMPORT_QUALITY_KEY = 'import-quality';
+const VALID_EXPORT_SCALES = new Set([1, 1.5, 2, 3, 4, 5, 6]);
 const VALID_EXPORT_QUALITIES = new Set(['best', 'recommended', 'smaller']);
+const VALID_IMPORT_QUALITIES = new Set(['low', 'medium', 'high']);
 
 function normalizeExportScale(value: unknown): number {
   const numeric = asNumber(value);
@@ -116,9 +125,45 @@ function normalizeExportQuality(value: unknown): string {
   return quality && VALID_EXPORT_QUALITIES.has(quality) ? quality : 'recommended';
 }
 
+function normalizeImportQuality(value: unknown): string {
+  const quality = asString(value);
+  return quality && VALID_IMPORT_QUALITIES.has(quality) ? quality : 'medium';
+}
+
 function parseTargetLanguagesPayload(value: unknown): string[] {
   if (!Array.isArray(value)) return [];
   return value.filter(item => typeof item === 'string') as string[];
+}
+
+function parsePdfImportPagesPayload(value: unknown): PdfImportPagePayload[] {
+  if (!Array.isArray(value)) return [];
+  const pages: PdfImportPagePayload[] = [];
+  for (const item of value) {
+    const obj = asObject(item);
+    if (!obj) continue;
+    const pageNumber = asNumber(obj.pageNumber);
+    const width = asNumber(obj.width);
+    const height = asNumber(obj.height);
+    const imageBase64 = asString(obj.imageBase64);
+    if (
+      pageNumber === null ||
+      width === null ||
+      height === null ||
+      !imageBase64 ||
+      pageNumber < 1 ||
+      width <= 0 ||
+      height <= 0
+    ) {
+      continue;
+    }
+    pages.push({ pageNumber, width, height, imageBase64 });
+  }
+  return pages;
+}
+
+function makeSafeNodeName(value: string): string {
+  const trimmed = value.trim();
+  return trimmed || 'Imported PDF';
 }
 
 interface TranslationNodePayload {
@@ -817,7 +862,7 @@ figma.ui.onmessage = async (rawMsg: unknown) => {
     const rawScale = msg?.scale;
     const scale = typeof rawScale === 'number' && rawScale > 0 ? rawScale : 2;
     const exportQuality = asString(msg?.exportQuality);
-    const exportFormat = exportQuality === 'best' ? 'PNG' : 'JPG';
+    const exportFormat = 'JPG';
     const frameIds = Array.isArray(msg?.frameIds)
       ? (msg?.frameIds as unknown[]).filter(item => typeof item === 'string') as string[]
       : [];
@@ -848,9 +893,7 @@ figma.ui.onmessage = async (rawMsg: unknown) => {
             format: exportFormat,
             constraint: { type: 'SCALE', value: scale },
           });
-          images[index] = exportFormat === 'PNG'
-            ? 'data:image/png;base64,' + figma.base64Encode(bytes)
-            : 'data:image/jpeg;base64,' + figma.base64Encode(bytes);
+          images[index] = 'data:image/jpeg;base64,' + figma.base64Encode(bytes);
           const extractedLinks = extractLinks(frame);
           allLinks[index] = extractedLinks;
           pluginLog('Export frame links extracted', {
@@ -914,6 +957,107 @@ figma.ui.onmessage = async (rawMsg: unknown) => {
     const exportQuality = normalizeExportQuality(msg?.exportQuality);
     await figma.clientStorage.setAsync(EXPORT_SCALE_KEY, scale);
     await figma.clientStorage.setAsync(EXPORT_QUALITY_KEY, exportQuality);
+  }
+
+  if (type === 'get-import-settings') {
+    const importQuality = normalizeImportQuality(await figma.clientStorage.getAsync(IMPORT_QUALITY_KEY));
+    figma.ui.postMessage({
+      type: 'import-settings-loaded',
+      settings: { importQuality },
+    });
+  }
+
+  if (type === 'save-import-settings') {
+    const importQuality = normalizeImportQuality(msg?.importQuality);
+    await figma.clientStorage.setAsync(IMPORT_QUALITY_KEY, importQuality);
+  }
+
+  if (type === 'import-pdf-pages') {
+    const pages = parsePdfImportPagesPayload(msg?.pages);
+    if (pages.length === 0) {
+      figma.ui.postMessage({ type: 'import-pdf-error', error: 'No PDF pages were ready to import.' });
+      figma.notify('No PDF pages were ready to import');
+      return;
+    }
+
+    try {
+      const rawFileName = asString(msg?.fileName) || 'Imported PDF';
+      const fileName = makeSafeNodeName(rawFileName.replace(/\.pdf$/i, ''));
+      const groupFrame = figma.createFrame();
+      groupFrame.name = fileName;
+      groupFrame.clipsContent = false;
+      groupFrame.fills = [];
+
+      const viewportCenter = figma.viewport.center;
+      const gap = 80;
+      const maxItemsPerRow = 20;
+      let nextX = 0;
+      let nextY = 0;
+      let rowHeight = 0;
+      let maxWidth = 0;
+      const createdNodes: SceneNode[] = [];
+
+      for (let index = 0; index < pages.length; index++) {
+        const page = pages[index];
+        figma.ui.postMessage({
+          type: 'import-pdf-place-progress',
+          completed: index,
+          total: pages.length,
+          pageNumber: page.pageNumber,
+        });
+
+        const pageFrame = figma.createFrame();
+        pageFrame.name = `${fileName} / Page ${page.pageNumber}`;
+        pageFrame.resizeWithoutConstraints(page.width, page.height);
+        pageFrame.x = nextX;
+        pageFrame.y = nextY;
+        pageFrame.clipsContent = false;
+        pageFrame.fills = [];
+
+        const image = figma.createImage(figma.base64Decode(page.imageBase64));
+        const rect = figma.createRectangle();
+        rect.name = 'Page image';
+        rect.resize(page.width, page.height);
+        rect.x = 0;
+        rect.y = 0;
+        rect.fills = [{
+          type: 'IMAGE',
+          scaleMode: 'FILL',
+          imageHash: image.hash,
+        }];
+        pageFrame.appendChild(rect);
+        groupFrame.appendChild(pageFrame);
+        createdNodes.push(pageFrame);
+
+        nextX += page.width + gap;
+        rowHeight = Math.max(rowHeight, page.height);
+        maxWidth = Math.max(maxWidth, nextX - gap);
+
+        if ((index + 1) % maxItemsPerRow === 0 && index < pages.length - 1) {
+          nextX = 0;
+          nextY += rowHeight + gap;
+          rowHeight = 0;
+        }
+      }
+
+      groupFrame.resizeWithoutConstraints(maxWidth, Math.max(1, nextY + rowHeight));
+      groupFrame.x = viewportCenter.x - groupFrame.width / 2;
+      groupFrame.y = viewportCenter.y - groupFrame.height / 2;
+      figma.currentPage.selection = [groupFrame];
+      figma.viewport.scrollAndZoomIntoView([groupFrame]);
+
+      figma.ui.postMessage({
+        type: 'import-pdf-complete',
+        pageCount: createdNodes.length,
+        fileName,
+      });
+      figma.notify(`Imported ${createdNodes.length} PDF page${createdNodes.length === 1 ? '' : 's'} to canvas`);
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : String(error);
+      figma.ui.postMessage({ type: 'import-pdf-error', error: message });
+      figma.notify('PDF import failed');
+      pluginError('PDF import failed', { error: message });
+    }
   }
 
   if (type === 'cancel') {

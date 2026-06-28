@@ -787,11 +787,124 @@
       height: 100%;
     }
 
+    .page-range-col {
+      flex: 1;
+      min-width: 150px;
+    }
+
+    .page-range-input {
+      width: 100%;
+      padding: 10px 12px;
+      background: #2d2d2d;
+      border: 1px solid #444;
+      border-radius: 6px;
+      color: #fff;
+      font-size: 12px;
+      outline: none;
+      height: 40px;
+      box-sizing: border-box;
+    }
+
+    .page-range-input:focus {
+      border-color: #888;
+      background: #333;
+    }
+
     .export-setting-help {
       font-size: 11px;
       line-height: 1.4;
       color: #9ca3af;
       margin: -4px 0 14px;
+    }
+
+    .import-dropzone {
+      min-height: 170px;
+      cursor: pointer;
+      text-align: center;
+      transition: border-color 0.15s, background 0.15s;
+    }
+
+    .import-dropzone:hover,
+    .import-dropzone.drag-over {
+      background: #262626;
+      border-color: #888;
+    }
+
+    .import-icon {
+      width: 28px;
+      height: 28px;
+      color: #b8b8b8;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 1.8;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .import-title {
+      color: #e5e5e5;
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .import-subtitle,
+    .import-meta {
+      color: #888;
+      font-size: 11px;
+      line-height: 1.45;
+    }
+
+    .import-meta {
+      min-height: 16px;
+      margin: -4px 0 14px;
+    }
+
+    .import-meta.success {
+      color: #9fd6ad;
+    }
+
+    .import-meta.error {
+      color: #ff9b9b;
+    }
+
+    .import-actions-row {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .import-actions-row .action-btn {
+      flex: 1;
+    }
+
+    .secondary-btn {
+      height: 42px;
+      padding: 0 14px;
+      border: 1px solid #555;
+      border-radius: 6px;
+      background: #2d2d2d;
+      color: #e5e5e5;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .secondary-btn:hover {
+      background: #363636;
+      border-color: #777;
+    }
+
+    .secondary-btn.hidden {
+      display: none;
+    }
+
+    .import-file-name {
+      max-width: 100%;
+      color: #d6d6d6;
+      font-size: 12px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
     .action-btn {
@@ -2299,6 +2412,7 @@
       border-radius: 2px;
     }
   </style>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 </head>
 
 <body>
@@ -2306,6 +2420,7 @@
   <!-- Tab bar -->
   <div class="tab-bar">
     <button class="tab-btn active" data-tab="export">Export PDF</button>
+    <button class="tab-btn" data-tab="import">Import PDF</button>
     <button class="tab-btn" data-tab="translate">Translate</button>
     <div class="spacer"></div>
     <button class="icon-btn" id="dashboardBtn" title="Preferences" aria-label="Preferences">
@@ -2367,6 +2482,8 @@
           <option value="2" selected>2x</option>
           <option value="3">3x</option>
           <option value="4">4x</option>
+          <option value="5">5x</option>
+          <option value="6">6x</option>
         </select>
         <svg class="select-caret" viewBox="0 0 12 12" aria-hidden="true">
           <path d="M2.5 4.5L6 8l3.5-3.5"></path>
@@ -2375,9 +2492,9 @@
       <div class="option-select quality-select">
         <div class="scale-label">Export quality</div>
         <select id="exportQuality">
-          <option value="best">Best quality</option>
-          <option value="recommended" selected>Recommended</option>
-          <option value="smaller">Smaller file</option>
+          <option value="best">High quality</option>
+          <option value="recommended" selected>Balanced</option>
+          <option value="smaller">Small file</option>
         </select>
         <svg class="select-caret" viewBox="0 0 12 12" aria-hidden="true">
           <path d="M2.5 4.5L6 8l3.5-3.5"></path>
@@ -2385,9 +2502,49 @@
       </div>
     </div>
 
-    <div class="export-setting-help" id="exportQualityHelp">Recommended uses compressed images for a smaller PDF while keeping output sharp for most exports.</div>
+    <div class="export-setting-help" id="exportQualityHelp">Balanced keeps the PDF sharp while controlling file size.</div>
 
     <button class="action-btn disabled" id="exportBtn">Select frames in Figma to export</button>
+  </div>
+
+  <!-- Import PDF tab -->
+  <div class="tab-content" id="tab-import">
+    <div class="preview-area import-dropzone" id="importDropzone" role="button" tabindex="0">
+      <svg class="import-icon" viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+        <polyline points="14 2 14 8 20 8" />
+        <path d="M12 12v6" />
+        <path d="M9 15l3 3 3-3" />
+      </svg>
+      <div class="import-title" id="importTitle">Choose a PDF to import</div>
+      <div class="import-subtitle">Each page will be placed as an image on the Figma canvas.</div>
+      <div class="import-file-name hidden" id="importFileName"></div>
+    </div>
+    <input class="hidden" type="file" id="importPdfInput" accept="application/pdf,.pdf">
+
+    <div class="export-controls-row">
+      <div class="option-select quality-select">
+        <div class="scale-label">Quality</div>
+        <select id="importQuality">
+          <option value="low">Low (1.5x)</option>
+          <option value="medium" selected>Medium (2x)</option>
+          <option value="high">High (4x)</option>
+        </select>
+        <svg class="select-caret" viewBox="0 0 12 12" aria-hidden="true">
+          <path d="M2.5 4.5L6 8l3.5-3.5"></path>
+        </svg>
+      </div>
+      <div class="page-range-col">
+        <div class="scale-label">Page range</div>
+        <input class="page-range-input" type="text" id="importPageRange" placeholder="All pages">
+      </div>
+    </div>
+
+    <div class="import-meta" id="importMeta">PDF pages import as flat images. Text remains visible but not editable.</div>
+    <div class="import-actions-row">
+      <button class="action-btn disabled" id="importPdfBtn">Choose a PDF to import</button>
+      <button class="secondary-btn hidden" id="importCancelBtn">Cancel</button>
+    </div>
   </div>
 
   <!-- Translate tab -->
@@ -3368,6 +3525,15 @@ ${JSON.stringify(batch.map(t => ({ mappingKey: t.mappingKey, text: t.text, charB
     const emptyHint = document.getElementById('emptyHint');
     const framesList = document.getElementById('framesList');
     const exportBtn = document.getElementById('exportBtn');
+    const importDropzone = document.getElementById('importDropzone');
+    const importPdfInput = document.getElementById('importPdfInput');
+    const importTitle = document.getElementById('importTitle');
+    const importFileName = document.getElementById('importFileName');
+    const importQualitySelect = document.getElementById('importQuality');
+    const importPageRangeInput = document.getElementById('importPageRange');
+    const importMeta = document.getElementById('importMeta');
+    const importPdfBtn = document.getElementById('importPdfBtn');
+    const importCancelBtn = document.getElementById('importCancelBtn');
     const translatePreviewArea = document.getElementById('translatePreviewArea');
 
     const translateEmptyHint = document.getElementById('translateEmptyHint');
@@ -3405,6 +3571,19 @@ ${JSON.stringify(batch.map(t => ({ mappingKey: t.mappingKey, text: t.text, charB
     const debugLogsCloseBtn = document.getElementById('debugLogsCloseBtn');
     const debugLogsCopyBtn = document.getElementById('debugLogsCopyBtn');
     const debugLogsClearBtn = document.getElementById('debugLogsClearBtn');
+
+    const PDFJS_WORKER_SRC = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    const IMPORT_RENDER_MAX_PIXELS = 16000000;
+    const IMPORT_SIZE_WARNING_MB = 25;
+    const IMPORT_QUALITY_PRESETS = {
+      low: { label: 'Low', scale: 1.5, mimeType: 'image/jpeg', encoderQuality: 0.82 },
+      medium: { label: 'Medium', scale: 2, mimeType: 'image/jpeg', encoderQuality: 0.88 },
+      high: { label: 'High', scale: 4, mimeType: 'image/jpeg', encoderQuality: 0.93 },
+    };
+    let selectedImportPdfFile = null;
+    let isImportingPdf = false;
+    let importCancelRequested = false;
+    let activeImportRenderTask = null;
 
     const EXTRACT_STAGE_START = 5;
     const EXTRACT_STAGE_END = 20;
@@ -3991,6 +4170,239 @@ ${JSON.stringify(batch.map(t => ({ mappingKey: t.mappingKey, text: t.text, charB
       });
     });
 
+    function configurePdfJs() {
+      if (!window.pdfjsLib) {
+        throw new Error('PDF importer could not load. Check your connection and try again.');
+      }
+      if (window.pdfjsLib.GlobalWorkerOptions) {
+        window.pdfjsLib.GlobalWorkerOptions.workerSrc = PDFJS_WORKER_SRC;
+      }
+      return window.pdfjsLib;
+    }
+
+    function getImportQualityValue() {
+      const value = importQualitySelect?.value || 'medium';
+      return Object.prototype.hasOwnProperty.call(IMPORT_QUALITY_PRESETS, value) ? value : 'medium';
+    }
+
+    function getImportQualityPreset() {
+      return IMPORT_QUALITY_PRESETS[getImportQualityValue()] || IMPORT_QUALITY_PRESETS.medium;
+    }
+
+    function getImportScaleValue() {
+      return getImportQualityPreset().scale;
+    }
+
+    function getImportScaleLabel() {
+      return `${getImportScaleValue()}x`;
+    }
+
+    function saveImportSettings() {
+      parent.postMessage({
+        pluginMessage: {
+          type: 'save-import-settings',
+          importQuality: getImportQualityValue(),
+        }
+      }, '*');
+    }
+
+    function applySavedImportSettings(settings) {
+      const value = settings && typeof settings.importQuality === 'string' ? settings.importQuality : 'medium';
+      if (importQualitySelect && Object.prototype.hasOwnProperty.call(IMPORT_QUALITY_PRESETS, value)) {
+        importQualitySelect.value = value;
+      }
+      updateImportUI();
+    }
+
+    function setImportMeta(text, tone = '') {
+      if (!importMeta) return;
+      importMeta.textContent = text;
+      importMeta.classList.toggle('success', tone === 'success');
+      importMeta.classList.toggle('error', tone === 'error');
+    }
+
+    function setImportBusy(busy, label) {
+      isImportingPdf = busy;
+      if (!importPdfBtn) return;
+      importPdfBtn.disabled = busy || !selectedImportPdfFile;
+      importPdfBtn.className = busy
+        ? 'action-btn exporting'
+        : (selectedImportPdfFile ? 'action-btn active' : 'action-btn disabled');
+      importPdfBtn.textContent = label || (selectedImportPdfFile ? 'Import PDF pages to canvas' : 'Choose a PDF to import');
+      importCancelBtn?.classList.toggle('hidden', !busy);
+    }
+
+    function updateImportUI() {
+      if (!selectedImportPdfFile) {
+        if (importTitle) importTitle.textContent = 'Choose a PDF to import';
+        if (importFileName) {
+          importFileName.textContent = '';
+          importFileName.classList.add('hidden');
+        }
+        setImportMeta(`PDF pages import as flat images. ${getImportQualityPreset().label} uses ${getImportScaleLabel()} scale.`);
+        setImportBusy(false);
+        return;
+      }
+
+      if (importTitle) importTitle.textContent = 'PDF ready';
+      if (importFileName) {
+        importFileName.textContent = selectedImportPdfFile.name;
+        importFileName.classList.remove('hidden');
+      }
+      const sizeMb = selectedImportPdfFile.size / (1024 * 1024);
+      const warning = sizeMb > IMPORT_SIZE_WARNING_MB ? ` · large file warning above ${IMPORT_SIZE_WARNING_MB} MB` : '';
+      setImportMeta(`${selectedImportPdfFile.name} selected · ${sizeMb.toFixed(sizeMb >= 10 ? 0 : 1)} MB · ${getImportQualityPreset().label} (${getImportScaleLabel()})${warning}`);
+      setImportBusy(false);
+    }
+
+    function acceptImportPdfFile(file) {
+      if (!file) return;
+      const isPdf = file.type === 'application/pdf' || /\.pdf$/i.test(file.name || '');
+      if (!isPdf) {
+        setImportMeta('Choose a PDF file.', 'error');
+        return;
+      }
+      selectedImportPdfFile = file;
+      updateImportUI();
+    }
+
+    function dataUrlToBase64(dataUrl) {
+      const commaIndex = dataUrl.indexOf(',');
+      return commaIndex >= 0 ? dataUrl.slice(commaIndex + 1) : dataUrl;
+    }
+
+    function parseImportPageRange(value, totalPages) {
+      const trimmed = String(value || '').trim();
+      if (!trimmed) {
+        return Array.from({ length: totalPages }, (_, index) => index + 1);
+      }
+
+      const seen = new Set();
+      const pages = [];
+      const parts = trimmed.split(',');
+      for (const rawPart of parts) {
+        const part = rawPart.trim();
+        if (!part) continue;
+
+        const rangeMatch = part.match(/^(\d+)\s*-\s*(\d+)$/);
+        if (rangeMatch) {
+          const start = Number(rangeMatch[1]);
+          const end = Number(rangeMatch[2]);
+          if (!Number.isInteger(start) || !Number.isInteger(end) || start < 1 || end < start || end > totalPages) {
+            throw new Error(`Page range must be between 1 and ${totalPages}.`);
+          }
+          for (let pageNumber = start; pageNumber <= end; pageNumber++) {
+            if (!seen.has(pageNumber)) {
+              seen.add(pageNumber);
+              pages.push(pageNumber);
+            }
+          }
+          continue;
+        }
+
+        if (!/^\d+$/.test(part)) {
+          throw new Error('Use page ranges like 1-3, 5, 8.');
+        }
+        const pageNumber = Number(part);
+        if (!Number.isInteger(pageNumber) || pageNumber < 1 || pageNumber > totalPages) {
+          throw new Error(`Page range must be between 1 and ${totalPages}.`);
+        }
+        if (!seen.has(pageNumber)) {
+          seen.add(pageNumber);
+          pages.push(pageNumber);
+        }
+      }
+
+      if (pages.length === 0) {
+        throw new Error('Enter at least one page to import.');
+      }
+      return pages;
+    }
+
+    async function renderPdfFileToPages(file) {
+      const pdfjs = configurePdfJs();
+      const arrayBuffer = await file.arrayBuffer();
+      const loadingTask = pdfjs.getDocument({ data: arrayBuffer });
+      const pdf = await loadingTask.promise;
+      const pageNumbers = parseImportPageRange(importPageRangeInput?.value, pdf.numPages);
+      const qualityPreset = getImportQualityPreset();
+      const pages = [];
+
+      for (let index = 0; index < pageNumbers.length; index++) {
+        if (importCancelRequested) throw new Error('Import canceled.');
+
+        const pageNumber = pageNumbers[index];
+        setImportBusy(true, `Rendering page ${index + 1} of ${pageNumbers.length}`);
+        const page = await pdf.getPage(pageNumber);
+        const baseViewport = page.getViewport({ scale: 1 });
+        const requestedScale = qualityPreset.scale;
+        const requestedViewport = page.getViewport({ scale: requestedScale });
+        const requestedPixels = requestedViewport.width * requestedViewport.height;
+        const scale = requestedPixels > IMPORT_RENDER_MAX_PIXELS
+          ? Math.sqrt(IMPORT_RENDER_MAX_PIXELS / (baseViewport.width * baseViewport.height))
+          : requestedScale;
+        const viewport = page.getViewport({ scale });
+        const canvas = document.createElement('canvas');
+        const context = canvas.getContext('2d');
+        if (!context) throw new Error('Canvas rendering is not available in this Figma plugin window.');
+
+        canvas.width = Math.ceil(viewport.width);
+        canvas.height = Math.ceil(viewport.height);
+        context.fillStyle = '#ffffff';
+        context.fillRect(0, 0, canvas.width, canvas.height);
+        activeImportRenderTask = page.render({ canvasContext: context, viewport });
+        try {
+          await activeImportRenderTask.promise;
+        } catch (error) {
+          if (importCancelRequested) throw new Error('Import canceled.');
+          throw error;
+        }
+        activeImportRenderTask = null;
+
+        if (importCancelRequested) throw new Error('Import canceled.');
+
+        pages.push({
+          pageNumber,
+          width: baseViewport.width,
+          height: baseViewport.height,
+          imageBase64: dataUrlToBase64(canvas.toDataURL(qualityPreset.mimeType, qualityPreset.encoderQuality)),
+        });
+      }
+
+      return pages;
+    }
+
+    async function startPdfImport() {
+      if (!selectedImportPdfFile || isImportingPdf) return;
+      try {
+        const sizeMb = selectedImportPdfFile.size / (1024 * 1024);
+        if (sizeMb > IMPORT_SIZE_WARNING_MB) {
+          const shouldContinue = window.confirm(`This PDF is ${sizeMb.toFixed(sizeMb >= 10 ? 0 : 1)} MB. Large imports can take longer and may use more memory. Continue?`);
+          if (!shouldContinue) return;
+        }
+        importCancelRequested = false;
+        setImportBusy(true, 'Reading PDF');
+        setImportMeta('Preparing PDF pages...');
+        const pages = await renderPdfFileToPages(selectedImportPdfFile);
+        if (pages.length === 0) throw new Error('No pages were found in this PDF.');
+        if (importCancelRequested) throw new Error('Import canceled.');
+        setImportBusy(true, 'Placing pages in Figma');
+        setImportMeta(`Placing ${pages.length} page${pages.length === 1 ? '' : 's'} on the canvas...`);
+        parent.postMessage({
+          pluginMessage: {
+            type: 'import-pdf-pages',
+            fileName: selectedImportPdfFile.name,
+            pages,
+          }
+        }, '*');
+      } catch (error) {
+        activeImportRenderTask = null;
+        setImportBusy(false);
+        setImportMeta(getErrorMessage(error), 'error');
+        uiError('PDF import failed before placement', { error: getErrorMessage(error) });
+      }
+    }
+
     debugLogBtn.addEventListener('click', () => {
       renderDebugLogs();
       debugLogsModal.classList.add('visible');
@@ -4305,15 +4717,16 @@ ${JSON.stringify(batch.map(t => ({ mappingKey: t.mappingKey, text: t.text, charB
     function updateExportQualityHelp() {
       if (!exportQualityHelp) return;
       const preset = getExportQualityPreset();
+      const scale = getExportScaleValue();
       if (preset === 'best') {
-        exportQualityHelp.textContent = 'Maximum fidelity and largest file size.';
+        exportQualityHelp.textContent = 'Sharpest export with a larger file.';
         return;
       }
       if (preset === 'smaller') {
-        exportQualityHelp.textContent = 'More compression for the smallest PDF size.';
+        exportQualityHelp.textContent = 'Smallest export, best for sharing.';
         return;
       }
-      exportQualityHelp.textContent = 'Balanced quality and file size for most exports.';
+      exportQualityHelp.textContent = 'Sharp results with a manageable file size.';
     }
 
     // ── Language picker state ──
@@ -4630,12 +5043,27 @@ ${JSON.stringify(batch.map(t => ({ mappingKey: t.mappingKey, text: t.text, charB
         const errorText = typeof msg.error === 'string' ? msg.error : 'Unknown export error';
         setExportState(false);
         uiError('PDF export failed', { error: errorText });
+      } else if (msg.type === 'import-pdf-place-progress') {
+        const total = Math.max(1, Number(msg.total) || 1);
+        const completed = Math.min(total, Math.max(0, Number(msg.completed) || 0));
+        setImportBusy(true, `Placing page ${Math.min(total, completed + 1)} of ${total}`);
+      } else if (msg.type === 'import-pdf-complete') {
+        const pageCount = Math.max(0, Number(msg.pageCount) || 0);
+        setImportBusy(false);
+        setImportMeta(`Imported ${pageCount} page${pageCount === 1 ? '' : 's'} to the Figma canvas.`, 'success');
+      } else if (msg.type === 'import-pdf-error') {
+        const errorText = typeof msg.error === 'string' ? msg.error : 'Unknown import error';
+        setImportBusy(false);
+        setImportMeta(errorText, 'error');
+        uiError('PDF import failed', { error: errorText });
       } else if (msg.type === 'settings-loaded') {
         currentSettings = normalizeSettings(msg.settings);
         populateSettingsModal();
         updateTranslateUI();
       } else if (msg.type === 'export-settings-loaded') {
         applySavedExportSettings(msg.settings);
+      } else if (msg.type === 'import-settings-loaded') {
+        applySavedImportSettings(msg.settings);
       } else if (msg.type === 'settings-saved') {
         setDashboardSaveStatus('saved');
         renderDashboardSettingsMeta();
@@ -4724,6 +5152,51 @@ ${JSON.stringify(batch.map(t => ({ mappingKey: t.mappingKey, text: t.text, charB
       }
     };
 
+    // ── Import PDF ──
+    importDropzone?.addEventListener('click', () => {
+      if (!isImportingPdf) importPdfInput?.click();
+    });
+    importDropzone?.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault();
+        if (!isImportingPdf) importPdfInput?.click();
+      }
+    });
+    importDropzone?.addEventListener('dragover', (event) => {
+      event.preventDefault();
+      importDropzone.classList.add('drag-over');
+    });
+    importDropzone?.addEventListener('dragleave', () => {
+      importDropzone.classList.remove('drag-over');
+    });
+    importDropzone?.addEventListener('drop', (event) => {
+      event.preventDefault();
+      importDropzone.classList.remove('drag-over');
+      acceptImportPdfFile(event.dataTransfer?.files?.[0]);
+    });
+    importPdfInput?.addEventListener('change', () => {
+      acceptImportPdfFile(importPdfInput.files?.[0]);
+      importPdfInput.value = '';
+    });
+    importQualitySelect?.addEventListener('change', () => {
+      saveImportSettings();
+      updateImportUI();
+    });
+    importPageRangeInput?.addEventListener('input', () => {
+      if (selectedImportPdfFile) updateImportUI();
+    });
+    importCancelBtn?.addEventListener('click', () => {
+      importCancelRequested = true;
+      if (activeImportRenderTask && typeof activeImportRenderTask.cancel === 'function') {
+        activeImportRenderTask.cancel();
+      }
+      setImportBusy(true, 'Canceling import');
+      setImportMeta('Canceling import...');
+    });
+    importPdfBtn?.addEventListener('click', startPdfImport);
+    updateImportUI();
+    parent.postMessage({ pluginMessage: { type: 'get-import-settings' } }, '*');
+
     // ── Export PDF (unchanged logic) ──
     if (exportQualitySelect) {
       exportQualitySelect.addEventListener('change', updateExportQualityHelp);
@@ -4732,6 +5205,7 @@ ${JSON.stringify(batch.map(t => ({ mappingKey: t.mappingKey, text: t.text, charB
     }
     if (exportScaleSelect) {
       exportScaleSelect.addEventListener('change', persistExportSettings);
+      exportScaleSelect.addEventListener('change', updateExportQualityHelp);
     }
 
     exportBtn.addEventListener('click', () => {
@@ -4772,6 +5246,13 @@ ${JSON.stringify(batch.map(t => ({ mappingKey: t.mappingKey, text: t.text, charB
       return /^data:image\/jpe?g/i.test(String(dataUrl || '')) ? 'JPEG' : 'PNG';
     }
 
+    function getExportJpegQuality(exportQuality) {
+      if (exportQuality === 'best') return 0.96;
+      if (exportQuality === 'smaller') return 0.72;
+      if (exportQuality === 'recommended') return 0.88;
+      return 0.88;
+    }
+
     async function generatePDF() {
       if (frameImages.length === 0) {
         setExportState(false);
@@ -4799,9 +5280,8 @@ ${JSON.stringify(batch.map(t => ({ mappingKey: t.mappingKey, text: t.text, charB
           const frame = selectedFrames[i];
           const originalImgData = frameImages[i];
           let imgData = originalImgData;
-          if (exportQuality === 'smaller' && inferPdfImageFormat(originalImgData) === 'JPEG') {
-            imgData = await recompressImageDataUrl(originalImgData, 0.76);
-          }
+          const jpegQuality = getExportJpegQuality(exportQuality);
+          imgData = await recompressImageDataUrl(originalImgData, jpegQuality);
           const imageFormat = inferPdfImageFormat(imgData);
           const w = frame.width * scale;
           const h = frame.height * scale;
