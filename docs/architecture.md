@@ -1,5 +1,5 @@
 # Architecture: PDF Pilot
-Last Updated: 2026-06-02
+Last Updated: 2026-06-28
 
 ## System Overview
 PDF Pilot is a single Figma plugin with two execution contexts:
@@ -12,10 +12,19 @@ PDF Pilot is a single Figma plugin with two execution contexts:
 ## Export Notes
 - PDF export rasterizes each selected frame in `code.ts` and assembles the PDF in `ui.html` with `jsPDF`.
 - The Export tab's frame list can be reordered in `ui.html` with a custom pointer-driven left-handle interaction. Dragging uses a floating row, animated placeholder, document-level pointer tracking, and edge auto-scroll; export requests pass ordered frame IDs to `code.ts`, so the reviewed list order becomes the PDF page order instead of relying on live Figma selection order.
-- Frame raster export now runs with a small parallel worker pool in `code.ts` instead of strictly sequential PNG generation, which reduces total wait time for multi-frame exports at the same scale.
+- Frame raster export now runs with a small parallel worker pool in `code.ts` instead of strictly sequential raster generation, which reduces total wait time for multi-frame exports at the same scale.
 - Lossless PDF stream compression is always enabled in `ui.html`; the Export tab now surfaces user-facing `Export quality` presets instead of a raw optimization toggle.
-- `Export quality` is separate from `Scale`: presets choose the image encoding/compression strategy, while scale still controls raster sharpness and remains the main size driver.
+- `Export quality` is separate from `Scale`: presets choose the image encoding/compression strategy, while scale still controls raster sharpness and remains the main size driver. Export scale supports values up to 6x for sharper raster output when users accept larger files.
+- Export uses JPEG for every quality preset. High quality uses near-lossless JPEG, while Balanced and Small File use stronger browser-native JPEG recompression in `ui.html` for fast, smaller PDF assembly.
 - Export `Scale` and `Export quality` are persisted in `figma.clientStorage` as export-specific preferences; the file name stays transient and always uses the UI default unless the user edits it for that run.
+
+## Import Notes
+- The Import PDF tab loads `pdf.js` from cdnjs in `ui.html`, reads a user-selected PDF file locally, and renders selected pages to a canvas.
+- Imported pages are sent from `ui.html` to `code.ts` as base64 image payloads with their original PDF page dimensions; `code.ts` creates one page frame per imported page and places the image-filled rectangle inside it.
+- PDF import is intentionally flat: page text remains visible in Figma but is not editable as text layers.
+- Import quality presets map to render scale and encoding: Low uses 1.5x JPEG, Medium uses 2x JPEG, and High uses 4x JPEG with tuned quality values to keep payloads smaller while preserving sharp visible output; the selected quality is persisted in `figma.clientStorage`.
+- Import rendering supports page ranges, warns before importing PDFs over 25 MB, allows canceling while pages render, and caps per-page render pixels to reduce the chance of freezing the plugin UI on very large pages.
+- Imported page frames are laid out horizontally with up to 20 pages per row, then wrap to the next row inside the parent import frame.
 
 ## Translation Placement Notes
 - Translated outputs are placed as page-level frames on the current Figma page, not reinserted into the original parent container.

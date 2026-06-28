@@ -1,5 +1,5 @@
 # Project: pdf-pilot
-Last Updated: 2026-06-02
+Last Updated: 2026-06-28
 Updated By: Codex
 
 ## What This Project Does

@@ -1,10 +1,15 @@
 # Private Plugin Notes
 
+Last Updated: 2026-06-28
+
 ## Spend Storage Fields
 
 Client storage keys:
 - `spend-runs-v2`: recent run records (capped to 10, newest first)
 - `spend-all-time-summary-v1`: accumulated all-time summary
+- `export-scale`: last selected export raster scale
+- `export-quality`: last selected export quality preset
+- `import-quality`: last selected PDF import quality preset
 
 Run record shape:
 - `run_id` (string)
@@ -45,6 +50,27 @@ Plugin -> UI:
 
 Existing settings contract is unchanged:
 - `get-settings`, `save-settings`, `settings-loaded`, `settings-saved`
+
+Export settings contract:
+- UI -> plugin: `get-export-settings`
+- plugin -> UI: `export-settings-loaded` with `{ settings: { exportScale, exportQuality } }`
+- UI -> plugin: `save-export-settings` with `{ exportScale, exportQuality }`
+
+Import settings contract:
+- UI -> plugin: `get-import-settings`
+- plugin -> UI: `import-settings-loaded` with `{ settings: { importQuality } }`
+- UI -> plugin: `save-import-settings` with `{ importQuality }`
+
+PDF import placement contract:
+- UI -> plugin: `import-pdf-pages` with:
+  - `fileName` (string)
+  - `pages` array containing `{ pageNumber, width, height, imageBase64 }`
+- plugin -> UI:
+  - `import-pdf-place-progress`
+  - `import-pdf-complete`
+  - `import-pdf-error`
+
+PDF import is intentionally raster-only. The UI owns PDF parsing/rendering and the plugin sandbox owns Figma node creation.
 
 ## FX Cache Behavior
 

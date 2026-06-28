@@ -1,12 +1,15 @@
-# PDF Pilot — Translation Feature Plan
+# PDF Pilot — Product Feature Plan
+
+Last Updated: 2026-06-28
 
 ## Overview
 
-Extend the existing "PDF Pilot" Figma plugin with a **Translate** tab that:
-- Duplicates selected English frames for each target language
-- Translates all text nodes using an AI provider (Gemini first, modular for others)
-- Detects overflow issues and flags them for user review
-- Provides an audit summary at the end
+PDF Pilot is a local Figma plugin for moving designs in and out of PDF workflows and translating selected frames:
+- Export selected Figma frames/components/instances to a PDF in a reviewed page order
+- Import PDF pages back to the Figma canvas as flat image-backed page frames
+- Duplicate selected English frames for target languages, translate text with AI, and audit overflow issues
+
+The current UI has three primary tabs: **Export PDF**, **Import PDF**, and **Translate**.
 
 ---
 
@@ -150,7 +153,7 @@ Why this works:
 
 ```
 ┌─────────────────────────────────────┐
-│  [Export PDF]  [Translate]     ⚙️   │
+│  [Export PDF] [Import PDF] [Translate] ⚙️ │
 ├─────────────────────────────────────┤
 │                                     │
 │  (tab content here)                 │
@@ -160,9 +163,37 @@ Why this works:
 
 The ⚙️ gear icon opens a settings modal for API key management.
 
-### Export PDF Tab (existing functionality, unchanged)
+### Export PDF Tab
 
-Current UI lives here as-is.
+The Export tab shows selected frames, lets the user reorder pages with the left-side drag handle, and exports the reviewed order to PDF. Export scale supports 1x, 1.5x, 2x, 3x, 4x, 5x, and 6x. Export quality presets are High quality, Balanced, and Small file; all presets currently use JPEG images with different recompression levels so PDF generation stays fast and output size is predictable.
+
+### Import PDF Tab
+
+The Import tab lets the user choose or drop a local PDF, select Low/Medium/High quality, optionally enter a page range such as `1-3, 5`, and place pages on the Figma canvas.
+
+```
+┌─────────────────────────────────────┐
+│  Choose a PDF to import             │
+│  Each page will be placed as image  │
+│                                     │
+│  Quality: [Medium (2x) ▼]           │
+│  Page range: [All pages          ]  │
+│                                     │
+│  PDF pages import as flat images.   │
+│                                     │
+│  [Import PDF pages to canvas]       │
+│  [Cancel] shown while importing     │
+└─────────────────────────────────────┘
+```
+
+Import behavior:
+- `ui.html` loads `pdf.js` from cdnjs, reads the selected file locally, and renders requested pages to a canvas.
+- Low/Medium/High map to 1.5x/2x/4x JPEG rendering with tuned browser-native quality settings.
+- Files over 25 MB show a warning before rendering starts.
+- The user can cancel while pages render; the active pdf.js render task is canceled when available.
+- `code.ts` receives validated base64 image payloads, creates one parent import frame, then creates one child frame per PDF page with a `Page image` rectangle inside it.
+- Imported pages are arranged horizontally with up to 20 pages per row before wrapping.
+- Imported text remains visible in Figma but is not editable because PDF import is rasterized.
 
 ### Translate Tab
 
@@ -292,6 +323,13 @@ Ownership and message bridge:
 - `code.ts` is the only layer that reads/writes `figma.clientStorage`.
 - `ui.html` requests settings via postMessage (`get-settings`) and saves via (`save-settings`).
 - `code.ts` responds with sanitized settings (`settings-loaded`) so UI never directly touches plugin storage APIs.
+
+Export and import preferences also live in `figma.clientStorage`:
+- `export-scale`
+- `export-quality`
+- `import-quality`
+
+The export file name is intentionally transient and is not persisted.
 
 ---
 
@@ -433,6 +471,15 @@ To detect this:
 - [ ] Remember last-used language selections
 - [ ] Export translated frames directly to PDF
 
+### PDF Import/Export Reliability
+- [x] Add Import PDF tab with local file picker and drag/drop
+- [x] Render selected PDF pages in `ui.html` with pdf.js
+- [x] Place imported pages on the Figma canvas as image-backed page frames
+- [x] Add import quality presets, page ranges, large-file warning, cancel, and remembered import quality
+- [x] Arrange imported pages in rows of up to 20 pages
+- [x] Use JPEG for all export quality presets and extend export scale to 6x
+- [ ] Consider bundling pdf.js locally if cdnjs/offline reliability becomes a release concern
+
 ---
 
 ## Manifest Changes Required
@@ -441,6 +488,7 @@ To detect this:
 {
   "networkAccess": {
     "allowedDomains": [
+      "https://cdnjs.cloudflare.com",
       "https://generativelanguage.googleapis.com",
       "https://api.openai.com"
     ]
