@@ -53,3 +53,12 @@ SESSION END (mandatory, never skip):
 
 ## Learnings
 See docs/learnings/
+## Upfront Alignment Interview
+
+Before any non-trivial design, architecture, or coding task in this repo, run an upfront alignment pass instead of steering reactively later. An LLM silently replaces the user's unspoken assumptions with its own guesses without signaling the substitution, so a wrong guess compounds through the work into muddied context that is harder to fix than starting over.
+
+**How.** Interview the user in detail using the AskUserQuestion tool about anything relevant: technical implementation, UI and UX, concerns, tradeoffs, scope, constraints. Make the questions non-obvious — do not ask what is already answered by the code or this file; ask the questions whose answers only live in the user's head and would otherwise be guessed. Prefer questions that expose a fork where you would otherwise pick a default silently.
+
+**Depth is adaptive.** Scale to the stakes: a few sharp questions for a small change, several rounds of deeper extraction for a large design or architecture decision. Keep surfacing assumptions as the work proceeds, not only at the start.
+
+**Skip** for trivial edits, pure lookups, and mechanical one-line changes.
