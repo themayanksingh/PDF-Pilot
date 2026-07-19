@@ -1,110 +1,104 @@
 # PDF Pilot
 
-Figma plugin for:
-- exporting selected designs to PDF
-- translating selected designs with AI
-- duplicating and localizing output by language
+PDF Pilot is a Figma plugin for exporting selected designs to PDF, importing PDF pages onto the canvas, and creating AI-translated copies of selected designs.
+
+[View PDF Pilot on Figma Community](https://www.figma.com/community/plugin/1604040004181266174/pdf-pilot)
 
 ## Features
 
-### Translate (AI)
-- Select one or more `Frame` / `Component` nodes
-- Choose target languages (FR/DE/ES/IT/TR/AR)
-- Calls AI provider from plugin UI and applies translations to duplicated designs
-- Uses stable mapping keys (`sourceFrameId::nodePath`) so text maps correctly after duplication
-- Loads required fonts before text replacement (including mixed font ranges)
-- Skips `TRUNCATE` text nodes and keeps source text for those nodes
-- Shows in-button progress while translating
-- Shows per-run spend in the Translate run feed (datetime, tokens, USD + INR)
-- Shows a combined completion + audit section with:
-  - translation API issues
-  - text/font apply issues
-  - overflow audit actions (Phase 2)
-
 ### Export PDF
-- Select one or more `Frame` / `Component` nodes
-- Export to PDF from the `Export PDF` tab
-- Preserves URL links detected in text and node reactions
 
-## AI Providers and Models
+- Export selected Frames and Components as one PDF.
+- Review and reorder pages before export with a dedicated drag handle.
+- Choose a raster scale from 1× through 6×.
+- Choose High, Balanced, or Small File JPEG quality.
+- Preserve supported URL links from text and prototype reactions.
+- Remember the latest export scale and quality.
 
-- Gemini:
-  - `gemini-2.5-flash-lite` (fixed in UI)
-- OpenAI:
-  - `gpt-5-mini`
+### Import PDF
 
-API keys are only required for the `Translate` workflow.
+- Choose or drop a local PDF.
+- Import every page or a page range such as `1-3, 5`.
+- Choose Low (1.5×), Medium (2×), or High (4×) JPEG quality.
+- Cancel during rendering and review progress as pages are placed.
+- Create one page frame per imported page inside a parent frame.
 
-### Gemini Tier-Aware Tuning
+Imported pages are raster images. Their text remains visible but is not editable as Figma text layers.
 
-In Settings, `Gemini Quota Tier` controls request pacing/concurrency:
+### Translate
 
-- `Auto (safe default)` (uses free-tier-safe pacing)
-- `Free Tier` (15 RPM / 250,000 TPM / 1,000 RPD)
-- `Paid Tier 1` (4,000 RPM / 4,000,000 TPM)
-- `Paid Tier 2` (10,000 RPM / 10,000,000 TPM)
-- `Paid Tier 3` (30,000 RPM / 30,000,000 TPM)
+- Translate selected Frames and Components with Gemini or OpenAI.
+- Choose from 30 target languages.
+- Keep the original designs unchanged and create translated copies below the existing canvas content.
+- Preserve text-to-layer mapping across duplicated frames.
+- Detect overflow, retry with tighter character budgets, and provide manual review actions.
+- Apply Arabic text alignment and preserve the right edge during right-to-left overflow fixes.
+- Record token usage and estimated USD spend for recent and all-time runs.
 
-These values are from Gemini API official rate-limit docs.
+API keys are required only for translation and are stored with `figma.clientStorage` in the local Figma client context.
 
-## Project Structure
+## Supported AI Models
 
-- `code.ts`: Figma plugin sandbox logic (selection, extraction, duplication, apply)
-- `ui.html`: plugin UI, tabs, provider calls, settings modal
-- `manifest.json`: plugin metadata and `networkAccess.allowedDomains`
-- `docs/PLAN.md`: translation implementation plan
+- Gemini: `gemini-2.5-flash-lite`
+- OpenAI: `gpt-5-mini`
 
-Note: README is public-facing. Internal implementation details live in `docs/private-plugin-notes.md`.
+Gemini quota profiles control request pacing for Auto, Free, and Paid tiers.
 
-## Setup
+## Development
 
-1. Install dependencies:
+Requirements:
+
+- Figma Desktop
+- Node.js
+- pnpm `10.30.3`
+
+Install and build:
+
 ```bash
 pnpm install
-```
-
-2. Build:
-```bash
 pnpm build
 ```
 
-3. (Optional) Watch mode during development:
+Watch TypeScript changes:
+
 ```bash
 pnpm watch
 ```
 
-4. Load plugin in Figma from this directory.
-
-## Dev Checks
+Validate the project:
 
 ```bash
 pnpm build
 pnpm lint
 ```
 
-## Usage
+Load `manifest.json` as a development plugin in Figma Desktop.
 
-### Export PDF
-1. Select nodes in Figma.
-2. Open plugin.
-3. Go to `Export PDF`.
-4. Set filename and scale (`2x` default).
-5. Export.
+## Project Structure
 
-### Translate
-1. Select nodes in Figma.
-2. Open plugin.
-3. Click `☰` (Dashboard) and save provider + API key.
-4. Go to `Translate`.
-5. Set source language and pick target languages.
-6. Click Translate.
-
-Spend visibility:
-- Open `☰` Dashboard to manage API keys and view spend analytics (last 10 + all-time totals).
-- The Translate tab also shows per-run spend cards after each run.
+- `code.ts` — Figma sandbox logic, storage, node creation, export rasterization, and translation application.
+- `ui.html` — plugin interface, PDF assembly/rendering, AI provider calls, and progress/review flows.
+- `manifest.json` — plugin metadata and allowed network domains.
+- `CHANGELOG.md` — released, unreleased, and historical completed work.
+- `STATE.md` — current operational state, active monitoring, and blockers.
+- `docs/ROADMAP.md` — pending product direction and priorities.
+- `docs/architecture.md` — runtime boundaries, data flows, persistence, and message contracts.
+- `docs/learnings/` — focused reusable engineering learnings.
+- `AGENTS.md` — repository workflow and maintenance rules.
 
 ## Network Access
 
-Manifest currently allows:
-- `https://generativelanguage.googleapis.com`
-- `https://api.openai.com`
+The plugin UI is allowed to access:
+
+- `https://cdnjs.cloudflare.com` for PDF.js
+- `https://generativelanguage.googleapis.com` for Gemini
+- `https://api.openai.com` for OpenAI
+
+PDF files are read locally in the plugin UI. PDF import does not upload the selected file to a project server.
+
+## Documentation Policy
+
+- Keep completed work in `CHANGELOG.md`.
+- Keep only pending work in `docs/ROADMAP.md`.
+- Keep only current status and blockers in `STATE.md`.
+- Record user-facing code that has not reached Figma under `Unreleased` in `CHANGELOG.md`.

@@ -1,9 +1,9 @@
 # Project: pdf-pilot
-Last Updated: 2026-06-28
+Last Updated: 2026-07-19
 Updated By: Codex
 
 ## What This Project Does
-PDF Pilot is a Figma plugin that exports selected frames/components/instances to PDF and translates selected designs with AI, duplicating localized frames and auditing overflow issues.
+PDF Pilot is a Figma plugin that exports selected frames/components to PDF, imports PDF pages as image-backed frames, and translates selected designs with AI while preserving the originals.
 
 ## Stack
 Single app (no monorepo)
@@ -23,7 +23,18 @@ Single app (no monorepo)
 - Run `pnpm build` after TypeScript/plugin logic changes.
 - Keep `code.ts` and `ui.html` message contracts in sync when changing plugin actions.
 - Keep `figma.clientStorage` payload handling defensive and validated.
-- Update `STATE.md`, `ROADMAP.md`, and architecture/learnings docs during normal task completion.
+- Keep `STATE.md` limited to current status, active work, and blockers.
+- Keep `docs/ROADMAP.md` limited to pending direction and priorities.
+- Move completed work out of `STATE.md` and `docs/ROADMAP.md` into `CHANGELOG.md` immediately.
+- Update architecture/learnings documentation when current behavior or reusable knowledge changes.
+- Keep `CHANGELOG.md` synchronized with the code and the public Figma Community release.
+
+## Release Tracking — Code Ahead of Figma (mandatory)
+- Treat the latest numbered version shown in `CHANGELOG.md` as the last known public Figma Community release.
+- Whenever a user-facing change lands in `code.ts`, `ui.html`, or `manifest.json` but has not yet been published to Figma, immediately record it under `Unreleased` in `CHANGELOG.md`.
+- Keep unreleased entries written in user-facing language and include the relevant Git commit when one exists.
+- Do not describe Git and Figma as aligned while `Unreleased` contains product changes.
+- After publishing, verify the live Figma Community listing, move the shipped entries into the new numbered version, and record its publication date and public release note.
 
 ## Architecture
 See docs/architecture.md
@@ -33,22 +44,22 @@ See docs/architecture.md
 SESSION START:
 1. Read AGENTS.md (this file)
 2. Read STATE.md for current task state and todos
-3. Read ROADMAP.md for project direction
+3. Read docs/ROADMAP.md for project direction
 4. Read docs/architecture.md for system design
 5. Do not start work until all four are read and understood
 
 DURING WORK:
-- If you complete a todo, mark it done in STATE.md immediately
+- If you complete a todo, remove it from STATE/ROADMAP and add it to CHANGELOG.md immediately
 - If you make an architecture decision, append it to docs/architecture.md
 - If you discover a reusable pattern or learning, append to docs/learnings/
-- If scope or direction changes, update ROADMAP.md then and there
+- If scope or direction changes, update docs/ROADMAP.md then and there
+- If product code becomes newer than the public Figma release, update `CHANGELOG.md` before ending the task
 
 SESSION END (mandatory, never skip):
-1. Update STATE.md: what was completed, what is next,
-   what failed and why, any blockers. Max 40 lines.
-2. Mark completed todos in STATE.md
-3. Add any newly discovered todos to STATE.md
-4. Update ROADMAP.md if focus or backlog changed
+1. Update STATE.md with current status, active work, failures, and blockers. Max 40 lines.
+2. Move completed work to CHANGELOG.md; never leave completed lists in STATE.md or docs/ROADMAP.md.
+3. Add newly discovered future work to docs/ROADMAP.md.
+4. Update docs/ROADMAP.md if focus or backlog changed
 5. Update Last Updated and Updated By in this file
 
 ## Learnings
