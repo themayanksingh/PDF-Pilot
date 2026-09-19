@@ -5,9 +5,10 @@
   "main": "code.js",
   "packageManager": "pnpm@10.30.3",
   "scripts": {
-    "build": "tsc -p tsconfig.json",
+    "build": "node scripts/patch-pdfjs.mjs && node scripts/build-plugin-ui.mjs && tsc -p tsconfig.json",
     "lint": "eslint --ext .ts,.tsx --ignore-pattern node_modules .",
     "lint:fix": "eslint --ext .ts,.tsx --ignore-pattern node_modules --fix .",
+    "check:editable-import": "node scripts/check-editable-import.mjs && node scripts/check-pdfjs-hook.mjs && node scripts/check-guide-import.mjs",
     "watch": "pnpm run build -- --watch"
   },
   "author": "",

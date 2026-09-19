@@ -1,6 +1,6 @@
 # Project: pdf-pilot
-Last Updated: 2026-07-19
-Updated By: Codex
+Last Updated: 2026-09-20
+Updated By: Cursor Grok
 
 ## What This Project Does
 PDF Pilot is a Figma plugin that exports selected frames/components to PDF, imports PDF pages as image-backed frames, and translates selected designs with AI while preserving the originals.
@@ -10,7 +10,7 @@ Single app (no monorepo)
 - Framework: Figma Plugin API (`manifest.json` API `1.0.0`) with custom plugin UI
 - Language: TypeScript (`typescript` `^5.3.2`) plus HTML/CSS/vanilla JavaScript
 - Database: None; persistence uses `figma.clientStorage`
-- Key libraries: `@figma/plugin-typings` `*`, `@figma/eslint-plugin-figma-plugins` `*`, `eslint` `^8.54.0`, `@typescript-eslint/eslint-plugin` `^6.12.0`, `@typescript-eslint/parser` `^6.12.0`, bundled `jsPDF` `2.5.1`
+- Key libraries: `@figma/plugin-typings` `*`, `@figma/eslint-plugin-figma-plugins` `*`, `eslint` `^8.54.0`, `@typescript-eslint/eslint-plugin` `^6.12.0`, `@typescript-eslint/parser` `^6.12.0`, bundled `jsPDF` `2.5.1`, vendored pdf.js `3.11.174` (hook revision 2) inlined into `ui.bundle.html`
 - Deploy target: Loaded as a local Figma plugin (no separate server deployment)
 
 ## Never Do
@@ -20,7 +20,8 @@ Single app (no monorepo)
 - Never remove or overwrite existing agent instructions; append and preserve history.
 
 ## Always Do
-- Run `pnpm build` after TypeScript/plugin logic changes.
+- Always run `pnpm build` after TypeScript/plugin logic changes (patches pdf.js if needed, writes `ui.bundle.html`, compiles `code.ts`).
+- Figma loads `ui.bundle.html`, not `ui.html`.
 - Keep `code.ts` and `ui.html` message contracts in sync when changing plugin actions.
 - Keep `figma.clientStorage` payload handling defensive and validated.
 - Keep `STATE.md` limited to current status, active work, and blockers.
@@ -73,3 +74,25 @@ Before any non-trivial design, architecture, or coding task in this repo, run an
 **Depth is adaptive.** Scale to the stakes: a few sharp questions for a small change, several rounds of deeper extraction for a large design or architecture decision. Keep surfacing assumptions as the work proceeds, not only at the start.
 
 **Skip** for trivial edits, pure lookups, and mechanical one-line changes.
+
+## Maintenance History
+
+- 2026-09-19 — Cursor Grok stopped comparing pdf.js canvases to Figma PNG exports. Verification now uses Figma background-only vs Figma candidate plus pdf.js source removal. `pnpm build` and `pnpm check:editable-import` passed. Live `788:105` is still the previous import until plugin reload. Existing agent instructions are preserved.
+
+- 2026-09-20 — Cursor Grok replaced the blocking missing-font dialog with `resolvePdfFont()`: normalize PDF names, read OpenType metrics, measure Figma candidates, auto-sub at high/medium confidence, keep low-confidence lettering in the page image. `pnpm` checks are not a Figma verify. Live `788:141` is still the previous import. Existing agent instructions are preserved.
+
+- 2026-09-20 — Cursor Grok required an explicit missing-font choice, aligned TextNodes by glyph centroid, dropped the Figma-pair graphics-mismatch gate, and accepted or rejected each occurrence instead of rolling the page back. `pnpm` checks are not a Figma verify. Existing agent instructions are preserved.
+
+- 2026-09-19 — Cursor Grok fixed Essential Guide Editable import at the confirmed roots: RGB bytes→0–1, three-image text verify, occurrence-owned fragment concat, exact font style plus Keep-original mapping, and terminal-stage logs. `pnpm build` and `pnpm check:editable-import` passed pages 5/11 in Chromium. Live Figma `12:447` is still the pre-reload tree. Existing agent instructions are preserved.
+
+- 2026-09-19 — Cursor Grok traced the bundled import (not the hook proof): paint-order grazing paths blocked the two fill titles; per-occurrence occlusion, embedded font naming, and a 4096px Figma image cap are in `ui.bundle.html`. Figma file still has 17 images until reload. Existing agent instructions are preserved.
+
+- 2026-09-19 — Cursor Grok packaged pdf.js 3.11.174 hook revision 2 into `ui.bundle.html`, proved fill-title suppression on sketches pages 6/10, and rejected leftover outlines / path lettering. Existing agent instructions are preserved.
+- 2026-09-19 — Cursor Grok matched canvas text to paint occurrences, dropped page-wide coverage abort, restored Figma PNG verify, and measured the sketches corpus (PUA fillText is real; most lettering is still path-painted). Existing agent instructions are preserved.
+- 2026-09-19 — Cursor Grok shipped the senior call: raster this PDF class until renderer-level suppression; report unsafe-text preservation in the import summary; no punch-outs. Existing agent instructions are preserved.
+- 2026-09-19 — Cursor Grok fixed Editable font matching to use PDF BaseFont names and pdf.js CMaps (jsDelivr). Existing agent instructions are preserved.
+- 2026-09-19 — Cursor Grok split missing fonts (one mapping step per import) from unreliable extracts, allowed partial text promotion with selective fillText suppress, and added always-on `[PDF Pilot]` import logs. Existing agent instructions are preserved.
+- 2026-09-19 — Cursor Grok implemented appearance-first Editable import (gated svg/text, Figma compare/rollback, no Inter substitute) and refreshed session docs. Existing agent instructions are preserved.
+- 2026-09-19 — Cursor Grok was the previous recorded updater. Codex refreshed session status and the Editable import architecture proposal; existing agent instructions are preserved.
+
+- 2026-09-19 — Codex traced the supplied all-raster logs and reproduced the whole-run/per-glyph suppression mismatch; recorded inactive Figma verification. Previous updater: Cursor Grok. Existing instructions are preserved.

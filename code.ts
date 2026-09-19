@@ -79,6 +79,71 @@ interface PdfImportPagePayload {
   imageBase64: string;
 }
 
+interface PdfEditableTextElement {
+  type: 'text';
+  characters: string;
+  x: number;
+  y: number;
+  fontSize: number;
+  fontFamily: string;
+  fontStyle: string;
+  color: RGB;
+  occurrenceId: string;
+}
+
+interface PdfEditableImageElement {
+  type: 'image';
+  name: string;
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+  imageBase64: string;
+}
+
+type PdfEditableElement = PdfEditableTextElement | PdfEditableImageElement;
+type EditableImportMode = 'raster' | 'text' | 'svg';
+
+interface PdfEditablePagePayload {
+  pageNumber: number;
+  width: number;
+  height: number;
+  mode: EditableImportMode;
+  elements: PdfEditableElement[];
+  fallbackImageBase64: string | null;
+  backgroundImageBase64: string | null;
+  svg: string | null;
+  verifyScale: number;
+  reason: string;
+  userLabel: string;
+  rasterKind: string;
+}
+
+interface EditableImportSession {
+  groupFrame: FrameNode;
+  fileName: string;
+  nextX: number;
+  nextY: number;
+  rowHeight: number;
+  maxWidth: number;
+  created: number;
+  total: number;
+  layerCount: number;
+  rasterCount: number;
+  unsafeTextCount: number;
+  viewportCenter: { x: number; y: number };
+  fontCache: Map<string, FontName | null>;
+}
+
+interface PendingEditableVerify {
+  session: EditableImportSession;
+  pageFrame: FrameNode;
+  page: PdfEditablePagePayload;
+}
+
+let editableImportSession: EditableImportSession | null = null;
+let pendingEditableVerify: PendingEditableVerify | null = null;
+
 interface ModelSpendBreakdown {
   model: string;
   prompt_tokens: number;
@@ -111,9 +176,15 @@ const SPEND_KNOWN_RUN_IDS_LIMIT = 200;
 const EXPORT_SCALE_KEY = 'export-scale';
 const EXPORT_QUALITY_KEY = 'export-quality';
 const IMPORT_QUALITY_KEY = 'import-quality';
+const IMPORT_MODE_KEY = 'import-mode';
+const IMPORT_FONT_OVERRIDES_KEY = 'import-font-overrides';
 const VALID_EXPORT_SCALES = new Set([1, 1.5, 2, 3, 4, 5, 6]);
 const VALID_EXPORT_QUALITIES = new Set(['best', 'recommended', 'smaller']);
 const VALID_IMPORT_QUALITIES = new Set(['low', 'medium', 'high']);
+const VALID_IMPORT_MODES = new Set(['image', 'editable']);
+const IMPORT_PAGE_GAP = 80;
+const IMPORT_MAX_ITEMS_PER_ROW = 20;
+const EDITABLE_UNSAFE_TEXT_LABEL = "Preserved as an image because this page's text could not be safely separated from its artwork.";
 
 function normalizeExportScale(value: unknown): number {
   const numeric = asNumber(value);
@@ -128,6 +199,11 @@ function normalizeExportQuality(value: unknown): string {
 function normalizeImportQuality(value: unknown): string {
   const quality = asString(value);
   return quality && VALID_IMPORT_QUALITIES.has(quality) ? quality : 'medium';
+}
+
+function normalizeImportMode(value: unknown): string {
+  const mode = asString(value);
+  return mode && VALID_IMPORT_MODES.has(mode) ? mode : 'image';
 }
 
 function parseTargetLanguagesPayload(value: unknown): string[] {
@@ -159,6 +235,513 @@ function parsePdfImportPagesPayload(value: unknown): PdfImportPagePayload[] {
     pages.push({ pageNumber, width, height, imageBase64 });
   }
   return pages;
+}
+
+function parsePdfEditableElement(value: unknown): PdfEditableElement | null {
+  const obj = asObject(value);
+  if (!obj) return null;
+  const type = asString(obj.type);
+  if (type === 'text') {
+    const characters = asString(obj.characters);
+    const x = asNumber(obj.x);
+    const y = asNumber(obj.y);
+    const fontSize = asNumber(obj.fontSize);
+    const fontFamily = asString(obj.fontFamily);
+    if (!characters || !fontFamily || x === null || y === null || fontSize === null || fontSize <= 0) return null;
+    return {
+      type: 'text',
+      characters,
+      x,
+      y,
+      fontSize,
+      fontFamily,
+      fontStyle: asString(obj.fontStyle) || 'Regular',
+      color: parseRgb(obj.color),
+      occurrenceId: asString(obj.occurrenceId) || '',
+    };
+  }
+  if (type === 'image') {
+    const imageBase64 = asString(obj.imageBase64);
+    const x = asNumber(obj.x);
+    const y = asNumber(obj.y);
+    const w = asNumber(obj.w);
+    const h = asNumber(obj.h);
+    if (!imageBase64 || x === null || y === null || w === null || h === null || w <= 0 || h <= 0) return null;
+    return {
+      type: 'image',
+      name: makeSafeNodeName(asString(obj.name) || 'Image'),
+      x,
+      y,
+      w,
+      h,
+      imageBase64,
+    };
+  }
+  return null;
+}
+
+function parsePdfEditablePagePayload(value: unknown): PdfEditablePagePayload | null {
+  const obj = asObject(value);
+  if (!obj) return null;
+  const pageNumber = asNumber(obj.pageNumber);
+  const width = asNumber(obj.width);
+  const height = asNumber(obj.height);
+  if (pageNumber === null || width === null || height === null || pageNumber < 1 || width <= 0 || height <= 0) {
+    return null;
+  }
+  const elements: PdfEditableElement[] = [];
+  for (const item of asArray(obj.elements)) {
+    const parsed = parsePdfEditableElement(item);
+    if (parsed) elements.push(parsed);
+  }
+  const fallbackImageBase64 = asString(obj.fallbackImageBase64);
+  const backgroundImageBase64 = asString(obj.backgroundImageBase64);
+  const svg = asString(obj.svg);
+  const verifyScale = asNumber(obj.verifyScale);
+  return {
+    pageNumber,
+    width,
+    height,
+    mode: parseEditableImportMode(obj.mode),
+    elements,
+    fallbackImageBase64,
+    backgroundImageBase64,
+    svg,
+    verifyScale: verifyScale && verifyScale > 0 ? verifyScale : 1,
+    reason: asString(obj.reason) || 'page image fallback',
+    userLabel: asString(obj.userLabel) || '',
+    rasterKind: asString(obj.rasterKind) || '',
+  };
+}
+
+function styleEquivalents(style: string): string[] {
+  const wanted = style || 'Regular';
+  const key = wanted.toLowerCase();
+  if (key === 'book' || key === 'roman') return ['Book', 'Regular', 'Roman'];
+  if (key === 'regular') return ['Regular', 'Roman', 'Book'];
+  if (key === 'heavy') return ['Heavy', 'Bold', 'Black'];
+  if (key === 'black') return ['Black', 'Heavy', 'Bold'];
+  if (key === 'bold') return ['Bold', 'Heavy', 'Black'];
+  if (key === 'semibold' || key === 'demibold' || key === 'demi') return ['Semibold', 'DemiBold', 'Demi', 'SemiBold'];
+  return [wanted];
+}
+
+async function resolveImportFont(cache: Map<string, FontName | null>, family: string, style: string): Promise<FontName | null> {
+  const key = `${family}::${style}`;
+  if (cache.has(key)) return cache.get(key) || null;
+  for (const nextStyle of styleEquivalents(style)) {
+    const font = { family, style: nextStyle };
+    try {
+      await figma.loadFontAsync(font);
+      cache.set(key, font);
+      return font;
+    } catch {
+      // Missing fonts stay graphics; never substitute Inter or a random family style.
+    }
+  }
+  cache.set(key, null);
+  return null;
+}
+
+function placeImportedPageImage(pageFrame: FrameNode, width: number, height: number, imageBase64: string, name: string): void {
+  const image = figma.createImage(figma.base64Decode(imageBase64));
+  const rect = figma.createRectangle();
+  rect.name = name;
+  rect.resize(width, height);
+  rect.x = 0;
+  rect.y = 0;
+  rect.fills = [{
+    type: 'IMAGE',
+    scaleMode: 'FILL',
+    imageHash: image.hash,
+  }];
+  pageFrame.appendChild(rect);
+}
+
+function prepareImportSlot(session: EditableImportSession): void {
+  if (session.created > 0 && session.created % IMPORT_MAX_ITEMS_PER_ROW === 0) {
+    session.nextX = 0;
+    session.nextY += session.rowHeight + IMPORT_PAGE_GAP;
+    session.rowHeight = 0;
+  }
+}
+
+function advanceImportGrid(session: EditableImportSession, width: number, height: number): void {
+  session.nextX += width + IMPORT_PAGE_GAP;
+  session.rowHeight = Math.max(session.rowHeight, height);
+  session.maxWidth = Math.max(session.maxWidth, session.nextX - IMPORT_PAGE_GAP);
+}
+
+function parseFontOverrides(value: unknown): Record<string, { family: string; style: string }> {
+  const obj = asObject(value);
+  if (!obj) return {};
+  const out: Record<string, { family: string; style: string }> = {};
+  for (const key of Object.keys(obj)) {
+    const row = asObject(obj[key]);
+    const family = asString(row?.family);
+    const style = asString(row?.style);
+    if (family && style) out[key] = { family, style };
+  }
+  return out;
+}
+
+async function measureImportFontJobs(jobs: unknown[]): Promise<Array<{
+  key: string;
+  measures: Array<{ family: string; style: string; width: number; height: number }>;
+}>> {
+  const results: Array<{ key: string; measures: Array<{ family: string; style: string; width: number; height: number }> }> = [];
+  for (const job of jobs) {
+    const obj = asObject(job);
+    const key = asString(obj?.key) || '';
+    const sample = (asString(obj?.sample) || 'Hg').slice(0, 48);
+    const fontSize = Math.max(1, asNumber(obj?.fontSize) || 12);
+    const measures: Array<{ family: string; style: string; width: number; height: number }> = [];
+    for (const cand of asArray(obj?.candidates).slice(0, 20)) {
+      const font = asObject(cand);
+      const family = asString(font?.family);
+      const style = asString(font?.style) || 'Regular';
+      if (!family) continue;
+      try {
+        await figma.loadFontAsync({ family, style });
+        const text = figma.createText();
+        text.fontName = { family, style };
+        text.characters = sample;
+        text.fontSize = fontSize;
+        text.textAutoResize = 'WIDTH_AND_HEIGHT';
+        text.x = -20000;
+        text.y = -20000;
+        measures.push({ family, style, width: text.width, height: text.height });
+        text.remove();
+      } catch {
+        // Skip fonts Figma cannot load.
+      }
+    }
+    results.push({ key, measures });
+  }
+  return results;
+}
+
+async function placeEditableText(pageFrame: FrameNode, session: EditableImportSession, page: PdfEditablePagePayload): Promise<{ placed: number; failed: number }> {
+  let placed = 0;
+  let failed = 0;
+  for (const element of page.elements) {
+    if (element.type !== 'text') continue;
+    try {
+      const font = await resolveImportFont(session.fontCache, element.fontFamily, element.fontStyle);
+      if (!font) {
+        failed += 1;
+        console.log('[PDF Pilot]', 'Skipped PDF text', {
+          page: page.pageNumber,
+          family: element.fontFamily,
+          style: element.fontStyle,
+          reason: 'font not available',
+        });
+        continue;
+      }
+      const text = figma.createText();
+      text.fontName = font;
+      text.characters = element.characters;
+      text.fontSize = element.fontSize;
+      text.fills = [{ type: 'SOLID', color: element.color }];
+      text.textAutoResize = 'WIDTH_AND_HEIGHT';
+      text.x = element.x;
+      text.y = element.y;
+      if (element.occurrenceId) text.setPluginData('pdf-pilot-occurrence', element.occurrenceId);
+      pageFrame.appendChild(text);
+      placed += 1;
+    } catch (error: unknown) {
+      failed += 1;
+      console.log('[PDF Pilot]', 'Skipped PDF text', {
+        page: page.pageNumber,
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
+  }
+  return { placed, failed };
+}
+
+function clearFrameChildren(frame: FrameNode): void {
+  for (const child of [...frame.children]) child.remove();
+}
+
+async function fillEditablePageFrame(pageFrame: FrameNode, session: EditableImportSession, page: PdfEditablePagePayload): Promise<'raster' | 'candidate'> {
+  const hasText = page.elements.some((element) => element.type === 'text');
+  const hasSvg = !!(page.svg && (page.svg.includes('<path') || page.svg.includes('<image')));
+  if (page.mode === 'svg' && !hasSvg && !hasText) {
+    if (page.fallbackImageBase64) {
+      placeImportedPageImage(pageFrame, page.width, page.height, page.fallbackImageBase64, 'Page image');
+    }
+    return 'raster';
+  }
+
+  if (page.mode === 'svg') {
+    try {
+      let hasGraphics = false;
+      if (page.svg && (page.svg.includes('<path') || page.svg.includes('<image'))) {
+        const svgNode = figma.createNodeFromSvg(page.svg);
+        svgNode.name = 'PDF graphics';
+        svgNode.x = 0;
+        svgNode.y = 0;
+        pageFrame.appendChild(svgNode);
+        hasGraphics = true;
+      }
+      const textResult = await placeEditableText(pageFrame, session, page);
+      if (hasGraphics && (textResult.placed > 0 || !hasText)) return 'candidate';
+    } catch (error: unknown) {
+      pluginWarn('SVG import failed', { page: page.pageNumber, error: error instanceof Error ? error.message : String(error) });
+    }
+    clearFrameChildren(pageFrame);
+  }
+
+  if (page.mode === 'text' && page.backgroundImageBase64) {
+    placeImportedPageImage(pageFrame, page.width, page.height, page.backgroundImageBase64, 'Page image');
+    const textResult = await placeEditableText(pageFrame, session, page);
+    if (textResult.placed > 0) return 'candidate';
+    clearFrameChildren(pageFrame);
+  }
+
+  if (page.fallbackImageBase64) {
+    placeImportedPageImage(pageFrame, page.width, page.height, page.fallbackImageBase64, 'Page image');
+  }
+  return 'raster';
+}
+
+function editablePageFrameName(session: EditableImportSession, page: PdfEditablePagePayload, layered: boolean): string {
+  const prefix = `${session.fileName} / Page ${page.pageNumber} · ${layered ? page.mode : 'image'}`;
+  if (layered) return prefix.slice(0, 140);
+  if (page.rasterKind === 'unsafe-text' || page.userLabel) {
+    return `${prefix} · text not separated from artwork`.slice(0, 140);
+  }
+  return prefix.slice(0, 140);
+}
+
+async function exportPagePng(pageFrame: FrameNode, scale: number): Promise<string> {
+  const bytes = await pageFrame.exportAsync({
+    format: 'PNG',
+    constraint: { type: 'SCALE', value: scale },
+  });
+  return figma.base64Encode(bytes);
+}
+
+function pageTextNodes(pageFrame: FrameNode): TextNode[] {
+  return pageFrame.children.filter((child): child is TextNode => child.type === 'TEXT');
+}
+
+function parseVerifyMoves(value: unknown): Array<{ occurrenceId: string; dx: number; dy: number }> {
+  const moves: Array<{ occurrenceId: string; dx: number; dy: number }> = [];
+  for (const item of asArray(value)) {
+    const obj = asObject(item);
+    const occurrenceId = asString(obj?.occurrenceId);
+    const dx = asNumber(obj?.dx);
+    const dy = asNumber(obj?.dy);
+    if (!occurrenceId || dx === null || dy === null) continue;
+    moves.push({ occurrenceId, dx, dy });
+  }
+  return moves;
+}
+
+function parseIdList(value: unknown): string[] {
+  const ids: string[] = [];
+  for (const item of asArray(value)) {
+    const id = asString(item);
+    if (id) ids.push(id);
+  }
+  return ids;
+}
+
+function replacePageImageFill(pageFrame: FrameNode, width: number, height: number, imageBase64: string): void {
+  const image = figma.createImage(figma.base64Decode(imageBase64));
+  const existing = pageFrame.children.find((child) => child.type === 'RECTANGLE' && child.name === 'Page image');
+  if (existing && existing.type === 'RECTANGLE') {
+    existing.resize(width, height);
+    existing.fills = [{ type: 'IMAGE', scaleMode: 'FILL', imageHash: image.hash }];
+    return;
+  }
+  placeImportedPageImage(pageFrame, width, height, imageBase64, 'Page image');
+}
+
+async function exportFigmaVerifyPair(pageFrame: FrameNode, scale: number): Promise<{
+  backgroundPngBase64: string;
+  candidatePngBase64: string;
+  actualTextBounds: Array<{ x: number; y: number; width: number; height: number; characters: string; occurrenceId: string }>;
+  exportWidth: number;
+  exportHeight: number;
+}> {
+  const texts = pageTextNodes(pageFrame);
+  const actualTextBounds = texts.map((node) => ({
+    x: node.x,
+    y: node.y,
+    width: node.width,
+    height: node.height,
+    characters: node.characters,
+    occurrenceId: node.getPluginData('pdf-pilot-occurrence') || '',
+  }));
+  try {
+    for (const text of texts) text.visible = false;
+    const backgroundPngBase64 = await exportPagePng(pageFrame, scale);
+    for (const text of texts) text.visible = true;
+    const candidatePngBase64 = await exportPagePng(pageFrame, scale);
+    return {
+      backgroundPngBase64,
+      candidatePngBase64,
+      actualTextBounds,
+      exportWidth: Math.round(pageFrame.width * scale),
+      exportHeight: Math.round(pageFrame.height * scale),
+    };
+  } finally {
+    for (const text of texts) text.visible = true;
+  }
+}
+
+function commitEditablePage(session: EditableImportSession, pageFrame: FrameNode, page: PdfEditablePagePayload, layered: boolean, failReason?: string): void {
+  if (pageFrame.parent !== session.groupFrame) session.groupFrame.appendChild(pageFrame);
+  const stage = layered
+    ? 'accepted'
+    : (failReason && failReason.indexOf('verification-rejected') === 0
+      ? 'verification-rejected'
+      : (failReason && failReason.indexOf('candidate-export-failure') === 0
+        ? 'candidate-export-failure'
+        : (failReason && failReason.indexOf('text-placement-failure') === 0
+          ? 'text-placement-failure'
+          : 'extraction-rejected')));
+  const reason = layered ? page.reason : (failReason || page.reason);
+  const userLabel = layered ? '' : (page.userLabel || ((page.rasterKind === 'unsafe-text' || page.elements.some((element) => element.type === 'text'))
+    ? EDITABLE_UNSAFE_TEXT_LABEL
+    : ''));
+  pageFrame.name = editablePageFrameName(session, {
+    ...page,
+    userLabel,
+    rasterKind: page.rasterKind || (userLabel ? 'unsafe-text' : page.rasterKind),
+  }, layered);
+  pageFrame.setPluginData('pdf-pilot-import', layered ? page.mode : 'raster');
+  pageFrame.setPluginData('pdf-pilot-reason', reason);
+  if (userLabel) pageFrame.setPluginData('pdf-pilot-label', userLabel);
+  session.created += 1;
+  if (layered) session.layerCount += 1;
+  else {
+    session.rasterCount += 1;
+    if (page.rasterKind === 'unsafe-text' || userLabel) session.unsafeTextCount += 1;
+  }
+  console.log('[PDF Pilot]', `page ${page.pageNumber}`, {
+    stage,
+    mode: layered ? page.mode : 'raster',
+    reason,
+    userLabel,
+    layered,
+  });
+  advanceImportGrid(session, page.width, page.height);
+  figma.ui.postMessage({
+    type: 'import-pdf-page-placed',
+    completed: session.created,
+    total: session.total,
+    pageNumber: page.pageNumber,
+    mode: layered ? page.mode : 'raster',
+  });
+}
+
+async function postCandidateExport(pageFrame: FrameNode, page: PdfEditablePagePayload): Promise<void> {
+  const pair = await exportFigmaVerifyPair(pageFrame, page.verifyScale || 1);
+  console.log('[PDF Pilot]', `page ${page.pageNumber} figma-export`, {
+    background: { width: pair.exportWidth, height: pair.exportHeight, bytes: pair.backgroundPngBase64.length },
+    candidate: { width: pair.exportWidth, height: pair.exportHeight, bytes: pair.candidatePngBase64.length },
+    actualTextBounds: pair.actualTextBounds,
+  });
+  figma.ui.postMessage({
+    type: 'import-pdf-candidate-export',
+    pageNumber: page.pageNumber,
+    backgroundPngBase64: pair.backgroundPngBase64,
+    candidatePngBase64: pair.candidatePngBase64,
+    actualTextBounds: pair.actualTextBounds,
+    exportWidth: pair.exportWidth,
+    exportHeight: pair.exportHeight,
+  });
+}
+
+function failPendingEditableVerify(failReason?: string): void {
+  const pending = pendingEditableVerify;
+  pendingEditableVerify = null;
+  if (!pending) return;
+  clearFrameChildren(pending.pageFrame);
+  if (pending.page.fallbackImageBase64) {
+    placeImportedPageImage(
+      pending.pageFrame,
+      pending.page.width,
+      pending.page.height,
+      pending.page.fallbackImageBase64,
+      'Page image'
+    );
+  }
+  commitEditablePage(pending.session, pending.pageFrame, pending.page, false, failReason);
+}
+
+async function placeEditableImportPage(session: EditableImportSession, page: PdfEditablePagePayload): Promise<void> {
+  const pageFrame = figma.createFrame();
+  pageFrame.name = `${session.fileName} / Page ${page.pageNumber}`;
+  pageFrame.resizeWithoutConstraints(page.width, page.height);
+  prepareImportSlot(session);
+  pageFrame.x = session.nextX;
+  pageFrame.y = session.nextY;
+  pageFrame.clipsContent = true;
+  pageFrame.fills = [{ type: 'SOLID', color: { r: 1, g: 1, b: 1 } }];
+  session.groupFrame.appendChild(pageFrame);
+
+  const kind = await fillEditablePageFrame(pageFrame, session, page);
+  if (kind !== 'candidate') {
+    commitEditablePage(
+      session,
+      pageFrame,
+      page,
+      false,
+      page.mode === 'raster' ? page.reason : `text-placement-failure · ${page.reason}`
+    );
+    return;
+  }
+  try {
+    pendingEditableVerify = { session, pageFrame, page };
+    await postCandidateExport(pageFrame, page);
+  } catch (error: unknown) {
+    pluginWarn('Editable verify export failed', {
+      page: page.pageNumber,
+      error: error instanceof Error ? error.message : String(error),
+    });
+    failPendingEditableVerify('candidate-export-failure · ' + (error instanceof Error ? error.message : String(error)));
+  }
+}
+
+function finishEditableImportSession(canceled: boolean): void {
+  if (pendingEditableVerify) failPendingEditableVerify();
+  const session = editableImportSession;
+  editableImportSession = null;
+  if (!session) return;
+  if (session.created === 0) {
+    session.groupFrame.remove();
+    figma.ui.postMessage({
+      type: canceled ? 'import-pdf-complete' : 'import-pdf-error',
+      pageCount: 0,
+      layerCount: 0,
+      rasterCount: 0,
+      unsafeTextCount: 0,
+      fileName: session.fileName,
+      error: canceled ? undefined : 'No PDF pages were ready to import.',
+    });
+    if (!canceled) figma.notify('No PDF pages were ready to import');
+    return;
+  }
+  const height = Math.max(1, session.rowHeight > 0 ? session.nextY + session.rowHeight : session.nextY - IMPORT_PAGE_GAP);
+  session.groupFrame.resizeWithoutConstraints(Math.max(1, session.maxWidth), height);
+  session.groupFrame.x = session.viewportCenter.x - session.groupFrame.width / 2;
+  session.groupFrame.y = session.viewportCenter.y - session.groupFrame.height / 2;
+  figma.currentPage.selection = [session.groupFrame];
+  figma.viewport.scrollAndZoomIntoView([session.groupFrame]);
+  figma.ui.postMessage({
+    type: 'import-pdf-complete',
+    pageCount: session.created,
+    layerCount: session.layerCount,
+    rasterCount: session.rasterCount,
+    unsafeTextCount: session.unsafeTextCount,
+    fileName: session.fileName,
+  });
+  figma.notify(`Imported ${session.created} PDF page${session.created === 1 ? '' : 's'} to canvas`);
 }
 
 function makeSafeNodeName(value: string): string {
@@ -278,6 +861,26 @@ function numberOr(value: unknown, fallback: number): number {
 
 function asArray(value: unknown): unknown[] {
   return Array.isArray(value) ? value : [];
+}
+
+function clamp01(value: number): number {
+  return Math.max(0, Math.min(1, value));
+}
+
+function parseRgb(value: unknown): RGB {
+  const obj = asObject(value);
+  const r = asNumber(obj?.r);
+  const g = asNumber(obj?.g);
+  const b = asNumber(obj?.b);
+  if (r === null || g === null || b === null) return { r: 0, g: 0, b: 0 };
+  if (r > 1 || g > 1 || b > 1) {
+    return { r: clamp01(r / 255), g: clamp01(g / 255), b: clamp01(b / 255) };
+  }
+  return { r: clamp01(r), g: clamp01(g), b: clamp01(b) };
+}
+
+function parseEditableImportMode(value: unknown): EditableImportMode {
+  return value === 'text' || value === 'svg' ? value : 'raster';
 }
 
 function parseSettingsPayload(value: unknown): SettingsPayload {
@@ -961,15 +1564,54 @@ figma.ui.onmessage = async (rawMsg: unknown) => {
 
   if (type === 'get-import-settings') {
     const importQuality = normalizeImportQuality(await figma.clientStorage.getAsync(IMPORT_QUALITY_KEY));
+    const importMode = normalizeImportMode(await figma.clientStorage.getAsync(IMPORT_MODE_KEY));
+    let availableFonts: Array<{ family: string; styles: string[] }> = [];
+    try {
+      const fonts = await figma.listAvailableFontsAsync();
+      const byFamily = new Map<string, Set<string>>();
+      for (const font of fonts) {
+        const family = font.fontName.family;
+        const styles = byFamily.get(family) || new Set<string>();
+        styles.add(font.fontName.style);
+        byFamily.set(family, styles);
+      }
+      availableFonts = Array.from(byFamily, ([family, styles]) => ({ family, styles: Array.from(styles) }));
+    } catch (error: unknown) {
+      pluginWarn('Could not list fonts for PDF import', { error: error instanceof Error ? error.message : String(error) });
+    }
     figma.ui.postMessage({
       type: 'import-settings-loaded',
-      settings: { importQuality },
+      settings: {
+        importQuality,
+        importMode,
+        availableFonts,
+        fontOverrides: parseFontOverrides(await figma.clientStorage.getAsync(IMPORT_FONT_OVERRIDES_KEY)),
+      },
     });
+  }
+
+  if (type === 'save-import-font-overrides') {
+    await figma.clientStorage.setAsync(IMPORT_FONT_OVERRIDES_KEY, parseFontOverrides(msg?.overrides));
+  }
+
+  if (type === 'measure-import-fonts') {
+    try {
+      const results = await measureImportFontJobs(asArray(msg?.jobs));
+      figma.ui.postMessage({ type: 'import-fonts-measured', results });
+    } catch (error: unknown) {
+      figma.ui.postMessage({
+        type: 'import-fonts-measured',
+        results: [],
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
   }
 
   if (type === 'save-import-settings') {
     const importQuality = normalizeImportQuality(msg?.importQuality);
+    const importMode = normalizeImportMode(msg?.importMode);
     await figma.clientStorage.setAsync(IMPORT_QUALITY_KEY, importQuality);
+    await figma.clientStorage.setAsync(IMPORT_MODE_KEY, importMode);
   }
 
   if (type === 'import-pdf-pages') {
@@ -989,8 +1631,8 @@ figma.ui.onmessage = async (rawMsg: unknown) => {
       groupFrame.fills = [];
 
       const viewportCenter = figma.viewport.center;
-      const gap = 80;
-      const maxItemsPerRow = 20;
+      const gap = IMPORT_PAGE_GAP;
+      const maxItemsPerRow = IMPORT_MAX_ITEMS_PER_ROW;
       let nextX = 0;
       let nextY = 0;
       let rowHeight = 0;
@@ -1058,6 +1700,143 @@ figma.ui.onmessage = async (rawMsg: unknown) => {
       figma.notify('PDF import failed');
       pluginError('PDF import failed', { error: message });
     }
+  }
+
+  if (type === 'import-pdf-log') {
+    const message = asString(msg?.message) || 'import';
+    console.log('[PDF Pilot]', message, msg?.payload ?? '');
+  }
+
+  if (type === 'import-pdf-editable-begin') {
+    if (pendingEditableVerify) failPendingEditableVerify();
+    if (editableImportSession) {
+      finishEditableImportSession(true);
+    }
+    const rawFileName = asString(msg?.fileName) || 'Imported PDF';
+    const fileName = makeSafeNodeName(rawFileName.replace(/\.pdf$/i, ''));
+    const total = Math.max(1, asNumber(msg?.total) || 1);
+    const groupFrame = figma.createFrame();
+    groupFrame.name = fileName;
+    groupFrame.clipsContent = false;
+    groupFrame.fills = [];
+    editableImportSession = {
+      groupFrame,
+      fileName,
+      nextX: 0,
+      nextY: 0,
+      rowHeight: 0,
+      maxWidth: 0,
+      created: 0,
+      total,
+      layerCount: 0,
+      rasterCount: 0,
+      unsafeTextCount: 0,
+      viewportCenter: figma.viewport.center,
+      fontCache: new Map(),
+    };
+  }
+
+  if (type === 'import-pdf-editable-page') {
+    const session = editableImportSession;
+    const page = parsePdfEditablePagePayload(msg?.page);
+    if (!session) {
+      figma.ui.postMessage({ type: 'import-pdf-page-placed', completed: 0, total: 0 });
+      return;
+    }
+    if (!page) {
+      figma.ui.postMessage({
+        type: 'import-pdf-page-placed',
+        completed: session.created,
+        total: session.total,
+      });
+      return;
+    }
+    try {
+      figma.ui.postMessage({
+        type: 'import-pdf-place-progress',
+        completed: session.created,
+        total: session.total,
+        pageNumber: page.pageNumber,
+      });
+      await placeEditableImportPage(session, page);
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : String(error);
+      pluginError('PDF editable import failed', { error: message, page: page.pageNumber });
+      if (pendingEditableVerify && pendingEditableVerify.page.pageNumber === page.pageNumber) {
+        failPendingEditableVerify();
+      } else {
+        figma.ui.postMessage({
+          type: 'import-pdf-page-placed',
+          completed: session.created,
+          total: session.total,
+          pageNumber: page.pageNumber,
+        });
+      }
+    }
+  }
+
+  if (type === 'import-pdf-verify') {
+    const pending = pendingEditableVerify;
+    if (!pending) return;
+    const action = asString(msg?.action) || (asBoolean(msg?.accept) === true ? 'commit' : 'reject');
+    const acceptedIds = parseIdList(msg?.acceptedIds);
+    const rejected = asArray(msg?.rejected).map((item) => {
+      const obj = asObject(item);
+      return {
+        occurrenceId: asString(obj?.occurrenceId) || '',
+        reason: asString(obj?.reason) || '',
+        characters: asString(obj?.characters) || '',
+      };
+    }).filter((row) => row.occurrenceId || row.reason);
+    if (action === 'adjust') {
+      const texts = pageTextNodes(pending.pageFrame);
+      for (const move of parseVerifyMoves(msg?.moves)) {
+        const node = texts.find((text) => text.getPluginData('pdf-pilot-occurrence') === move.occurrenceId);
+        if (!node) continue;
+        node.x += move.dx;
+        node.y += move.dy;
+      }
+      try {
+        await postCandidateExport(pending.pageFrame, pending.page);
+      } catch (error: unknown) {
+        failPendingEditableVerify('candidate-export-failure · ' + (error instanceof Error ? error.message : String(error)));
+      }
+      return;
+    }
+    if (action === 'commit' && acceptedIds.length > 0) {
+      for (const text of pageTextNodes(pending.pageFrame)) {
+        const id = text.getPluginData('pdf-pilot-occurrence');
+        if (!id || acceptedIds.indexOf(id) < 0) text.remove();
+      }
+      const backgroundImageBase64 = asString(msg?.backgroundImageBase64);
+      if (backgroundImageBase64) {
+        replacePageImageFill(pending.pageFrame, pending.page.width, pending.page.height, backgroundImageBase64);
+      }
+      if (pageTextNodes(pending.pageFrame).length === 0) {
+        failPendingEditableVerify('verification-rejected · no accepted text runs');
+        return;
+      }
+      pendingEditableVerify = null;
+      console.log('[PDF Pilot]', `page ${pending.page.pageNumber} commit`, {
+        acceptedIds,
+        rejected,
+      });
+      commitEditablePage(pending.session, pending.pageFrame, pending.page, true);
+      return;
+    }
+    const mean = asNumber(msg?.mean);
+    const worstText = asNumber(msg?.worstText);
+    const failedRun = asString(msg?.failedRun) || (rejected[0] ? rejected[0].reason + ' · "' + rejected[0].characters + '"' : '');
+    failPendingEditableVerify([
+      'verification-rejected',
+      mean === null ? '' : 'mean=' + mean.toFixed(4),
+      worstText === null ? '' : 'worstText=' + worstText.toFixed(4),
+      failedRun,
+    ].filter(Boolean).join(' · '));
+  }
+
+  if (type === 'import-pdf-editable-finish') {
+    finishEditableImportSession(msg?.canceled === true);
   }
 
   if (type === 'cancel') {

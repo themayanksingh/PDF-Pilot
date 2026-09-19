@@ -824,10 +824,125 @@
       transition: border-color 0.15s, background 0.15s;
     }
 
+    .import-dropzone.has-preview {
+      min-height: 0;
+      padding: 10px 10px 8px;
+      gap: 6px;
+      align-items: stretch;
+      justify-content: flex-start;
+      text-align: left;
+    }
+
+    .import-dropzone.has-preview .import-icon {
+      display: none;
+    }
+
+    .import-dropzone.has-preview .import-title {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
     .import-dropzone:hover,
     .import-dropzone.drag-over {
       background: #262626;
       border-color: #888;
+    }
+
+    .import-thumbs-row {
+      display: none;
+      align-items: flex-start;
+      gap: 6px;
+      width: 100%;
+    }
+
+    .import-dropzone.has-preview .import-thumbs-row {
+      display: flex;
+    }
+
+    .import-thumbs {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      flex: 1;
+      min-width: 0;
+      padding: 0;
+      scroll-behavior: smooth;
+      scrollbar-width: thin;
+    }
+
+    .import-thumb-arrow {
+      flex: 0 0 28px;
+      width: 28px;
+      height: 96px;
+      padding: 0;
+      border: 1px solid #555;
+      border-radius: 6px;
+      background: #2a2a2a;
+      color: #ddd;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .import-thumb-arrow:hover:not(:disabled) {
+      background: #333;
+      border-color: #777;
+    }
+
+    .import-thumb-arrow:disabled {
+      opacity: 0.35;
+      cursor: default;
+    }
+
+    .import-thumb-arrow svg {
+      width: 12px;
+      height: 12px;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 1.8;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .import-thumb {
+      flex: 0 0 auto;
+      width: 72px;
+      cursor: pointer;
+    }
+
+    .import-thumb img,
+    .import-thumb-ph {
+      display: block;
+      width: 72px;
+      height: 96px;
+      object-fit: contain;
+      background: #fff;
+      border: 1px solid #3a3a3a;
+      border-radius: 4px;
+    }
+
+    .import-thumb-ph {
+      background: #2a2a2a;
+    }
+
+    .import-thumb-label {
+      display: block;
+      margin-top: 4px;
+      color: #888;
+      font-size: 10px;
+      text-align: center;
+    }
+
+    .import-thumb.selected img,
+    .import-thumb.selected .import-thumb-ph {
+      outline: 2px solid #fff;
+      outline-offset: -1px;
+    }
+
+    .import-thumb:not(.selected) {
+      opacity: 0.42;
     }
 
     .import-icon {
@@ -865,6 +980,44 @@
 
     .import-meta.error {
       color: #ff9b9b;
+    }
+
+    .import-mode-col {
+      margin-bottom: 14px;
+    }
+
+    .import-mode-row {
+      display: flex;
+      gap: 0;
+      border: 1px solid #555;
+      border-radius: 6px;
+      overflow: hidden;
+      width: fit-content;
+    }
+
+    .import-mode-btn {
+      appearance: none;
+      background: #2a2a2a;
+      border: none;
+      color: #aaa;
+      padding: 8px 14px;
+      font-size: 12px;
+      font-family: inherit;
+      font-weight: 500;
+      cursor: pointer;
+    }
+
+    .import-mode-btn + .import-mode-btn {
+      border-left: 1px solid #555;
+    }
+
+    .import-mode-btn:hover {
+      color: #eee;
+    }
+
+    .import-mode-btn.active {
+      background: #3a3a3a;
+      color: #fff;
     }
 
     .import-actions-row {
@@ -905,6 +1058,71 @@
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
+    }
+
+    .import-font-map {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .import-font-map-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: #f1f1f1;
+    }
+
+    .import-font-map-help {
+      font-size: 11px;
+      color: #b8b8b8;
+      line-height: 1.4;
+    }
+
+    .import-font-map-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      max-height: 240px;
+      overflow-y: auto;
+    }
+
+    .import-font-map-row {
+      border: 1px solid #444;
+      border-radius: 6px;
+      background: #2a2a2a;
+      padding: 8px;
+    }
+
+    .import-font-map-name {
+      font-size: 12px;
+      font-weight: 600;
+      color: #f1f1f1;
+    }
+
+    .import-font-map-samples {
+      font-size: 11px;
+      color: #b8b8b8;
+      margin: 4px 0 6px;
+      line-height: 1.35;
+    }
+
+    .import-font-map-row select {
+      width: 100%;
+      height: 32px;
+      border: 1px solid #444;
+      border-radius: 6px;
+      background: #1e1e1e;
+      color: #eee;
+      font-size: 12px;
+      font-family: inherit;
+      margin-top: 4px;
+    }
+
+    .import-font-map-choice {
+      font-size: 11px;
+      color: #d6d6d6;
+      margin-top: 6px;
     }
 
     .action-btn {
@@ -2412,7 +2630,8 @@
       border-radius: 2px;
     }
   </style>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <!--PDFJS_MAIN-->
+  <!--/PDFJS_MAIN-->
 </head>
 
 <body>
@@ -2516,15 +2735,32 @@
         <path d="M12 12v6" />
         <path d="M9 15l3 3 3-3" />
       </svg>
-      <div class="import-title" id="importTitle">Choose a PDF to import</div>
-      <div class="import-subtitle">Each page will be placed as an image on the Figma canvas.</div>
+      <div class="import-title" id="importTitle">Choose a PDF</div>
+      <div class="import-subtitle" id="importSubtitle">Pages as images</div>
       <div class="import-file-name hidden" id="importFileName"></div>
+      <div class="import-thumbs-row" id="importThumbsRow">
+        <button type="button" class="import-thumb-arrow" id="importThumbsPrev" aria-label="Previous pages" disabled>
+          <svg viewBox="0 0 12 12" aria-hidden="true"><path d="M7.5 2.5L3.5 6l4 3.5"></path></svg>
+        </button>
+        <div class="import-thumbs" id="importThumbs"></div>
+        <button type="button" class="import-thumb-arrow" id="importThumbsNext" aria-label="Next pages" disabled>
+          <svg viewBox="0 0 12 12" aria-hidden="true"><path d="M4.5 2.5L8.5 6l-4 3.5"></path></svg>
+        </button>
+      </div>
     </div>
     <input class="hidden" type="file" id="importPdfInput" accept="application/pdf,.pdf">
 
+    <div class="import-mode-col">
+      <div class="scale-label">Import as</div>
+      <div class="import-mode-row" role="group" aria-label="Import as">
+        <button type="button" class="import-mode-btn active" data-import-mode="image">Image</button>
+        <button type="button" class="import-mode-btn" data-import-mode="editable">Editable</button>
+      </div>
+    </div>
+
     <div class="export-controls-row">
-      <div class="option-select quality-select">
-        <div class="scale-label">Quality</div>
+      <div class="option-select quality-select" id="importQualityWrap">
+        <div class="scale-label" id="importQualityLabel">Quality</div>
         <select id="importQuality">
           <option value="low">Low (1.5x)</option>
           <option value="medium" selected>Medium (2x)</option>
@@ -2540,7 +2776,13 @@
       </div>
     </div>
 
-    <div class="import-meta" id="importMeta">PDF pages import as flat images. Text remains visible but not editable.</div>
+    <div class="import-meta" id="importMeta">Pages import as images.</div>
+    <div class="import-font-map hidden" id="importFontMap">
+      <div class="import-font-map-title">Font substitutions</div>
+      <div class="import-font-map-help" id="importFontMapHelp">Unusual lettering stays in the page image when no close match exists. Change a mapping and re-import to apply it.</div>
+      <div class="import-font-map-list" id="importFontMapList"></div>
+      <button type="button" class="secondary-btn hidden" id="importFontMapChange">Change mapping</button>
+    </div>
     <div class="import-actions-row">
       <button class="action-btn disabled" id="importPdfBtn">Choose a PDF to import</button>
       <button class="secondary-btn hidden" id="importCancelBtn">Cancel</button>
@@ -3529,11 +3771,21 @@ ${JSON.stringify(batch.map(t => ({ mappingKey: t.mappingKey, text: t.text, charB
     const importPdfInput = document.getElementById('importPdfInput');
     const importTitle = document.getElementById('importTitle');
     const importFileName = document.getElementById('importFileName');
+    const importSubtitle = document.getElementById('importSubtitle');
     const importQualitySelect = document.getElementById('importQuality');
+    const importQualityLabel = document.getElementById('importQualityLabel');
+    const importQualityWrap = document.getElementById('importQualityWrap');
     const importPageRangeInput = document.getElementById('importPageRange');
     const importMeta = document.getElementById('importMeta');
+    const importThumbs = document.getElementById('importThumbs');
+    const importThumbsPrev = document.getElementById('importThumbsPrev');
+    const importThumbsNext = document.getElementById('importThumbsNext');
     const importPdfBtn = document.getElementById('importPdfBtn');
     const importCancelBtn = document.getElementById('importCancelBtn');
+    const importFontMap = document.getElementById('importFontMap');
+    const importFontMapList = document.getElementById('importFontMapList');
+    const importFontMapHelp = document.getElementById('importFontMapHelp');
+    const importFontMapChange = document.getElementById('importFontMapChange');
     const translatePreviewArea = document.getElementById('translatePreviewArea');
 
     const translateEmptyHint = document.getElementById('translateEmptyHint');
@@ -3572,18 +3824,67 @@ ${JSON.stringify(batch.map(t => ({ mappingKey: t.mappingKey, text: t.text, charB
     const debugLogsCopyBtn = document.getElementById('debugLogsCopyBtn');
     const debugLogsClearBtn = document.getElementById('debugLogsClearBtn');
 
-    const PDFJS_WORKER_SRC = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    const PDFJS_CMAP_URL = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/cmaps/';
+    const PDFJS_STANDARD_FONT_URL = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/standard_fonts/';
     const IMPORT_RENDER_MAX_PIXELS = 16000000;
+    const FIGMA_IMAGE_MAX_EDGE = 4096;
+    function importRenderScaleForSize(width, height, requestedScale, maxPixels, maxEdge) {
+      maxPixels = maxPixels || IMPORT_RENDER_MAX_PIXELS;
+      maxEdge = maxEdge || FIGMA_IMAGE_MAX_EDGE;
+      const requestedPixels = requestedScale * width * requestedScale * height;
+      const pixelScale = requestedPixels > maxPixels ? Math.sqrt(maxPixels / (width * height)) : requestedScale;
+      return Math.min(pixelScale, maxEdge / width, maxEdge / height);
+    }
     const IMPORT_SIZE_WARNING_MB = 25;
     const IMPORT_QUALITY_PRESETS = {
       low: { label: 'Low', scale: 1.5, mimeType: 'image/jpeg', encoderQuality: 0.82 },
       medium: { label: 'Medium', scale: 2, mimeType: 'image/jpeg', encoderQuality: 0.88 },
       high: { label: 'High', scale: 4, mimeType: 'image/jpeg', encoderQuality: 0.93 },
     };
+    const IMPORT_MODES = { image: true, editable: true };
+    const IMPORT_THUMB_WIDTH = 72;
+    const IMPORT_THUMB_HEIGHT = 96;
+    const FONT_ALIASES = {
+      helvetica: 'Arial',
+      'helvetica-bold': 'Arial',
+      helveticaneue: 'Helvetica Neue',
+      times: 'Times New Roman',
+      'times-roman': 'Times New Roman',
+      'times-bold': 'Times New Roman',
+      timesnewroman: 'Times New Roman',
+      timesnewromanps: 'Times New Roman',
+      courier: 'Courier New',
+      'courier-new': 'Courier New',
+      arialmt: 'Arial',
+      symbol: 'Symbol',
+      zapfdingbats: 'Zapf Dingbats',
+      sfui: 'SF Pro',
+      'sf ui': 'SF Pro',
+      sfns: 'SF Pro',
+      'sf ns': 'SF Pro',
+      dincondensed: 'DIN Condensed',
+      'din condensed': 'DIN Condensed',
+      futura: 'Futura',
+      futurabt: 'Futura',
+      hirakakuinterface: 'Hiragino Sans',
+      hirakakupro: 'Hiragino Kaku Gothic Pro',
+      hirakakupron: 'Hiragino Kaku Gothic ProN',
+    };
+    const PDF_MATRIX_IDENTITY = [1, 0, 0, 1, 0, 0];
     let selectedImportPdfFile = null;
     let isImportingPdf = false;
     let importCancelRequested = false;
     let activeImportRenderTask = null;
+    let importPreviewToken = 0;
+    let importPreviewPdf = null;
+    let importPreviewLoad = null;
+    let importPageCount = 0;
+    let importLastThumbPage = 0;
+    let availableImportFonts = [];
+    let importFontDicts = new Map();
+    let importFontChoices = {};
+    let importFontReport = [];
+    let importFontOverrides = {};
 
     const EXTRACT_STAGE_START = 5;
     const EXTRACT_STAGE_END = 20;
@@ -4170,19 +4471,49 @@ ${JSON.stringify(batch.map(t => ({ mappingKey: t.mappingKey, text: t.text, charB
       });
     });
 
+    function requirePdfPilotEngine() {
+      const lib = window.pdfjsLib;
+      const hook = (lib && lib.PDFPilot) || globalThis.__PDF_PILOT_RENDERER__;
+      if (!lib || !hook || hook.revision !== '2') {
+        throw new Error('PDF Pilot renderer hook is missing. Run pnpm build and reload the plugin.');
+      }
+      return hook;
+    }
+
     function configurePdfJs() {
-      if (!window.pdfjsLib) {
-        throw new Error('PDF importer could not load. Check your connection and try again.');
+      const hook = requirePdfPilotEngine();
+      const workerEl = document.getElementById('pdfjs-worker-src');
+      if (!workerEl || !String(workerEl.textContent || '').trim()) {
+        throw new Error('PDF Pilot worker is missing. Run pnpm build and reload the plugin.');
       }
       if (window.pdfjsLib.GlobalWorkerOptions) {
-        window.pdfjsLib.GlobalWorkerOptions.workerSrc = PDFJS_WORKER_SRC;
+        const blob = new Blob([workerEl.textContent], { type: 'text/javascript' });
+        window.pdfjsLib.GlobalWorkerOptions.workerSrc = URL.createObjectURL(blob);
       }
+      importLog('engine', {
+        version: hook.version,
+        build: hook.build,
+        hook: hook.revision,
+      });
       return window.pdfjsLib;
     }
 
     function getImportQualityValue() {
       const value = importQualitySelect?.value || 'medium';
       return Object.prototype.hasOwnProperty.call(IMPORT_QUALITY_PRESETS, value) ? value : 'medium';
+    }
+
+    function getImportModeValue() {
+      const active = document.querySelector('.import-mode-btn.active');
+      const value = active && active.dataset.importMode;
+      return value && IMPORT_MODES[value] ? value : 'image';
+    }
+
+    function setImportModeValue(mode) {
+      const next = IMPORT_MODES[mode] ? mode : 'image';
+      document.querySelectorAll('.import-mode-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.importMode === next);
+      });
     }
 
     function getImportQualityPreset() {
@@ -4202,6 +4533,7 @@ ${JSON.stringify(batch.map(t => ({ mappingKey: t.mappingKey, text: t.text, charB
         pluginMessage: {
           type: 'save-import-settings',
           importQuality: getImportQualityValue(),
+          importMode: getImportModeValue(),
         }
       }, '*');
     }
@@ -4210,6 +4542,23 @@ ${JSON.stringify(batch.map(t => ({ mappingKey: t.mappingKey, text: t.text, charB
       const value = settings && typeof settings.importQuality === 'string' ? settings.importQuality : 'medium';
       if (importQualitySelect && Object.prototype.hasOwnProperty.call(IMPORT_QUALITY_PRESETS, value)) {
         importQualitySelect.value = value;
+      }
+      setImportModeValue(settings && settings.importMode);
+      if (Array.isArray(settings && settings.availableFonts)) {
+        availableImportFonts = [];
+        settings.availableFonts.forEach((font) => {
+          if (!font || !font.family) return;
+          if (Array.isArray(font.styles)) {
+            font.styles.forEach((style) => {
+              if (style) availableImportFonts.push({ family: font.family, style });
+            });
+          } else if (font.style) {
+            availableImportFonts.push({ family: font.family, style: font.style });
+          }
+        });
+      }
+      if (settings && settings.fontOverrides && typeof settings.fontOverrides === 'object') {
+        importFontOverrides = settings.fontOverrides;
       }
       updateImportUI();
     }
@@ -4224,7 +4573,8 @@ ${JSON.stringify(batch.map(t => ({ mappingKey: t.mappingKey, text: t.text, charB
     function setImportBusy(busy, label) {
       isImportingPdf = busy;
       if (!importPdfBtn) return;
-      importPdfBtn.disabled = busy || !selectedImportPdfFile;
+      const noPages = !busy && selectedImportPdfFile && importPageCount > 0 && getImportSelectionSet().size === 0;
+      importPdfBtn.disabled = busy || !selectedImportPdfFile || noPages;
       importPdfBtn.className = busy
         ? 'action-btn exporting'
         : (selectedImportPdfFile ? 'action-btn active' : 'action-btn disabled');
@@ -4233,26 +4583,248 @@ ${JSON.stringify(batch.map(t => ({ mappingKey: t.mappingKey, text: t.text, charB
     }
 
     function updateImportUI() {
+      const editable = getImportModeValue() === 'editable';
+      if (importQualityLabel) importQualityLabel.textContent = 'Quality';
+      importQualityWrap?.classList.toggle('hidden', editable);
       if (!selectedImportPdfFile) {
-        if (importTitle) importTitle.textContent = 'Choose a PDF to import';
+        importDropzone?.classList.remove('has-preview');
+        if (importTitle) importTitle.textContent = 'Choose a PDF';
+        if (importSubtitle) {
+          importSubtitle.textContent = editable ? 'Verified layers, otherwise a page image' : 'Pages as images';
+        }
         if (importFileName) {
           importFileName.textContent = '';
           importFileName.classList.add('hidden');
         }
-        setImportMeta(`PDF pages import as flat images. ${getImportQualityPreset().label} uses ${getImportScaleLabel()} scale.`);
-        setImportBusy(false);
+        setImportMeta(editable
+          ? 'Only verified text becomes layers. Everything else stays a page image.'
+          : `${getImportQualityPreset().label} · ${getImportScaleLabel()}`);
+        if (!isImportingPdf) setImportBusy(false);
         return;
       }
 
-      if (importTitle) importTitle.textContent = 'PDF ready';
+      importDropzone?.classList.add('has-preview');
+      if (importTitle) importTitle.textContent = selectedImportPdfFile.name;
       if (importFileName) {
-        importFileName.textContent = selectedImportPdfFile.name;
-        importFileName.classList.remove('hidden');
+        importFileName.textContent = '';
+        importFileName.classList.add('hidden');
       }
       const sizeMb = selectedImportPdfFile.size / (1024 * 1024);
+      const sizeLabel = `${sizeMb.toFixed(sizeMb >= 10 ? 0 : 1)} MB`;
+      const pageLabel = importPageCount > 0
+        ? `${importPageCount} page${importPageCount === 1 ? '' : 's'}`
+        : 'Reading PDF…';
+      if (importSubtitle) importSubtitle.textContent = `${pageLabel} · ${sizeLabel}`;
       const warning = sizeMb > IMPORT_SIZE_WARNING_MB ? ` · large file warning above ${IMPORT_SIZE_WARNING_MB} MB` : '';
-      setImportMeta(`${selectedImportPdfFile.name} selected · ${sizeMb.toFixed(sizeMb >= 10 ? 0 : 1)} MB · ${getImportQualityPreset().label} (${getImportScaleLabel()})${warning}`);
-      setImportBusy(false);
+      const modeLabel = editable ? 'Editable' : getImportQualityPreset().label + ` (${getImportScaleLabel()})`;
+      const countBit = importPageCount > 0 ? ` · ${importPageCount} page${importPageCount === 1 ? '' : 's'}` : '';
+      if (!isImportingPdf) {
+        setImportMeta(`${selectedImportPdfFile.name} selected · ${sizeLabel}${countBit} · ${modeLabel}${warning}`);
+        setImportBusy(false);
+      }
+      syncImportThumbSelection();
+    }
+
+    function formatPageRange(pages) {
+      if (!pages.length) return '';
+      const sorted = pages.slice().sort((a, b) => a - b);
+      const parts = [];
+      let start = sorted[0];
+      let prev = sorted[0];
+      for (let i = 1; i <= sorted.length; i++) {
+        const n = sorted[i];
+        if (n === prev + 1) {
+          prev = n;
+          continue;
+        }
+        parts.push(start === prev ? String(start) : start + '-' + prev);
+        start = prev = n;
+      }
+      return parts.join(', ');
+    }
+
+    function getImportSelectionSet() {
+      if (importPageCount < 1) return new Set();
+      try {
+        return new Set(parseImportPageRange(importPageRangeInput?.value, importPageCount));
+      } catch (_error) {
+        return new Set();
+      }
+    }
+
+    function syncImportThumbSelection() {
+      if (!importThumbs || importPageCount < 1) return;
+      const selected = getImportSelectionSet();
+      importThumbs.querySelectorAll('[data-page]').forEach((item) => {
+        item.classList.toggle('selected', selected.has(Number(item.dataset.page)));
+      });
+      if (importPageRangeInput && !String(importPageRangeInput.value || '').trim()) {
+        importPageRangeInput.placeholder = `All ${importPageCount} pages`;
+      }
+    }
+
+    function applyImportSelection(pages) {
+      if (!importPageRangeInput) return;
+      const unique = Array.from(new Set(pages))
+        .filter((n) => n >= 1 && n <= importPageCount)
+        .sort((a, b) => a - b);
+      importPageRangeInput.value = unique.length === 0 || unique.length === importPageCount
+        ? ''
+        : formatPageRange(unique);
+      importPageRangeInput.placeholder = `All ${importPageCount} pages`;
+      syncImportThumbSelection();
+      if (!isImportingPdf) setImportBusy(false);
+    }
+
+    function onImportThumbClick(event, pageNumber) {
+      event.preventDefault();
+      event.stopPropagation();
+      if (importPageCount < 1 || isImportingPdf) return;
+      const selected = getImportSelectionSet();
+      if (event.shiftKey && importLastThumbPage) {
+        const from = Math.min(importLastThumbPage, pageNumber);
+        const to = Math.max(importLastThumbPage, pageNumber);
+        for (let page = from; page <= to; page++) selected.add(page);
+        applyImportSelection(Array.from(selected));
+      } else if (selected.size === importPageCount) {
+        applyImportSelection([pageNumber]);
+      } else {
+        if (selected.has(pageNumber)) selected.delete(pageNumber);
+        else selected.add(pageNumber);
+        applyImportSelection(selected.size === 0
+          ? Array.from({ length: importPageCount }, (_, index) => index + 1)
+          : Array.from(selected));
+      }
+      importLastThumbPage = pageNumber;
+    }
+
+    function clearImportThumbs() {
+      importThumbs?.replaceChildren();
+      updateImportThumbArrows();
+    }
+
+    function updateImportThumbArrows() {
+      if (!importThumbs) return;
+      const maxScroll = importThumbs.scrollWidth - importThumbs.clientWidth;
+      const overflow = maxScroll > 4;
+      if (importThumbsPrev) importThumbsPrev.disabled = !overflow || importThumbs.scrollLeft <= 4;
+      if (importThumbsNext) importThumbsNext.disabled = !overflow || importThumbs.scrollLeft >= maxScroll - 4;
+    }
+
+    function scrollImportThumbs(direction) {
+      if (!importThumbs) return;
+      const amount = Math.max(240, Math.floor(importThumbs.clientWidth * 0.85));
+      importThumbs.scrollBy({ left: amount * direction, behavior: 'smooth' });
+    }
+
+    async function destroyImportPreviewPdf() {
+      const pdf = importPreviewPdf;
+      importPreviewPdf = null;
+      importPageCount = 0;
+      if (pdf && typeof pdf.destroy === 'function') {
+        try {
+          await pdf.destroy();
+        } catch (_error) {
+          // Ignore a teardown race if a new file was chosen.
+        }
+      }
+    }
+
+    async function renderImportThumbs(pdf, token) {
+      if (!importThumbs) return;
+      clearImportThumbs();
+      const items = [];
+      for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber++) {
+        const item = document.createElement('div');
+        item.className = 'import-thumb';
+        item.dataset.page = String(pageNumber);
+        const placeholder = document.createElement('div');
+        placeholder.className = 'import-thumb-ph';
+        const label = document.createElement('span');
+        label.className = 'import-thumb-label';
+        label.textContent = String(pageNumber);
+        item.append(placeholder, label);
+        item.addEventListener('click', (event) => onImportThumbClick(event, pageNumber));
+        importThumbs.appendChild(item);
+        items.push(item);
+      }
+      syncImportThumbSelection();
+      updateImportThumbArrows();
+      const canvas = document.createElement('canvas');
+      const context = canvas.getContext('2d', { alpha: false });
+      // ponytail: sequential thumbs; virtualize if 200+ page PDFs hitch the panel
+      for (let index = 0; index < items.length; index++) {
+        if (token !== importPreviewToken || isImportingPdf) return;
+        const pageNumber = index + 1;
+        try {
+          const page = await pdf.getPage(pageNumber);
+          const base = page.getViewport({ scale: 1 });
+          const scale = Math.min(IMPORT_THUMB_WIDTH / base.width, IMPORT_THUMB_HEIGHT / base.height);
+          const viewport = page.getViewport({ scale });
+          canvas.width = Math.max(1, Math.ceil(viewport.width));
+          canvas.height = Math.max(1, Math.ceil(viewport.height));
+          context.fillStyle = '#ffffff';
+          context.fillRect(0, 0, canvas.width, canvas.height);
+          await page.render({ canvasContext: context, viewport }).promise;
+          if (token !== importPreviewToken || isImportingPdf) return;
+          const img = document.createElement('img');
+          img.alt = `Page ${pageNumber}`;
+          img.draggable = false;
+          img.src = canvas.toDataURL('image/jpeg', 0.7);
+          items[index].querySelector('.import-thumb-ph')?.replaceWith(img);
+          if (typeof page.cleanup === 'function') page.cleanup();
+        } catch (_error) {
+          if (token !== importPreviewToken) return;
+        }
+        if (index % 2 === 1) {
+          await new Promise((resolve) => requestAnimationFrame(resolve));
+        }
+      }
+    }
+
+    async function loadImportPreview(file) {
+      const token = ++importPreviewToken;
+      await destroyImportPreviewPdf();
+      if (token !== importPreviewToken) return null;
+      clearImportThumbs();
+      try {
+        const pdfjs = configurePdfJs();
+        const data = await file.arrayBuffer();
+        if (token !== importPreviewToken) return null;
+        const pdf = await pdfjs.getDocument({
+          data,
+          isEvalSupported: false,
+          fontExtraProperties: true,
+          cMapUrl: PDFJS_CMAP_URL,
+          cMapPacked: true,
+          standardFontDataUrl: PDFJS_STANDARD_FONT_URL,
+        }).promise;
+        if (token !== importPreviewToken) {
+          if (typeof pdf.destroy === 'function') pdf.destroy();
+          return null;
+        }
+        importPreviewPdf = pdf;
+        importPageCount = pdf.numPages;
+        updateImportUI();
+        void renderImportThumbs(pdf, token);
+        return pdf;
+      } catch (error) {
+        if (token !== importPreviewToken) return null;
+        setImportMeta(getErrorMessage(error), 'error');
+        return null;
+      }
+    }
+
+    async function ensureImportPdf(file) {
+      if (importPreviewPdf && selectedImportPdfFile === file) return importPreviewPdf;
+      if (importPreviewLoad && importPreviewLoad.file === file) {
+        const pdf = await importPreviewLoad.promise;
+        if (pdf) return pdf;
+      }
+      importPreviewLoad = { file, promise: loadImportPreview(file) };
+      const pdf = await importPreviewLoad.promise;
+      if (!pdf) throw new Error('Could not read this PDF.');
+      return pdf;
     }
 
     function acceptImportPdfFile(file) {
@@ -4263,7 +4835,17 @@ ${JSON.stringify(batch.map(t => ({ mappingKey: t.mappingKey, text: t.text, charB
         return;
       }
       selectedImportPdfFile = file;
+      importFontDicts = new Map();
+      importFontChoices = {};
+      importPageCount = 0;
+      importLastThumbPage = 0;
+      if (importPageRangeInput) {
+        importPageRangeInput.value = '';
+        importPageRangeInput.placeholder = 'All pages';
+      }
+      clearImportThumbs();
       updateImportUI();
+      importPreviewLoad = { file, promise: loadImportPreview(file) };
     }
 
     function dataUrlToBase64(dataUrl) {
@@ -4272,6 +4854,7 @@ ${JSON.stringify(batch.map(t => ({ mappingKey: t.mappingKey, text: t.text, charB
     }
 
     function parseImportPageRange(value, totalPages) {
+      if (!totalPages) return [];
       const trimmed = String(value || '').trim();
       if (!trimmed) {
         return Array.from({ length: totalPages }, (_, index) => index + 1);
@@ -4286,11 +4869,13 @@ ${JSON.stringify(batch.map(t => ({ mappingKey: t.mappingKey, text: t.text, charB
 
         const rangeMatch = part.match(/^(\d+)\s*-\s*(\d+)$/);
         if (rangeMatch) {
-          const start = Number(rangeMatch[1]);
-          const end = Number(rangeMatch[2]);
-          if (!Number.isInteger(start) || !Number.isInteger(end) || start < 1 || end < start || end > totalPages) {
-            throw new Error(`Page range must be between 1 and ${totalPages}.`);
+          const startRaw = Number(rangeMatch[1]);
+          const endRaw = Number(rangeMatch[2]);
+          if (!Number.isInteger(startRaw) || !Number.isInteger(endRaw) || endRaw < startRaw) {
+            throw new Error('Use page ranges like 1-3, 5, 8.');
           }
+          const start = Math.max(1, startRaw);
+          const end = Math.min(totalPages, endRaw);
           for (let pageNumber = start; pageNumber <= end; pageNumber++) {
             if (!seen.has(pageNumber)) {
               seen.add(pageNumber);
@@ -4304,9 +4889,10 @@ ${JSON.stringify(batch.map(t => ({ mappingKey: t.mappingKey, text: t.text, charB
           throw new Error('Use page ranges like 1-3, 5, 8.');
         }
         const pageNumber = Number(part);
-        if (!Number.isInteger(pageNumber) || pageNumber < 1 || pageNumber > totalPages) {
-          throw new Error(`Page range must be between 1 and ${totalPages}.`);
+        if (!Number.isInteger(pageNumber) || pageNumber < 1) {
+          throw new Error(`This PDF has ${totalPages} page${totalPages === 1 ? '' : 's'}.`);
         }
+        if (pageNumber > totalPages) continue;
         if (!seen.has(pageNumber)) {
           seen.add(pageNumber);
           pages.push(pageNumber);
@@ -4314,62 +4900,2619 @@ ${JSON.stringify(batch.map(t => ({ mappingKey: t.mappingKey, text: t.text, charB
       }
 
       if (pages.length === 0) {
-        throw new Error('Enter at least one page to import.');
+        throw new Error(`This PDF has ${totalPages} page${totalPages === 1 ? '' : 's'}.`);
       }
       return pages;
     }
 
-    async function renderPdfFileToPages(file) {
-      const pdfjs = configurePdfJs();
-      const arrayBuffer = await file.arrayBuffer();
-      const loadingTask = pdfjs.getDocument({ data: arrayBuffer });
-      const pdf = await loadingTask.promise;
+    // Keep matrix/font helpers in sync with scripts/editable-import-core.mjs
+    function pdfMultiply(a, b) {
+      return [
+        a[0] * b[0] + a[2] * b[1],
+        a[1] * b[0] + a[3] * b[1],
+        a[0] * b[2] + a[2] * b[3],
+        a[1] * b[2] + a[3] * b[3],
+        a[0] * b[4] + a[2] * b[5] + a[4],
+        a[1] * b[4] + a[3] * b[5] + a[5],
+      ];
+    }
+
+    function pdfApply(m, x, y) {
+      return { x: m[0] * x + m[2] * y + m[4], y: m[1] * x + m[3] * y + m[5] };
+    }
+
+    function parsePdfFontName(fontFamily) {
+      let blob = String(fontFamily || '').replace(/^[A-Z]{6}\+/, '').split(',')[0].trim().replace(/^["']|["']$/g, '');
+      blob = blob.replace(/^\./, '').replace(/_(opsz|GRAD|YAXS|wght|wdth|ital)[-A-Za-z0-9.]+/gi, '');
+      let style = 'Regular';
+      if ((/bold/i.test(blob) || /(?:^|[-_])Bd/i.test(blob)) && /italic|oblique/i.test(blob)) style = 'Bold Italic';
+      else if (/semi(?:bold)?|demi(?:bold)?/i.test(blob)) style = 'Semibold';
+      else if (/heavy/i.test(blob)) style = 'Heavy';
+      else if (/black/i.test(blob)) style = 'Black';
+      else if (/bold/i.test(blob) || /(?:^|[-_])Bd/i.test(blob)) style = 'Bold';
+      else if (/book/i.test(blob)) style = 'Book';
+      else if (/medium/i.test(blob)) style = 'Medium';
+      else if (/light/i.test(blob)) style = 'Light';
+      else if (/italic|oblique/i.test(blob)) style = 'Italic';
+      else {
+        const weight = blob.match(/[-_]W(\d)$/i);
+        if (weight) style = 'W' + weight[1];
+      }
+      const family = blob
+        .replace(/MT$/i, '')
+        .replace(/[-_](BoldItalic|BoldOblique|Semibold|DemiBold|Demi|Bold|Italic|Oblique|Regular|Book|Medium|Light|Black|Heavy|Roman|W\d|BdCn|Bd|Cn|It)$/i, '')
+        .replace(/(LTStd|Std|PS|BT)$/i, '')
+        .replace(/[-_]+$/, '')
+        .trim() || blob;
+      return { family, style, raw: blob };
+    }
+
+    function fontFamilyCandidates(family) {
+      const raw = String(family || '').trim();
+      if (!raw) return [];
+      const spaced = raw.replace(/([a-z])([A-Z])/g, '$1 $2').replace(/([A-Z]+)([A-Z][a-z])/g, '$1 $2');
+      const compact = raw.replace(/\s+/g, '').toLowerCase();
+      const alias = FONT_ALIASES[raw.toLowerCase()] || FONT_ALIASES[compact] || FONT_ALIASES[spaced.replace(/\s+/g, '').toLowerCase()];
+      const names = [raw];
+      if (spaced !== raw) names.push(spaced);
+      if (alias) names.push(alias);
+      if (alias === 'SF Pro') names.push('SF Pro Text', 'SF Pro Display');
+      return [...new Set(names)];
+    }
+
+    function otReadNameString(bytes, offset, length, platform, encoding) {
+      if (offset < 0 || offset + length > bytes.length) return '';
+      if (platform === 3 || encoding === 1 || encoding === 10) {
+        let out = '';
+        for (let i = 0; i + 1 < length; i += 2) {
+          const code = (bytes[offset + i] << 8) | bytes[offset + i + 1];
+          if (code) out += String.fromCharCode(code);
+        }
+        return out.trim();
+      }
+      let out = '';
+      for (let i = 0; i < length; i++) out += String.fromCharCode(bytes[offset + i]);
+      return out.trim();
+    }
+
+    function parseOpenTypeNames(bytes) {
+      const empty = {
+        family: '',
+        style: '',
+        fullName: '',
+        postscript: '',
+        bytes: bytes && bytes.length || 0,
+        weight: 0,
+        width: 5,
+        italic: false,
+        panose: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        fixedPitch: false,
+        unicodeRange: 0,
+      };
+      if (!bytes || bytes.length < 12) return empty;
+      const u16 = (at) => (bytes[at] << 8) | bytes[at + 1];
+      const u32 = (at) => ((bytes[at] << 24) | (bytes[at + 1] << 16) | (bytes[at + 2] << 8) | bytes[at + 3]) >>> 0;
+      let sfnt = 0;
+      const tag = u32(0);
+      if (tag === 0x74746366) {
+        if (bytes.length < 16) return empty;
+        sfnt = u32(12);
+      } else if (tag !== 0x00010000 && tag !== 0x4F54544F && tag !== 0x74727565) {
+        return empty;
+      }
+      if (sfnt + 12 > bytes.length) return empty;
+      const numTables = u16(sfnt + 4);
+      let nameOff = 0;
+      let os2Off = 0;
+      let postOff = 0;
+      for (let i = 0; i < numTables; i++) {
+        const rec = sfnt + 12 + i * 16;
+        if (rec + 16 > bytes.length) break;
+        const t0 = bytes[rec];
+        const t1 = bytes[rec + 1];
+        const t2 = bytes[rec + 2];
+        const t3 = bytes[rec + 3];
+        const off = u32(rec + 8);
+        if (t0 === 0x6E && t1 === 0x61 && t2 === 0x6D && t3 === 0x65) nameOff = off;
+        else if (t0 === 0x4F && t1 === 0x53 && t2 === 0x2F && t3 === 0x32) os2Off = off;
+        else if (t0 === 0x70 && t1 === 0x6F && t2 === 0x73 && t3 === 0x74) postOff = off;
+      }
+      const found = {};
+      if (nameOff && nameOff + 6 <= bytes.length) {
+        const count = u16(nameOff + 2);
+        const stringOff = nameOff + u16(nameOff + 4);
+        for (let i = 0; i < count; i++) {
+          const rec = nameOff + 6 + i * 12;
+          if (rec + 12 > bytes.length) break;
+          const platform = u16(rec);
+          const encoding = u16(rec + 2);
+          const nameId = u16(rec + 6);
+          const length = u16(rec + 8);
+          const offset = stringOff + u16(rec + 10);
+          if (nameId !== 1 && nameId !== 2 && nameId !== 4 && nameId !== 6 && nameId !== 16 && nameId !== 17) continue;
+          const text = otReadNameString(bytes, offset, length, platform, encoding);
+          if (!text) continue;
+          if (!found[nameId] || platform === 3) found[nameId] = text;
+        }
+      }
+      let weight = 0;
+      let width = 5;
+      let italic = false;
+      const panose = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+      let unicodeRange = 0;
+      if (os2Off && os2Off + 64 <= bytes.length) {
+        weight = u16(os2Off + 4);
+        width = u16(os2Off + 6) || 5;
+        for (let i = 0; i < 10; i++) panose[i] = bytes[os2Off + 32 + i];
+        unicodeRange = u32(os2Off + 42);
+        italic = !!(u16(os2Off + 62) & 1);
+      }
+      let fixedPitch = false;
+      if (postOff && postOff + 16 <= bytes.length) {
+        if (u16(postOff + 4) !== 0) italic = true;
+        fixedPitch = u32(postOff + 12) !== 0;
+      }
+      return {
+        family: found[16] || found[1] || '',
+        style: found[17] || found[2] || '',
+        fullName: found[4] || '',
+        postscript: found[6] || '',
+        bytes: bytes.length,
+        weight,
+        width,
+        italic,
+        panose,
+        fixedPitch,
+        unicodeRange,
+      };
+    }
+
+    function parsePdfFontIdentity(baseFont, fontBytes) {
+      const names = parseOpenTypeNames(fontBytes);
+      const parsed = [names.family, names.fullName, names.postscript, baseFont]
+        .filter(Boolean)
+        .map(parsePdfFontName);
+      const spaced = parsed.find((item) => / /.test(item.family));
+      const aliased = parsed.find((item) => FONT_ALIASES[String(item.family || '').toLowerCase()]);
+      const stripped = parsed.find((item) => item.family && item.family !== item.raw);
+      const best = spaced || aliased || stripped || parsed[0] || parsePdfFontName(baseFont);
+      const baseStyle = parsePdfFontName(baseFont).style;
+      const tableStyle = names.style && !/^unknown$/i.test(names.style) ? names.style : '';
+      const style = (tableStyle && !/^regular$/i.test(tableStyle)) || !baseStyle || /^regular$/i.test(baseStyle)
+        ? (tableStyle || best.style || baseStyle)
+        : baseStyle;
+      return {
+        family: best.family,
+        style: style || best.style,
+        raw: best.raw,
+        embedded: names.bytes > 0,
+        postscript: names.postscript || best.raw,
+        fullName: names.fullName,
+        bytes: names.bytes,
+        weight: names.weight || 0,
+        width: names.width || 5,
+        italic: names.italic === true || /italic|oblique/i.test(style || best.style || ''),
+        panose: names.panose || [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        fixedPitch: names.fixedPitch === true,
+        unicodeRange: names.unicodeRange || 0,
+      };
+    }
+
+    function pdfjsFontBytes(font) {
+      if (!font || typeof font !== 'object') return null;
+      const inner = font.font && typeof font.font === 'object' ? font.font : font;
+      const data = inner.data || font.data;
+      return data && data.length ? data : null;
+    }
+
+    function isReliableTextExtract(str, fontMeta) {
+      if (!isDecodedText(str)) return false;
+      if (!fontMeta) return true;
+      if (fontMeta.isType3Font || fontMeta.isInvalidPDFjsFont) return false;
+      const composite = fontMeta.composite === true
+        || /type0|cid/i.test(String(fontMeta.type || fontMeta.subtype || ''));
+      const identity = /identity/i.test(String(fontMeta.encoding || fontMeta.cidEncoding || ''));
+      if (composite && identity && fontMeta.hasToUnicode !== true) return false;
+      return true;
+    }
+
+    function findBytes(haystack, needle, from) {
+      if (!needle.length || haystack.length < needle.length) return -1;
+      const start = from || 0;
+      outer: for (let i = start; i <= haystack.length - needle.length; i++) {
+        for (let j = 0; j < needle.length; j++) {
+          if (haystack[i + j] !== needle[j]) continue outer;
+        }
+        return i;
+      }
+      return -1;
+    }
+
+    function indexPdfFontDicts(bytes) {
+      const out = new Map();
+      if (!bytes || !bytes.length) return out;
+      const markers = [
+        Uint8Array.from('/Type /Font', (ch) => ch.charCodeAt(0)),
+        Uint8Array.from('/Type/Font', (ch) => ch.charCodeAt(0)),
+      ];
+      const endMarker = Uint8Array.from('>>', (ch) => ch.charCodeAt(0));
+      const descriptor = Uint8Array.from('Descriptor', (ch) => ch.charCodeAt(0));
+      for (let m = 0; m < markers.length; m++) {
+        const marker = markers[m];
+        let from = 0;
+        while (from < bytes.length) {
+          const at = findBytes(bytes, marker, from);
+          if (at < 0) break;
+          from = at + marker.length;
+          if (findBytes(bytes, descriptor, from) === from) continue;
+          const end = findBytes(bytes, endMarker, at);
+          if (end < 0 || end - at > 1200) continue;
+          let dict = '';
+          for (let i = at; i < end + 2; i++) dict += String.fromCharCode(bytes[i]);
+          if (!/\/Subtype\s*\//.test(dict)) continue;
+          const base = dict.match(/\/BaseFont\s*\/([^\s/>]+)/);
+          if (!base) continue;
+          const subtype = (dict.match(/\/Subtype\s*\/([^\s/>]+)/) || [])[1] || '';
+          const encoding = (dict.match(/\/Encoding\s*\/([^\s/>]+)/) || [])[1] || '';
+          const parsed = parsePdfFontName(base[1]);
+          const next = {
+            subtype,
+            encoding,
+            hasToUnicode: /\/ToUnicode\b/.test(dict),
+            composite: /Type0|CID/i.test(subtype),
+            isType3Font: subtype === 'Type3',
+          };
+          const key = parsed.family.toLowerCase();
+          const prev = out.get(key);
+          if (!prev) {
+            out.set(key, next);
+            continue;
+          }
+          out.set(key, {
+            subtype: prev.subtype === 'Type0' ? prev.subtype : next.subtype,
+            encoding: /identity/i.test(prev.encoding) ? prev.encoding : next.encoding,
+            hasToUnicode: prev.hasToUnicode || next.hasToUnicode,
+            composite: prev.composite || next.composite,
+            isType3Font: prev.isType3Font || next.isType3Font,
+          });
+        }
+      }
+      return out;
+    }
+
+    function pdfTextLayout(item, viewport, style) {
+      const tx = pdfMultiply(viewport.transform, item.transform);
+      const fontSize = Math.hypot(tx[2], tx[3]);
+      const angle = Math.atan2(tx[1], tx[0]);
+      const ascentFrac = typeof style?.ascent === 'number' ? style.ascent : 0.8;
+      return {
+        x: tx[4],
+        y: tx[5] - fontSize * ascentFrac,
+        fontSize,
+        angle,
+        baseline: tx[5],
+        width: typeof item.width === 'number' ? item.width * Math.hypot(tx[0], tx[1]) / (Math.hypot(item.transform[0], item.transform[1]) || 1) : fontSize * String(item.str || '').length * 0.5,
+      };
+    }
+
+    function isDecodedText(str) {
+      if (!str || !String(str).trim()) return false;
+      for (const ch of str) {
+        const code = ch.codePointAt(0);
+        if (code === 0xFFFD || (code < 32 && code !== 9 && code !== 10) || (code >= 0xE000 && code <= 0xF8FF)) return false;
+      }
+      return true;
+    }
+
+    function styleEquivalents(style) {
+      const wanted = String(style || 'Regular');
+      const key = wanted.toLowerCase();
+      if (key === 'book' || key === 'roman') return ['Regular', 'Book', 'Roman', 'Medium'];
+      if (key === 'regular') return ['Regular', 'Roman', 'Book', 'Medium'];
+      if (key === 'medium') return ['Medium', 'Regular', 'Book'];
+      if (key === 'heavy') return ['Heavy', 'Black', 'Bold'];
+      if (key === 'black') return ['Black', 'Heavy', 'Bold'];
+      if (key === 'bold') return ['Bold', 'Heavy', 'Black'];
+      if (key === 'semibold' || key === 'demibold' || key === 'demi') return ['Semibold', 'DemiBold', 'Demi', 'SemiBold'];
+      if (key === 'oblique') return ['Italic', 'Oblique'];
+      if (key === 'italic') return ['Italic', 'Oblique'];
+      return [wanted];
+    }
+
+    function matchAvailableFont(family, style, available) {
+      if (!family) return null;
+      const wantedStyle = style || 'Regular';
+      const names = fontFamilyCandidates(family);
+      const alias = names[names.length - 1] || family;
+      const styles = styleEquivalents(wantedStyle);
+      if (!available || available.length === 0) return { family: alias, style: wantedStyle };
+      for (const name of names) {
+        for (let s = 0; s < styles.length; s++) {
+          const st = styles[s];
+          const exact = available.find((font) => font.family === name && font.style === st)
+            || available.find((font) => font.family.toLowerCase() === name.toLowerCase() && font.style === st);
+          if (exact) return exact;
+        }
+      }
+      return null;
+    }
+
+    const CLASS_FALLBACKS = {
+      'neutral-sans': ['Arial', 'Inter', 'Helvetica'],
+      'geometric-sans': ['Avenir Next', 'Century Gothic', 'Montserrat', 'Futura'],
+      'humanist-sans': ['Frutiger', 'Myriad Pro', 'Segoe UI', 'Source Sans 3', 'Source Sans Pro'],
+      'condensed-sans': ['DIN Condensed', 'Roboto Condensed', 'Arial Narrow'],
+      'transitional-serif': ['Times New Roman', 'Georgia'],
+      'modern-serif': ['Didot', 'Bodoni 72', 'Bodoni'],
+      'slab-serif': ['Rockwell', 'Roboto Slab'],
+      mono: ['Courier New', 'Roboto Mono', 'Menlo'],
+      'cjk-sans': ['Noto Sans CJK JP', 'Hiragino Sans', 'Yu Gothic'],
+      'cjk-serif': ['Noto Serif CJK JP', 'Hiragino Mincho ProN'],
+      arabic: ['Noto Sans Arabic', 'Noto Naskh Arabic'],
+      devanagari: ['Noto Sans Devanagari', 'Kohinoor Devanagari'],
+    };
+
+    function styleWeight(style) {
+      const key = String(style || '').toLowerCase();
+      if (/thin|hairline/.test(key)) return 100;
+      if (/ultra\s*light|extralight/.test(key)) return 200;
+      if (/light/.test(key)) return 300;
+      if (/medium/.test(key)) return 500;
+      if (/semi|demi/.test(key)) return 600;
+      if (/heavy|extra\s*bold|ultrabold/.test(key)) return 800;
+      if (/black|ultra/.test(key)) return 900;
+      if (/bold|\bbd\b/.test(key)) return 700;
+      if (/book|roman|regular/.test(key) || !key) return 400;
+      return 400;
+    }
+
+    function styleWidth(style, raw) {
+      const blob = String(style || '') + ' ' + String(raw || '');
+      if (/ultra\s*cond/i.test(blob)) return 1;
+      if (/extra\s*cond/i.test(blob)) return 2;
+      if (/semi\s*cond/i.test(blob)) return 4;
+      if (/condensed|narrow|compressed|(?:^|[-_\s])(?:Bd)?Cn(?:[-_]|$)/i.test(blob)) return 3;
+      if (/semi\s*expand/i.test(blob)) return 6;
+      if (/expanded|extended|wide/i.test(blob)) return 7;
+      return 5;
+    }
+
+    function styleItalic(style, raw) {
+      return /italic|oblique/i.test(String(style || '') + ' ' + String(raw || ''));
+    }
+
+    function detectScript(sample) {
+      const text = String(sample || '');
+      for (let i = 0; i < text.length; i++) {
+        const code = text.charCodeAt(i);
+        if ((code >= 0x3040 && code <= 0x30ff) || (code >= 0x3400 && code <= 0x9fff) || (code >= 0xac00 && code <= 0xd7af)) return 'cjk';
+        if (code >= 0x0600 && code <= 0x06ff) return 'arabic';
+        if (code >= 0x0900 && code <= 0x097f) return 'devanagari';
+      }
+      return 'latin';
+    }
+
+    function detectCategory(family, opts) {
+      const name = String(family || '').toLowerCase();
+      const panose = (opts && opts.panose) || [];
+      const width = (opts && opts.width) || 5;
+      const fixed = opts && opts.fixedPitch;
+      if (fixed || /mono|courier|menlo|consolas|source code/.test(name)) return 'mono';
+      if (/dingbat|symbol|wingding|zapf/.test(name) || panose[0] === 5) return 'symbol';
+      if (/script|hand|brush|comic|marker|handwriting/.test(name) || panose[0] === 3) return 'handwriting';
+      if (width <= 4 || /condensed|narrow|compressed|din condensed/.test(name)) return 'condensed-sans';
+      if (/futura|avenir|century gothic|montserrat|gotham|geometr/.test(name)) return 'geometric-sans';
+      if (/frutiger|myriad|gill|segoe|source sans|humanist/.test(name)) return 'humanist-sans';
+      if (/didot|bodoni/.test(name)) return 'modern-serif';
+      if (/rockwell|slab|egyptienne|clarendon/.test(name)) return 'slab-serif';
+      if (/times|georgia|cambria|palatino|garamond|serif/.test(name) || (panose[0] === 2 && panose[1] > 0 && panose[1] < 11)) return 'transitional-serif';
+      if (panose[0] === 2 && panose[1] >= 11) return 'neutral-sans';
+      return 'neutral-sans';
+    }
+
+    function normalizeFamilyName(family) {
+      let s = String(family || '').replace(/^[A-Z]{6}\+/, '').trim();
+      s = s.replace(/(LTStd|Std|PS|MT|BT)$/i, '');
+      s = s.replace(/([a-z])([A-Z])/g, '$1 $2').replace(/([A-Z]+)([A-Z][a-z])/g, '$1 $2').replace(/\s+/g, ' ').trim();
+      const compact = s.replace(/\s+/g, '').toLowerCase();
+      return FONT_ALIASES[compact] || FONT_ALIASES[s.toLowerCase()] || s;
+    }
+
+    function pdfFontDescriptor(identity, sample) {
+      const parsed = identity && identity.family ? identity : parsePdfFontName((identity && identity.raw) || '');
+      const family = normalizeFamilyName(parsed.family);
+      const style = parsed.style || 'Regular';
+      const namedWidth = styleWidth(style, parsed.raw || (identity && identity.raw));
+      const tableWidth = Number(identity && identity.width) || 0;
+      const width = (tableWidth > 0 && tableWidth !== 5) ? tableWidth : namedWidth;
+      const italic = !!(identity && identity.italic) || styleItalic(style, parsed.raw);
+      const weight = (identity && identity.weight) || styleWeight(style);
+      return {
+        family,
+        style,
+        weight: weight || styleWeight(style),
+        width: width || 5,
+        italic,
+        category: detectCategory(family, {
+          panose: identity && identity.panose,
+          width: width || 5,
+          fixedPitch: identity && identity.fixedPitch,
+        }),
+        script: detectScript(sample),
+        raw: parsed.raw || family,
+      };
+    }
+
+    function figmaFontDescriptor(font) {
+      const family = String(font.family || '');
+      const style = String(font.style || 'Regular');
+      return {
+        family,
+        style,
+        weight: styleWeight(style),
+        width: styleWidth(style, family),
+        italic: styleItalic(style, ''),
+        category: detectCategory(family, { width: styleWidth(style, family) }),
+        script: /hiragino|gothic|mincho|yu gothic|noto sans cjk|source han|pingfang|apple sd/i.test(family)
+          ? 'cjk'
+          : (/arabic|naskh|kufi/i.test(family) ? 'arabic' : (/devanagari|kohinoor/i.test(family) ? 'devanagari' : 'latin')),
+      };
+    }
+
+    function typographyClass(category) {
+      if (category === 'mono') return 'mono';
+      if (category === 'handwriting') return 'handwriting';
+      if (category === 'symbol') return 'symbol';
+      if (category === 'transitional-serif' || category === 'modern-serif' || category === 'slab-serif') return 'serif';
+      return 'sans';
+    }
+
+    function weightCompatible(sourceWeight, candidateWeight) {
+      const srcBold = sourceWeight >= 700;
+      const candBold = candidateWeight >= 700;
+      return srcBold === candBold || Math.abs(sourceWeight - candidateWeight) <= 150;
+    }
+
+    function pdfContentKind(desc, run) {
+      if (desc.category === 'handwriting' || desc.category === 'symbol') return desc.category;
+      if (desc.category === 'mono') return 'mono';
+      if (desc.script === 'cjk' || desc.script === 'arabic' || desc.script === 'devanagari') return desc.script;
+      if (desc.width <= 4 || desc.category === 'condensed-sans') return 'condensed';
+      const size = Number(run && run.fontSize) || 0;
+      const chars = String((run && (run.characters || run.sample)) || '');
+      if (size >= 18 || (chars.length > 0 && chars.length <= 24 && size >= 14)) return 'heading';
+      return 'body';
+    }
+
+    function availableHas(available, family, style) {
+      return (available || []).find((font) => font.family === family && font.style === style)
+        || (available || []).find((font) => font.family.toLowerCase() === String(family || '').toLowerCase() && font.style === style)
+        || null;
+    }
+
+    function fallbackStyleForWeight(weight, italic) {
+      let style = 'Regular';
+      if (weight >= 800) style = 'Heavy';
+      else if (weight >= 700) style = 'Bold';
+      else if (weight >= 600) style = 'Semibold';
+      else if (weight >= 500) style = 'Medium';
+      if (italic) style = style === 'Regular' ? 'Italic' : style + ' Italic';
+      return style;
+    }
+
+    function collectFontCandidates(source, available, limit) {
+      const max = limit || 20;
+      const out = [];
+      const seen = {};
+      const push = (font, rung) => {
+        if (!font || out.length >= max) return;
+        const key = font.family + '::' + font.style;
+        if (seen[key]) return;
+        const cand = figmaFontDescriptor(font);
+        if (source.script !== 'latin' && cand.script !== source.script) return;
+        if (typographyClass(source.category) !== typographyClass(cand.category)) return;
+        if (source.italic !== cand.italic) return;
+        if (!weightCompatible(source.weight, cand.weight)) return;
+        if ((source.width <= 4 || source.category === 'condensed-sans') && cand.width > 4) return;
+        if (source.category === 'handwriting' && normalizeFamilyName(source.family).toLowerCase() !== normalizeFamilyName(cand.family).toLowerCase()) return;
+        if (source.category === 'symbol' && normalizeFamilyName(source.family).toLowerCase() !== normalizeFamilyName(cand.family).toLowerCase()) return;
+        seen[key] = true;
+        out.push({ family: font.family, style: font.style, rung: rung || 'other' });
+      };
+      const names = fontFamilyCandidates(source.family);
+      for (const name of names) {
+        push(availableHas(available, name, source.style), 'exact');
+      }
+      const equiv = styleEquivalents(source.style);
+      for (const name of names) {
+        for (let i = 0; i < equiv.length; i++) push(availableHas(available, name, equiv[i]), 'equivalent');
+      }
+      const wantStyle = fallbackStyleForWeight(source.weight, source.italic);
+      if (source.category !== 'handwriting' && source.category !== 'symbol') {
+        for (let i = 0; i < (available || []).length && out.length < max; i++) {
+          const font = available[i];
+          if (normalizeFamilyName(font.family).toLowerCase() !== normalizeFamilyName(source.family).toLowerCase()) continue;
+          push(font, 'same-family');
+        }
+      }
+      const classes = [];
+      if (source.script === 'cjk') classes.push(typographyClass(source.category) === 'serif' ? 'cjk-serif' : 'cjk-sans');
+      else if (source.script === 'arabic') classes.push('arabic');
+      else if (source.script === 'devanagari') classes.push('devanagari');
+      else {
+        classes.push(source.category);
+        if (typographyClass(source.category) === 'sans' && source.category !== 'neutral-sans') classes.push('neutral-sans');
+      }
+      for (let c = 0; c < classes.length; c++) {
+        const families = CLASS_FALLBACKS[classes[c]] || [];
+        for (let f = 0; f < families.length; f++) {
+          const family = families[f];
+          for (const st of styleEquivalents(wantStyle)) push(availableHas(available, family, st), 'fallback');
+          push(availableHas(available, family, wantStyle), 'fallback');
+        }
+      }
+      if (source.category !== 'handwriting' && source.category !== 'symbol') {
+        for (let i = 0; i < (available || []).length && out.length < max; i++) {
+          push(available[i], 'metric');
+        }
+      }
+      return out.slice(0, max);
+    }
+
+    function scoreFontCandidate(source, candidate, measured, kind) {
+      const cand = candidate.style ? figmaFontDescriptor(candidate) : candidate;
+      if (source.script !== 'latin' && cand.script !== source.script) return { score: Infinity, widthError: 1, heightError: 1, reject: 'script' };
+      if (typographyClass(source.category) !== typographyClass(cand.category)) return { score: Infinity, widthError: 1, heightError: 1, reject: 'class' };
+      if (source.italic !== cand.italic) return { score: Infinity, widthError: 1, heightError: 1, reject: 'italic' };
+      if (!weightCompatible(source.weight, cand.weight)) return { score: Infinity, widthError: 1, heightError: 1, reject: 'weight' };
+      const hasMeasure = !!(measured && Number(measured.width) > 0);
+      const pdfWidth = Number(measured && measured.pdfWidth) || 0;
+      const pdfHeight = Number(measured && measured.pdfHeight) || 0;
+      const unmeasured = !hasMeasure || pdfWidth <= 0;
+      const widthError = unmeasured ? 0.2 : Math.abs(measured.width - pdfWidth) / pdfWidth;
+      const heightError = unmeasured ? 0.2 : (pdfHeight > 0 ? Math.abs((measured.height || 0) - pdfHeight) / pdfHeight : 0);
+      let score = widthError * 120 + heightError * 40;
+      score += Math.abs(source.weight - cand.weight) / 100 * 12;
+      score += Math.abs(source.width - cand.width) * 10;
+      if (normalizeFamilyName(source.family).toLowerCase() === normalizeFamilyName(cand.family).toLowerCase()) score -= 40;
+      if (kind === 'heading' && (widthError > 0.06 || Math.abs(source.weight - cand.weight) > 100)) score += 40;
+      if (kind === 'condensed' && cand.width > 4) return { score: Infinity, widthError, heightError, reject: 'width' };
+      return { score, widthError, heightError, reject: '', unmeasured };
+    }
+
+    function confidenceFor(source, cand, scored, kind, rung) {
+      if (scored.score === Infinity) return 'low';
+      if (kind === 'handwriting' || kind === 'symbol') {
+        return normalizeFamilyName(source.family).toLowerCase() === normalizeFamilyName(cand.family).toLowerCase() ? 'high' : 'low';
+      }
+      if (kind === 'heading' && (scored.widthError > 0.06 || Math.abs(source.weight - cand.weight) > 100)) {
+        if (rung !== 'exact' && rung !== 'equivalent' && rung !== 'same-family') return 'low';
+        if (scored.widthError > 0.06 && !scored.unmeasured) return 'low';
+      }
+      if (kind === 'condensed' && cand.width > 4) return 'low';
+      if (rung === 'exact' || rung === 'equivalent' || rung === 'same-family') return 'high';
+      if (scored.unmeasured) return 'low';
+      if (scored.widthError <= 0.08 && Math.abs(source.weight - cand.weight) <= 100) return 'high';
+      if (kind === 'body' && scored.widthError <= 0.15 && Math.abs(source.weight - cand.weight) <= 150) return 'medium';
+      if (scored.widthError <= 0.12 && (rung === 'fallback' || rung === 'metric')) return 'medium';
+      return 'low';
+    }
+
+    function resolvePdfFont(source, available, opts) {
+      const options = opts || {};
+      const kind = options.kind || pdfContentKind(source, options.run);
+      if (options.override && availableHas(available, options.override.family, options.override.style)) {
+        const font = availableHas(available, options.override.family, options.override.style);
+        return { family: font.family, style: font.style, confidence: 'high', widthError: 0, reason: 'override', kind };
+      }
+      const measures = options.measures || {};
+      const candidates = collectFontCandidates(source, available, 20);
+      let best = null;
+      for (let i = 0; i < candidates.length; i++) {
+        const cand = candidates[i];
+        const measured = measures[cand.family + '::' + cand.style] || {};
+        const scored = scoreFontCandidate(source, cand, {
+          width: measured.width,
+          height: measured.height,
+          pdfWidth: options.pdfWidth,
+          pdfHeight: options.pdfHeight,
+        }, kind);
+        const confidence = confidenceFor(source, figmaFontDescriptor(cand), scored, kind, cand.rung);
+        if (confidence === 'low') continue;
+        if (!best || scored.score < best.score) {
+          best = {
+            family: cand.family,
+            style: cand.style,
+            confidence,
+            widthError: scored.widthError,
+            score: scored.score,
+            reason: cand.rung,
+            kind,
+          };
+        }
+      }
+      if (!best) return { family: '', style: '', confidence: 'low', widthError: 1, reason: 'no-credible-match', kind };
+      return best;
+    }
+
+    function composeTextLines(runs) {
+      if (!runs.length) return [];
+      const sorted = runs.slice().sort((a, b) => (a.baseline - b.baseline) || (a.x - b.x));
+      const lines = [];
+      let current = null;
+      for (const run of sorted) {
+        if (!current) {
+          current = { ...run, characters: run.characters };
+          continue;
+        }
+        const sameLine = Math.abs(run.baseline - current.baseline) <= Math.max(1, current.fontSize * 0.22)
+          && Math.abs(run.fontSize - current.fontSize) <= 0.6
+          && run.fontFamily === current.fontFamily
+          && run.fontStyle === current.fontStyle
+          && Math.abs(run.angle - current.angle) < 0.05
+          && run.color.r === current.color.r && run.color.g === current.color.g && run.color.b === current.color.b;
+        const gap = run.x - (current.x + current.width);
+        if (sameLine && gap > -current.fontSize * 0.2 && gap < current.fontSize * 1.6) {
+          current.characters += (gap > current.fontSize * 0.18 ? ' ' : '') + run.characters;
+          current.width = run.x + run.width - current.x;
+          continue;
+        }
+        lines.push(current);
+        current = { ...run, characters: run.characters };
+      }
+      if (current) lines.push(current);
+      return lines;
+    }
+
+    function imagePlacementFromCtm(ctm, viewport) {
+      const m = pdfMultiply(viewport.transform, ctm);
+      const p00 = pdfApply(m, 0, 0);
+      const p10 = pdfApply(m, 1, 0);
+      const p01 = pdfApply(m, 0, 1);
+      const p11 = pdfApply(m, 1, 1);
+      const wVec = { x: p10.x - p00.x, y: p10.y - p00.y };
+      const hVec = { x: p01.x - p00.x, y: p01.y - p00.y };
+      const width = Math.hypot(wVec.x, wVec.y);
+      const height = Math.hypot(hVec.x, hVec.y);
+      const shear = Math.abs(wVec.x * hVec.x + wVec.y * hVec.y) / (width * height || 1);
+      const xs = [p00.x, p10.x, p01.x, p11.x];
+      const ys = [p00.y, p10.y, p01.y, p11.y];
+      const x = Math.min.apply(null, xs);
+      const y = Math.min.apply(null, ys);
+      return {
+        x,
+        y,
+        w: Math.max.apply(null, xs) - x,
+        h: Math.max.apply(null, ys) - y,
+        width,
+        height,
+        sheared: shear > 0.08,
+      };
+    }
+
+    function clipInsidePage(rect, viewport) {
+      const x1 = Math.max(0, rect.x);
+      const y1 = Math.max(0, rect.y);
+      const x2 = Math.min(viewport.width, rect.x + rect.w);
+      const y2 = Math.min(viewport.height, rect.y + rect.h);
+      return (Math.max(0, x2 - x1) * Math.max(0, y2 - y1)) / Math.max(1, rect.w * rect.h);
+    }
+
+    function meanAbsDiff(a, b) {
+      const n = Math.min(a.length, b.length);
+      if (n === 0) return 1;
+      let sum = 0;
+      let count = 0;
+      for (let i = 0; i < n; i += 4) {
+        sum += Math.abs(a[i] - b[i]) + Math.abs(a[i + 1] - b[i + 1]) + Math.abs(a[i + 2] - b[i + 2]);
+        count += 1;
+      }
+      return count ? sum / (count * 3 * 255) : 1;
+    }
+
+    function tileDiff(a, b, width, height, x0, y0, tile) {
+      const x1 = Math.min(width, x0 + tile);
+      const y1 = Math.min(height, y0 + tile);
+      let sum = 0;
+      let count = 0;
+      for (let y = y0; y < y1; y++) {
+        for (let x = x0; x < x1; x++) {
+          const i = (y * width + x) * 4;
+          sum += Math.abs(a[i] - b[i]) + Math.abs(a[i + 1] - b[i + 1]) + Math.abs(a[i + 2] - b[i + 2]);
+          count += 1;
+        }
+      }
+      return count ? sum / (count * 3 * 255) : 0;
+    }
+
+    function tileMaxDiff(a, b, width, height, tile) {
+      let worst = 0;
+      for (let y = 0; y < height; y += tile) {
+        for (let x = 0; x < width; x += tile) {
+          const diff = tileDiff(a, b, width, height, x, y, tile);
+          if (diff > worst) worst = diff;
+        }
+      }
+      return worst;
+    }
+
+    function rectsOverlap(a, b) {
+      return a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
+    }
+
+    function rectOverlapArea(a, b) {
+      const x = Math.max(0, Math.min(a.x + a.w, b.x + b.w) - Math.max(a.x, b.x));
+      const y = Math.max(0, Math.min(a.y + a.h, b.y + b.h) - Math.max(a.y, b.y));
+      return x * y;
+    }
+
+    function laterPaintOccludesRun(run, later) {
+      if (!later || later.kind === 'path-stroke') return false;
+      const runArea = Math.max(1, Number(run.w) * Number(run.h));
+      return rectOverlapArea(run, later) / runArea >= 0.5;
+    }
+
+    function laterPaintCoversText(textRects, laterRects) {
+      return coveredTextRunIndices(textRects, laterRects).length > 0;
+    }
+
+    function occurrenceSeq(id) {
+      const match = String(id || '').match(/#(\d+)$/);
+      return match ? Number(match[1]) : 0;
+    }
+
+    function coveredTextRunIndices(textRects, laterRects) {
+      if (!textRects.length || !laterRects.length) return [];
+      const out = [];
+      for (let i = 0; i < textRects.length; i++) {
+        const run = textRects[i];
+        const seq = Number(run.seq);
+        const hit = laterRects.some((later) => {
+          const after = Number(later.afterSeq);
+          if (Number.isFinite(seq) && seq > 0 && Number.isFinite(after) && after < seq) return false;
+          return laterPaintOccludesRun(run, later);
+        });
+        if (hit) out.push(i);
+      }
+      return out;
+    }
+
+    function textRunPaintBox(run) {
+      const fontSize = Number(run.fontSize) || 0;
+      return {
+        x: Number(run.x) || 0,
+        y: Number(run.y) || 0,
+        w: Math.max(Number(run.width) || 0, fontSize),
+        h: fontSize * 1.2,
+        pad: fontSize * 0.4,
+      };
+    }
+
+    function normalizeMatchText(str) {
+      return String(str || '').replace(/\s+/g, ' ').trim();
+    }
+
+    function joinFragmentTexts(frags) {
+      const strs = (frags || []).map((frag) => String(frag.characters || frag.str || ''));
+      let hyphen = '';
+      for (let i = 0; i < strs.length; i++) {
+        const piece = strs[i];
+        if (!hyphen) {
+          hyphen = piece;
+          continue;
+        }
+        hyphen = hyphen.endsWith('-') && /^\S/.test(piece) ? hyphen.slice(0, -1) + piece : hyphen + piece;
+      }
+      return [strs.join(''), strs.join(' '), hyphen].map(normalizeMatchText);
+    }
+
+    function matchOccurrencesToFragments(occurrences, fragments, scale) {
+      const s = scale || 1;
+      const unused = (fragments || []).map((frag, index) => ({ frag, index })).filter((row) => {
+        const chars = String(row.frag.characters || row.frag.str || '');
+        return !!chars && row.frag.reliable !== false;
+      });
+      const usedFrag = {};
+      const matches = [];
+      for (let o = 0; o < (occurrences || []).length; o++) {
+        const occ = occurrences[o];
+        if (!occ || !occ.suppressible || !occ.unicode) continue;
+        const want = normalizeMatchText(occ.unicode);
+        if (!want) continue;
+        const oy = Number(occ.y) || 0;
+        const ox = Number(occ.x) || 0;
+        const tol = Math.max(4 * s, (Number(occ.fontSize) || 12) * 0.5);
+        const pool = unused.filter((row) => {
+          if (usedFrag[row.index]) return false;
+          const layout = row.frag.layout || row.frag;
+          const baseline = typeof layout.baseline === 'number' ? layout.baseline : (Number(layout.y) || 0) + (Number(layout.fontSize) || 0) * 0.8;
+          return Math.abs(baseline * s - oy) <= tol;
+        }).sort((a, b) => a.index - b.index);
+        let found = null;
+        for (let i = 0; i < pool.length && !found; i++) {
+          const seq = [];
+          for (let j = i; j < pool.length; j++) {
+            if (seq.length && pool[j].index !== seq[seq.length - 1].index + 1) break;
+            seq.push(pool[j]);
+            if (joinFragmentTexts(seq.map((row) => row.frag)).indexOf(want) >= 0) {
+              const startX = Math.abs(((Number((seq[0].frag.layout || seq[0].frag).x) || 0) * s) - ox);
+              if (startX <= Math.max(tol * 3, (Number(occ.width) || Number(occ.fontSize) || 12))) {
+                found = seq;
+                break;
+              }
+            }
+            const glued = normalizeMatchText(seq.map((row) => String(row.frag.characters || row.frag.str || '')).join(''));
+            if (glued.length > want.length + 6) break;
+          }
+        }
+        if (!found) continue;
+        found.forEach((row) => { usedFrag[row.index] = true; });
+        matches.push({ occ, id: occ.id, fragments: found.map((row) => row.frag) });
+      }
+      return matches;
+    }
+
+    function matchRunsToOccurrences(runs, occurrences, scale) {
+      const s = scale || 1;
+      const unused = (occurrences || []).filter((occ) => occ && occ.suppressible && occ.unicode);
+      const used = {};
+      const matches = [];
+      for (let r = 0; r < (runs || []).length; r++) {
+        const run = runs[r];
+        const chars = String(run.characters || '');
+        if (!chars) continue;
+        const baseline = typeof run.baseline === 'number' ? run.baseline : (Number(run.y) || 0) + (Number(run.fontSize) || 0) * 0.8;
+        const rx = (Number(run.x) || 0) * s;
+        const ry = baseline * s;
+        const tol = Math.max(2 * s, (Number(run.fontSize) || 0) * 0.35 * s);
+        let best = null;
+        let bestDist = Infinity;
+        for (let i = 0; i < unused.length; i++) {
+          const occ = unused[i];
+          if (used[occ.id] || occ.unicode !== chars) continue;
+          const dist = Math.hypot((Number(occ.x) || 0) - rx, (Number(occ.y) || 0) - ry);
+          if (dist < bestDist) {
+            bestDist = dist;
+            best = occ;
+          }
+        }
+        if (best && bestDist <= tol) {
+          used[best.id] = true;
+          matches.push({ run, id: best.id, dist: bestDist });
+        }
+      }
+      return matches;
+    }
+
+    function rectMeanAbsDiff(a, b, width, height, rect) {
+      const x0 = Math.max(0, Math.floor(rect.x));
+      const y0 = Math.max(0, Math.floor(rect.y));
+      const x1 = Math.min(width, Math.ceil(rect.x + rect.w));
+      const y1 = Math.min(height, Math.ceil(rect.y + rect.h));
+      let sum = 0;
+      let count = 0;
+      for (let y = y0; y < y1; y++) {
+        for (let x = x0; x < x1; x++) {
+          const i = (y * width + x) * 4;
+          sum += Math.abs(a[i] - b[i]) + Math.abs(a[i + 1] - b[i + 1]) + Math.abs(a[i + 2] - b[i + 2]);
+          count += 1;
+        }
+      }
+      return count ? sum / (count * 3 * 255) : 0;
+    }
+
+    function promotedRunRemoved(full, suppressed, width, height, run, scale) {
+      const s = scale || 1;
+      const box = textRunPaintBox(run);
+      const rect = {
+        x: box.x * s,
+        y: box.y * s,
+        w: Math.max(1, box.w * s),
+        h: Math.max(1, box.h * s),
+      };
+      if (rectMeanAbsDiff(full, suppressed, width, height, rect) < 0.008) return false;
+      const x0 = Math.max(0, Math.floor(rect.x));
+      const y0 = Math.max(0, Math.floor(rect.y));
+      const x1 = Math.min(width, Math.ceil(rect.x + rect.w));
+      const y1 = Math.min(height, Math.ceil(rect.y + rect.h));
+      let cr = 0;
+      let cg = 0;
+      let cb = 0;
+      let changed = 0;
+      const unchanged = [];
+      const changedAt = [];
+      for (let y = y0; y < y1; y++) {
+        for (let x = x0; x < x1; x++) {
+          const i = (y * width + x) * 4;
+          const d = Math.abs(full[i] - suppressed[i]) + Math.abs(full[i + 1] - suppressed[i + 1]) + Math.abs(full[i + 2] - suppressed[i + 2]);
+          if (d > 40) {
+            cr += full[i];
+            cg += full[i + 1];
+            cb += full[i + 2];
+            changed += 1;
+            changedAt.push(i);
+          } else {
+            unchanged.push(i);
+          }
+        }
+      }
+      if (changed < 8) return false;
+      cr /= changed;
+      cg /= changed;
+      cb /= changed;
+      const far = [];
+      for (let n = 0; n < unchanged.length; n++) {
+        const i = unchanged[n];
+        if (Math.abs(suppressed[i] - cr) + Math.abs(suppressed[i + 1] - cg) + Math.abs(suppressed[i + 2] - cb) > 80) {
+          far.push(i);
+        }
+      }
+      const bgSamples = far.length ? far : unchanged;
+      const bg = { r: 255, g: 255, b: 255 };
+      if (bgSamples.length) {
+        const counts = new Map();
+        let best = 0;
+        let bestKey = (15 << 8) | (15 << 4) | 15;
+        for (let n = 0; n < bgSamples.length; n++) {
+          const i = bgSamples[n];
+          const key = ((suppressed[i] >> 4) << 8) | ((suppressed[i + 1] >> 4) << 4) | (suppressed[i + 2] >> 4);
+          const next = (counts.get(key) || 0) + 1;
+          counts.set(key, next);
+          if (next > best) {
+            best = next;
+            bestKey = key;
+          }
+        }
+        bg.r = ((bestKey >> 8) & 15) * 17;
+        bg.g = ((bestKey >> 4) & 15) * 17;
+        bg.b = (bestKey & 15) * 17;
+      }
+      const vx = cr - bg.r;
+      const vy = cg - bg.g;
+      const vz = cb - bg.b;
+      const denom = vx * vx + vy * vy + vz * vz;
+      if (denom < 64) return false;
+      let original = 0;
+      let leftover = 0;
+      for (let n = 0; n < changedAt.length; n++) {
+        const i = changedAt[n];
+        const fullT = ((full[i] - bg.r) * vx + (full[i + 1] - bg.g) * vy + (full[i + 2] - bg.b) * vz) / denom;
+        if (fullT <= 0.35) continue;
+        original += 1;
+        const supT = ((suppressed[i] - bg.r) * vx + (suppressed[i + 1] - bg.g) * vy + (suppressed[i + 2] - bg.b) * vz) / denom;
+        if (supT > 0.12) leftover += 1;
+      }
+      return original > 0 && leftover <= original * 0.08;
+    }
+
+    function verifyCandidate(ref, cand, width, height, textBounds, tile) {
+      const mean = meanAbsDiff(ref, cand);
+      let worstGraphics = 0;
+      const bounds = textBounds || [];
+      const size = tile || 32;
+      for (let y = 0; y < height; y += size) {
+        for (let x = 0; x < width; x += size) {
+          const rect = { x, y, w: Math.min(size, width - x), h: Math.min(size, height - y) };
+          if (bounds.some((bound) => rectsOverlap(rect, bound))) continue;
+          const diff = tileDiff(ref, cand, width, height, x, y, size);
+          if (diff > worstGraphics) worstGraphics = diff;
+        }
+      }
+      let worstText = 0;
+      for (let i = 0; i < bounds.length; i++) {
+        const diff = rectMeanAbsDiff(ref, cand, width, height, bounds[i]);
+        if (diff > worstText) worstText = diff;
+      }
+      return { pass: worstGraphics <= 0.25 && (bounds.length ? worstText <= 0.5 : true), mean, worstGraphics, worstText };
+    }
+
+    function luma01(r, g, b) {
+      return 0.299 * r + 0.587 * g + 0.114 * b;
+    }
+
+    function measureChangedInk(from, to, width, height, rect) {
+      const x0 = Math.max(0, Math.floor(rect.x));
+      const y0 = Math.max(0, Math.floor(rect.y));
+      const x1 = Math.min(width, Math.ceil(rect.x + rect.w));
+      const y1 = Math.min(height, Math.ceil(rect.y + rect.h));
+      let count = 0;
+      let sx = 0;
+      let sy = 0;
+      let sr = 0;
+      let sg = 0;
+      let sb = 0;
+      for (let y = y0; y < y1; y++) {
+        for (let x = x0; x < x1; x++) {
+          const i = (y * width + x) * 4;
+          const d = Math.abs(from[i] - to[i]) + Math.abs(from[i + 1] - to[i + 1]) + Math.abs(from[i + 2] - to[i + 2]);
+          if (d < 36) continue;
+          count += 1;
+          sx += x;
+          sy += y;
+          sr += from[i];
+          sg += from[i + 1];
+          sb += from[i + 2];
+        }
+      }
+      return {
+        count,
+        x: count ? sx / count : (x0 + x1) / 2,
+        y: count ? sy / count : (y0 + y1) / 2,
+        r: count ? sr / count / 255 : 1,
+        g: count ? sg / count / 255 : 1,
+        b: count ? sb / count / 255 : 1,
+      };
+    }
+
+    function textRunVerifyBound(run, scale) {
+      const s = scale || 1;
+      const fontSize = Number(run.fontSize) || 0;
+      const width = Math.max(Number(run.width) || 0, fontSize * Math.max(1, String(run.characters || '').length * 0.35));
+      return {
+        x: (Number(run.x) || 0) * s,
+        y: (Number(run.y) || 0) * s,
+        w: Math.max(8 * s, width * s),
+        h: Math.max(8 * s, fontSize * 1.4 * s),
+      };
+    }
+
+    var VERIFY_AA_PAD = 2;
+
+    function scalePageRect(bound, scale) {
+      const s = scale || 1;
+      return {
+        x: Number(bound.x) * s,
+        y: Number(bound.y) * s,
+        w: Number(bound.w != null ? bound.w : bound.width) * s,
+        h: Number(bound.h != null ? bound.h : bound.height) * s,
+      };
+    }
+
+    function padRect(rect, pad) {
+      return {
+        x: rect.x - pad,
+        y: rect.y - pad,
+        w: rect.w + pad * 2,
+        h: rect.h + pad * 2,
+      };
+    }
+
+    function pageRectFromBound(bound) {
+      return {
+        x: Number(bound.x) || 0,
+        y: Number(bound.y) || 0,
+        w: Number(bound.w != null ? bound.w : bound.width) || 0,
+        h: Number(bound.h != null ? bound.h : bound.height) || 0,
+      };
+    }
+
+    function figmaExcludeBounds(sourcePageRects, actualPageRects, figmaScale, pad) {
+      const out = [];
+      const aa = pad != null ? pad : VERIFY_AA_PAD;
+      (sourcePageRects || []).forEach((rect) => out.push(padRect(scalePageRect(rect, figmaScale), aa)));
+      (actualPageRects || []).forEach((rect) => out.push(padRect(scalePageRect(rect, figmaScale), aa)));
+      return out;
+    }
+
+    function figmaGraphicsDiff(background, candidate, width, height, excludeBounds, tile) {
+      const size = tile || 32;
+      let worst = 0;
+      for (let y = 0; y < height; y += size) {
+        for (let x = 0; x < width; x += size) {
+          const rect = { x, y, w: Math.min(size, width - x), h: Math.min(size, height - y) };
+          if ((excludeBounds || []).some((bound) => rectsOverlap(rect, bound))) continue;
+          const diff = tileDiff(background, candidate, width, height, x, y, size);
+          if (diff > worst) worst = diff;
+        }
+      }
+      return worst;
+    }
+
+    function centroidDeltaPage(removed, added, pdfScale, figmaScale) {
+      const ps = pdfScale || 1;
+      const fs = figmaScale || 1;
+      return {
+        dx: (Number(removed.x) || 0) / ps - (Number(added.x) || 0) / fs,
+        dy: (Number(removed.y) || 0) / ps - (Number(added.y) || 0) / fs,
+      };
+    }
+
+    function boundForOccurrence(actualBounds, occurrenceId) {
+      const id = String(occurrenceId || '');
+      if (!id) return null;
+      return (actualBounds || []).find((bound) => String(bound.occurrenceId || '') === id) || null;
+    }
+
+    function scorePromotedRun(run, removed, added, pdfScale, figmaScale) {
+      const fontSize = Math.max(1, Number(run.fontSize) || 0);
+      const minRemoved = Math.max(3, Math.round(fontSize * pdfScale * 0.12));
+      const minAdded = Math.max(3, Math.round(fontSize * figmaScale * 0.12));
+      const expected = normalizePdfRgb((run.color && run.color.r) || 0, (run.color && run.color.g) || 0, (run.color && run.color.b) || 0);
+      const expectedLuma = luma01(expected.r, expected.g, expected.b);
+      const addedLuma = luma01(added.r, added.g, added.b);
+      const removedLuma = luma01(removed.r, removed.g, removed.b);
+      const delta = centroidDeltaPage(removed, added, pdfScale, figmaScale);
+      let reason = '';
+      if (removed.count < minRemoved) reason = 'source glyph not removed';
+      else if (added.count < minAdded) reason = 'missing Figma text';
+      else if (Math.hypot(delta.dx, delta.dy) > fontSize * 0.9) reason = 'displaced text';
+      else if (added.count < removed.count * 0.18 || added.count > removed.count * 8) reason = 'ink amount mismatch';
+      else if (expectedLuma < 0.55 && addedLuma > 0.82) reason = 'blank or white text';
+      else if (expectedLuma < 0.55 && removedLuma < 0.55 && addedLuma - removedLuma > 0.45) reason = 'blank or white text';
+      return { reason, dx: delta.dx, dy: delta.dy, removed: removed.count, added: added.count };
+    }
+
+    function verifyImportCandidate(opts) {
+      const full = opts.full;
+      const suppressed = opts.suppressed;
+      const background = opts.background;
+      const candidate = opts.candidate;
+      const pdfWidth = opts.pdfWidth;
+      const pdfHeight = opts.pdfHeight;
+      const figWidth = opts.figWidth;
+      const figHeight = opts.figHeight;
+      const runs = opts.runs || [];
+      const actualBounds = opts.actualBounds || [];
+      const scale = opts.scale || 1;
+      const figmaScale = opts.figmaScale || scale;
+      const mean = meanAbsDiff(background, candidate);
+      let worstText = 0;
+      const runResults = [];
+      for (let i = 0; i < runs.length; i++) {
+        const run = runs[i];
+        const sourceBound = textRunVerifyBound(run, scale);
+        const matched = boundForOccurrence(actualBounds, run.occurrenceId);
+        const figmaBound = matched
+          ? scalePageRect(pageRectFromBound(matched), figmaScale)
+          : { x: 0, y: 0, w: 0, h: 0 };
+        const textDiff = matched ? rectMeanAbsDiff(background, candidate, figWidth, figHeight, figmaBound) : 1;
+        if (textDiff > worstText) worstText = textDiff;
+        const removed = measureChangedInk(full, suppressed, pdfWidth, pdfHeight, sourceBound);
+        const added = matched
+          ? measureChangedInk(candidate, background, figWidth, figHeight, figmaBound)
+          : { count: 0, x: 0, y: 0, r: 1, g: 1, b: 1 };
+        const scored = matched
+          ? scorePromotedRun(run, removed, added, scale, figmaScale)
+          : { reason: 'missing Figma text', dx: 0, dy: 0, removed: removed.count, added: 0 };
+        runResults.push({
+          occurrenceId: run.occurrenceId || '',
+          characters: String(run.characters || '').slice(0, 48),
+          reason: scored.reason,
+          dx: scored.dx,
+          dy: scored.dy,
+          removed: scored.removed,
+          added: scored.added,
+        });
+      }
+      const failedRuns = runResults.filter((row) => row.reason);
+      const acceptedIds = runResults.filter((row) => row.occurrenceId && !row.reason).map((row) => row.occurrenceId);
+      const moves = failedRuns.filter((row) => row.reason === 'displaced text').map((row) => ({
+        occurrenceId: row.occurrenceId,
+        dx: row.dx,
+        dy: row.dy,
+      }));
+      const reason = failedRuns.length
+        ? failedRuns[0].reason + ' · "' + failedRuns[0].characters + '"'
+        : '';
+      return {
+        pass: failedRuns.length === 0,
+        mean,
+        worstGraphics: 0,
+        worstText,
+        failedRuns,
+        runResults,
+        acceptedIds,
+        rejected: failedRuns,
+        moves,
+        reason,
+      };
+    }
+
+    function normalizePdfRgb(r, g, b) {
+      let nr = Number(r);
+      let ng = Number(g);
+      let nb = Number(b);
+      if (!isFinite(nr) || !isFinite(ng) || !isFinite(nb)) return { r: 0, g: 0, b: 0 };
+      if (nr > 1 || ng > 1 || nb > 1) {
+        nr /= 255;
+        ng /= 255;
+        nb /= 255;
+      }
+      return {
+        r: Math.max(0, Math.min(1, nr)),
+        g: Math.max(0, Math.min(1, ng)),
+        b: Math.max(0, Math.min(1, nb)),
+      };
+    }
+
+    function rgbCss(r, g, b) {
+      const color = normalizePdfRgb(r, g, b);
+      const hex = (n) => Math.max(0, Math.min(255, Math.round(n * 255))).toString(16).padStart(2, '0');
+      return '#' + hex(color.r) + hex(color.g) + hex(color.b);
+    }
+
+    function inferTextColors(opColors, itemCount) {
+      if (!itemCount) return [];
+      if (opColors.length === itemCount) return opColors;
+      if (opColors.length === 0) return Array.from({ length: itemCount }, () => ({ r: 0, g: 0, b: 0 }));
+      const first = opColors[0];
+      if (opColors.every((color) => color.r === first.r && color.g === first.g && color.b === first.b)) {
+        return Array.from({ length: itemCount }, () => first);
+      }
+      return Array.from({ length: itemCount }, (_, index) => opColors[Math.min(index, opColors.length - 1)]);
+    }
+
+    function gateTextGeometry(layout, viewport) {
+      if (!layout || !(layout.fontSize >= 3)) return false;
+      const maxSize = Math.min(viewport.width, viewport.height) * 0.22;
+      if (layout.fontSize > maxSize) return false;
+      if (Math.abs(layout.angle) > 0.2) return false;
+      if (layout.x > viewport.width - 2 || layout.y > viewport.height - 2) return false;
+      if (layout.y + layout.fontSize < 2) return false;
+      return layout.x + layout.fontSize >= 2;
+    }
+
+    function suppressionWorked(mean, tile) {
+      return mean >= 0.002 && tile >= 0.02;
+    }
+
+    function chooseEditableMode(signals) {
+      const promoted = signals.gatedCount || 0;
+      const leftover = signals.unpromotedVisibleCount || 0;
+      if (signals.textRenderModeNonFill) {
+        return { mode: 'raster', reason: 'text clip or stroke' };
+      }
+      if (promoted > 0 && (signals.colorsUnusable || signals.paintAfterText)) {
+        return { mode: 'raster', reason: signals.paintAfterText ? 'text is not topmost' : 'text failed gates' };
+      }
+      const graphicsCount = (signals.simplePathCount || 0) + (signals.imageCount || 0);
+      const svgOk = !signals.complex && !signals.clipUsed && !signals.complexPath && leftover === 0 && !signals.fontTextUnpromoted && (signals.pathSegs || 0) <= 8000 && (signals.imageCount || 0) <= 40 && (graphicsCount > 0 || promoted > 0);
+      if (svgOk) return { mode: 'svg', reason: graphicsCount ? 'simple paths and images' : 'gated text' };
+      if (promoted > 0 && signals.suppressionOk) return { mode: 'text', reason: leftover ? 'gated text over page image' : 'gated text over suppressed page image' };
+      return { mode: 'raster', reason: 'page image fallback' };
+    }
+
+    const EDITABLE_UNSAFE_TEXT_LABEL = 'Preserved as an image because this page\'s text could not be safely separated from its artwork.';
+
+    function editableRasterKind(decodedCount, textOpCount) {
+      if ((decodedCount || 0) > 0 || (textOpCount || 0) > 0) return 'unsafe-text';
+      return 'no-text';
+    }
+
+    const PDF_PATH_OPS = { moveTo: 13, lineTo: 14, curveTo: 15, curveTo2: 16, curveTo3: 17, closePath: 18, rectangle: 19 };
+
+    function pathDFromConstruct(ops, coords, matrix) {
+      let d = '';
+      let j = 0;
+      let x = 0;
+      let y = 0;
+      const pt = (px, py) => {
+        const p = pdfApply(matrix, px, py);
+        return (Math.round(p.x * 100) / 100) + ' ' + (Math.round(p.y * 100) / 100);
+      };
+      for (let i = 0; i < ops.length; i++) {
+        const op = ops[i] | 0;
+        if (op === PDF_PATH_OPS.rectangle) {
+          const rx = coords[j++];
+          const ry = coords[j++];
+          const w = coords[j++];
+          const h = coords[j++];
+          d += 'M' + pt(rx, ry) + 'L' + pt(rx + w, ry) + 'L' + pt(rx + w, ry + h) + 'L' + pt(rx, ry + h) + 'Z';
+          x = rx;
+          y = ry;
+        } else if (op === PDF_PATH_OPS.moveTo) {
+          x = coords[j++];
+          y = coords[j++];
+          d += 'M' + pt(x, y);
+        } else if (op === PDF_PATH_OPS.lineTo) {
+          x = coords[j++];
+          y = coords[j++];
+          d += 'L' + pt(x, y);
+        } else if (op === PDF_PATH_OPS.curveTo) {
+          const x1 = coords[j++];
+          const y1 = coords[j++];
+          const x2 = coords[j++];
+          const y2 = coords[j++];
+          x = coords[j++];
+          y = coords[j++];
+          d += 'C' + pt(x1, y1) + ' ' + pt(x2, y2) + ' ' + pt(x, y);
+        } else if (op === PDF_PATH_OPS.curveTo2) {
+          const x2 = coords[j++];
+          const y2 = coords[j++];
+          const x3 = coords[j++];
+          const y3 = coords[j++];
+          d += 'C' + pt(x, y) + ' ' + pt(x2, y2) + ' ' + pt(x3, y3);
+          x = x3;
+          y = y3;
+        } else if (op === PDF_PATH_OPS.curveTo3) {
+          const x1 = coords[j++];
+          const y1 = coords[j++];
+          x = coords[j++];
+          y = coords[j++];
+          d += 'C' + pt(x1, y1) + ' ' + pt(x, y) + ' ' + pt(x, y);
+        } else if (op === PDF_PATH_OPS.closePath) {
+          d += 'Z';
+        } else {
+          return null;
+        }
+      }
+      return d;
+    }
+
+    function buildSvgMarkup(width, height, nodes) {
+      let body = '';
+      for (const node of nodes) {
+        if (node.type === 'path') {
+          const widthAttr = node.stroke ? ' stroke-width="' + (node.strokeWidth || 1) + '"' : '';
+          const rule = node.evenodd ? ' fill-rule="evenodd"' : '';
+          body += '<path d="' + node.d + '" fill="' + (node.fill || 'none') + '" stroke="' + (node.stroke || 'none') + '"' + widthAttr + rule + '/>';
+        } else if (node.type === 'image' && node.imageBase64) {
+          body += '<image href="data:image/png;base64,' + node.imageBase64 + '" x="' + node.x + '" y="' + node.y + '" width="' + node.w + '" height="' + node.h + '"/>';
+        }
+      }
+      return '<svg xmlns="http://www.w3.org/2000/svg" width="' + width + '" height="' + height + '" viewBox="0 0 ' + width + ' ' + height + '">' + body + '</svg>';
+    }
+
+    function cmykToRgb(c, m, y, k) {
+      return {
+        r: 1 - Math.min(1, c * (1 - k) + k),
+        g: 1 - Math.min(1, m * (1 - k) + k),
+        b: 1 - Math.min(1, y * (1 - k) + k),
+      };
+    }
+
+    function waitForPdfObj(store, name, timeoutMs) {
+      return new Promise(resolve => {
+        let done = false;
+        const finish = value => {
+          if (done) return;
+          done = true;
+          resolve(value || null);
+        };
+        try {
+          const value = store.get(name, finish);
+          if (value) finish(value);
+        } catch (_error) {
+          finish(null);
+          return;
+        }
+        setTimeout(() => finish(null), timeoutMs);
+      });
+    }
+
+    function bytesToBase64(bytes) {
+      let binary = '';
+      const chunk = 0x8000;
+      for (let i = 0; i < bytes.length; i += chunk) {
+        binary += String.fromCharCode.apply(null, bytes.subarray(i, i + chunk));
+      }
+      return btoa(binary);
+    }
+
+    async function pdfImageObjToBase64(img) {
+      if (!img) return null;
+      const canvas = document.createElement('canvas');
+      const context = canvas.getContext('2d');
+      if (!context) return null;
+
+      if (img.bitmap) {
+        canvas.width = img.bitmap.width;
+        canvas.height = img.bitmap.height;
+        context.drawImage(img.bitmap, 0, 0);
+        return dataUrlToBase64(canvas.toDataURL('image/png'));
+      }
+
+      const raw = img.data;
+      const bytes = raw && ArrayBuffer.isView(raw)
+        ? new Uint8Array(raw.buffer, raw.byteOffset, raw.byteLength)
+        : raw;
+      if (bytes && bytes.length >= 2 && bytes[0] === 0xFF && bytes[1] === 0xD8 && !img.kind) {
+        return bytesToBase64(bytes);
+      }
+
+      const width = img.width | 0;
+      const height = img.height | 0;
+      if (width < 1 || height < 1 || !raw) return null;
+      canvas.width = width;
+      canvas.height = height;
+      const imageData = context.createImageData(width, height);
+      const out = imageData.data;
+      const kind = img.kind;
+      if (kind === 3 || raw.length === width * height * 4) {
+        out.set(raw);
+      } else if (kind === 2 || raw.length === width * height * 3) {
+        let s = 0;
+        for (let d = 0; d < out.length; d += 4) {
+          out[d] = raw[s];
+          out[d + 1] = raw[s + 1];
+          out[d + 2] = raw[s + 2];
+          out[d + 3] = 255;
+          s += 3;
+        }
+      } else if (kind === 1 || raw.length === width * height) {
+        let s = 0;
+        for (let d = 0; d < out.length; d += 4) {
+          const v = raw[s++];
+          out[d] = out[d + 1] = out[d + 2] = v;
+          out[d + 3] = 255;
+        }
+      } else {
+        return null;
+      }
+      context.putImageData(imageData, 0, 0);
+      return dataUrlToBase64(canvas.toDataURL('image/png'));
+    }
+
+    async function resolvePdfImage(page, nameOrObj) {
+      if (nameOrObj && typeof nameOrObj === 'object' && (nameOrObj.width || nameOrObj.bitmap || nameOrObj.data)) {
+        return nameOrObj;
+      }
+      if (typeof nameOrObj !== 'string' || !nameOrObj) return null;
+      return await waitForPdfObj(page.objs, nameOrObj, 4000)
+        || await waitForPdfObj(page.commonObjs, nameOrObj, 1000);
+    }
+
+    function importRenderScale(page, qualityPreset) {
+      const baseViewport = page.getViewport({ scale: 1 });
+      return importRenderScaleForSize(baseViewport.width, baseViewport.height, qualityPreset.scale, IMPORT_RENDER_MAX_PIXELS, FIGMA_IMAGE_MAX_EDGE);
+    }
+
+    function analyzePdfPaint(ops, viewport, OPS) {
+      let ctm = PDF_MATRIX_IDENTITY.slice();
+      const stack = [];
+      let fill = { r: 0, g: 0, b: 0 };
+      let stroke = { r: 0, g: 0, b: 0 };
+      let lineWidth = 1;
+      let currentPath = null;
+      let pathSegs = 0;
+      let simplePathCount = 0;
+      let imageCount = 0;
+      let textOpCount = 0;
+      let complex = false;
+      let clipUsed = false;
+      let complexPath = false;
+      let textRenderModeNonFill = false;
+      let dash = false;
+      let lastPathMinMax = null;
+      const laterRects = [];
+      const draws = [];
+      const textOpColors = [];
+      const textOps = {};
+      textOps[OPS.showText] = true;
+      textOps[OPS.showSpacedText] = true;
+      textOps[OPS.nextLineShowText] = true;
+      textOps[OPS.nextLineSetSpacingShowText] = true;
+      if (OPS.showType3Text) textOps[OPS.showType3Text] = true;
+      const imageOps = {};
+      imageOps[OPS.paintImageXObject] = true;
+      imageOps[OPS.paintInlineImageXObject] = true;
+      const complexOps = {};
+      [
+        OPS.paintImageXObjectRepeat,
+        OPS.paintImageMaskXObject,
+        OPS.paintImageMaskXObjectGroup,
+        OPS.paintImageMaskXObjectRepeat,
+        OPS.paintInlineImageXObjectGroup,
+        OPS.paintSolidColorImageMask,
+        OPS.shadingFill,
+        OPS.beginGroup,
+        OPS.setFillColorN,
+        OPS.setStrokeColorN,
+      ].forEach((id) => { if (id) complexOps[id] = true; });
+
+      function snapshot() {
+        return { ctm: ctm.slice(), fill, stroke, lineWidth };
+      }
+      function restore(prev) {
+        if (!prev) {
+          ctm = PDF_MATRIX_IDENTITY.slice();
+          return;
+        }
+        ctm = prev.ctm;
+        fill = prev.fill;
+        stroke = prev.stroke;
+        lineWidth = prev.lineWidth;
+      }
+      function pageRectFromUserBox(minMax) {
+        if (!minMax || minMax.length < 4) {
+          return { x: 0, y: 0, w: viewport.width, h: viewport.height };
+        }
+        const matrix = pdfMultiply(viewport.transform, ctm);
+        const corners = [
+          pdfApply(matrix, minMax[0], minMax[1]),
+          pdfApply(matrix, minMax[2], minMax[1]),
+          pdfApply(matrix, minMax[0], minMax[3]),
+          pdfApply(matrix, minMax[2], minMax[3]),
+        ];
+        const xs = corners.map((point) => point.x);
+        const ys = corners.map((point) => point.y);
+        const x = Math.min.apply(null, xs);
+        const y = Math.min.apply(null, ys);
+        return { x, y, w: Math.max.apply(null, xs) - x, h: Math.max.apply(null, ys) - y };
+      }
+      function markCover(rect, kind) {
+        if (!rect || textOpCount === 0) return;
+        laterRects.push({
+          x: rect.x,
+          y: rect.y,
+          w: rect.w,
+          h: rect.h,
+          afterSeq: textOpCount,
+          kind: kind || 'path-fill',
+        });
+      }
+
+      for (let i = 0; i < ops.fnArray.length; i++) {
+        const fn = ops.fnArray[i];
+        const args = ops.argsArray[i] || [];
+        if (fn === OPS.save) {
+          stack.push(snapshot());
+        } else if (fn === OPS.restore) {
+          restore(stack.pop());
+        } else if (fn === OPS.transform) {
+          ctm = pdfMultiply(ctm, args);
+        } else if (fn === OPS.paintFormXObjectBegin) {
+          stack.push(snapshot());
+          if (Array.isArray(args[0]) && args[0].length === 6) ctm = pdfMultiply(ctm, args[0]);
+        } else if (fn === OPS.paintFormXObjectEnd) {
+          restore(stack.pop());
+        } else if (fn === OPS.setFillRGBColor) {
+          fill = normalizePdfRgb(args[0], args[1], args[2]);
+        } else if (fn === OPS.setStrokeRGBColor) {
+          stroke = normalizePdfRgb(args[0], args[1], args[2]);
+        } else if (fn === OPS.setFillGray) {
+          fill = { r: args[0], g: args[0], b: args[0] };
+        } else if (fn === OPS.setStrokeGray) {
+          stroke = { r: args[0], g: args[0], b: args[0] };
+        } else if (fn === OPS.setFillCMYKColor) {
+          fill = cmykToRgb(args[0], args[1], args[2], args[3]);
+        } else if (fn === OPS.setStrokeCMYKColor) {
+          stroke = cmykToRgb(args[0], args[1], args[2], args[3]);
+        } else if (fn === OPS.setLineWidth) {
+          lineWidth = args[0];
+        } else if (fn === OPS.setDash && args[0] && args[0].length) {
+          dash = true;
+          complex = true;
+        } else if (fn === OPS.setGState) {
+          const states = Array.isArray(args[0]) && Array.isArray(args[0][0]) ? args[0] : args;
+          for (let s = 0; s < states.length; s++) {
+            const key = states[s] && states[s][0];
+            const value = states[s] && states[s][1];
+            if (key === 'SMask' && value) complex = true;
+            if (key === 'BM' && value && value !== 'Normal' && value !== 'normal') complex = true;
+            if ((key === 'CA' || key === 'ca') && typeof value === 'number' && value < 0.999) complex = true;
+          }
+        } else if (fn === OPS.setTextRenderingMode && args[0] >= 4) {
+          textRenderModeNonFill = true;
+        } else if (fn === OPS.constructPath) {
+          const pathOps = args[0] || [];
+          const coords = args[1] || [];
+          lastPathMinMax = args[2] || null;
+          pathSegs += pathOps.length;
+          currentPath = args[2] || coords.length > 4
+            ? pathDFromConstruct(pathOps, coords, pdfMultiply(viewport.transform, ctm))
+            : null;
+          if (!currentPath) complexPath = true;
+        } else if (fn === OPS.clip || fn === OPS.eoClip) {
+          clipUsed = true;
+          currentPath = null;
+        } else if (fn === OPS.endPath) {
+          currentPath = null;
+        } else if (
+          fn === OPS.fill || fn === OPS.eoFill || fn === OPS.stroke || fn === OPS.closeStroke
+          || fn === OPS.fillStroke || fn === OPS.eoFillStroke || fn === OPS.closeFillStroke || fn === OPS.closeEOFillStroke
+        ) {
+          const doStroke = fn === OPS.stroke || fn === OPS.closeStroke || fn === OPS.fillStroke
+            || fn === OPS.eoFillStroke || fn === OPS.closeFillStroke || fn === OPS.closeEOFillStroke;
+          const doFill = fn !== OPS.stroke && fn !== OPS.closeStroke;
+          if (lastPathMinMax) {
+            markCover(pageRectFromUserBox(lastPathMinMax), doFill ? 'path-fill' : 'path-stroke');
+          }
+          if (currentPath) {
+            const matrix = pdfMultiply(viewport.transform, ctm);
+            draws.push({
+              type: 'path',
+              d: currentPath,
+              fill: doFill ? rgbCss(fill.r, fill.g, fill.b) : null,
+              stroke: doStroke && !dash ? rgbCss(stroke.r, stroke.g, stroke.b) : null,
+              strokeWidth: Math.max(0.25, (lineWidth || 1) * Math.hypot(matrix[0], matrix[1])),
+              evenodd: fn === OPS.eoFill || fn === OPS.eoFillStroke || fn === OPS.closeEOFillStroke,
+            });
+            simplePathCount += 1;
+          } else {
+            complexPath = true;
+          }
+          currentPath = null;
+        } else if (imageOps[fn]) {
+          const placement = imagePlacementFromCtm(ctm, viewport);
+          markCover({ x: placement.x, y: placement.y, w: placement.w, h: placement.h }, 'image');
+          placement.insideRatio = clipInsidePage(placement, viewport);
+          if (placement.width >= 1 && placement.height >= 1 && placement.insideRatio >= 0.15 && !placement.sheared) {
+            imageCount += 1;
+            draws.push({ type: 'image', key: args[0], x: placement.x, y: placement.y, w: placement.w, h: placement.h });
+          }
+        } else if (complexOps[fn]) {
+          complex = true;
+          if (fn === OPS.shadingFill && lastPathMinMax) {
+            markCover(pageRectFromUserBox(lastPathMinMax), 'shading');
+          }
+        } else if (textOps[fn]) {
+          textOpCount += 1;
+          textOpColors.push(fill);
+        }
+      }
+
+      return {
+        complex,
+        clipUsed,
+        complexPath,
+        simplePathCount,
+        pathSegs,
+        imageCount,
+        textOpCount,
+        textRenderModeNonFill,
+        draws,
+        textOpColors,
+        laterRects,
+      };
+    }
+
+    async function renderPdfPageCanvas(page, scale, textFilter) {
+      const hook = requirePdfPilotEngine();
+      const viewport = page.getViewport({ scale });
+      const canvas = document.createElement('canvas');
+      const context = canvas.getContext('2d', { willReadFrequently: true });
+      if (!context) throw new Error('Canvas rendering is not available in this Figma plugin window.');
+      canvas.width = Math.max(1, Math.ceil(viewport.width));
+      canvas.height = Math.max(1, Math.ceil(viewport.height));
+      context.fillStyle = '#ffffff';
+      context.fillRect(0, 0, canvas.width, canvas.height);
+      hook.reset();
+      if (textFilter && textFilter.collect) hook.collect = true;
+      if (textFilter && textFilter.suppressIds) {
+        hook.suppressIds = textFilter.suppressIds instanceof Set
+          ? textFilter.suppressIds
+          : new Set(textFilter.suppressIds);
+      }
+      activeImportRenderTask = page.render({ canvasContext: context, viewport });
+      try {
+        await activeImportRenderTask.promise;
+      } catch (error) {
+        if (importCancelRequested) throw new Error('Import canceled.');
+        throw error;
+      } finally {
+        activeImportRenderTask = null;
+      }
+      const stats = {
+        fill: 0,
+        stroke: 0,
+        suppress: hook.suppressIds ? hook.suppressIds.size : 0,
+        leftover: 0,
+        miss: 0,
+        n1: 0,
+        samples: [],
+        hookHits: hook.hookHits,
+        hookRevision: hook.revision,
+        engine: hook.version,
+        occurrences: hook.occurrences.slice(),
+      };
+      hook.collect = false;
+      hook.suppressIds = null;
+      return { canvas, context, viewport, scale, stats };
+    }
+
+    async function renderPdfPageToFallback(page, pageNumber, qualityPreset) {
+      const scale = importRenderScale(page, qualityPreset);
+      const rendered = await renderPdfPageCanvas(page, scale, { collect: true });
+      const baseViewport = page.getViewport({ scale: 1 });
+      return {
+        pageNumber,
+        width: baseViewport.width,
+        height: baseViewport.height,
+        imageBase64: dataUrlToBase64(rendered.canvas.toDataURL(qualityPreset.mimeType, qualityPreset.encoderQuality)),
+        stats: rendered.stats,
+      };
+    }
+
+    function formatEditableReason(decision, paint, counts, suppressionOk) {
+      return [
+        decision.mode,
+        decision.reason,
+        'ops=' + paint.textOpCount,
+        'dec=' + counts.decoded,
+        'unc=' + counts.uncertain,
+        'gated=' + counts.gated,
+        'keep=' + counts.leftover,
+        paint.complex ? 'complex' : '',
+        paint.clipUsed ? 'clip' : '',
+        paint.complexPath ? 'badpath' : '',
+        paint.textRenderModeNonFill ? 'trmode' : '',
+        'seg=' + paint.pathSegs,
+        'img=' + paint.imageCount,
+        suppressionOk ? 'suppress' : 'nosuppress',
+        'fonts=' + availableImportFonts.length,
+      ].filter(Boolean).join(' · ');
+    }
+
+    function rasterPagePayload(pageNumber, viewport, fallback, reason, rasterKind) {
+      const kind = rasterKind || 'no-text';
+      return {
+        pageNumber,
+        width: viewport.width,
+        height: viewport.height,
+        mode: 'raster',
+        elements: [],
+        fallbackImageBase64: fallback.imageBase64,
+        backgroundImageBase64: null,
+        svg: null,
+        referencePngBase64: null,
+        verifyScale: 1,
+        reason: reason || 'page image fallback',
+        userLabel: kind === 'unsafe-text' ? EDITABLE_UNSAFE_TEXT_LABEL : '',
+        rasterKind: kind,
+      };
+    }
+
+    function importLog(message, payload) {
+      parent.postMessage({ pluginMessage: { type: 'import-pdf-log', message: message, payload: payload } }, '*');
+    }
+
+    function fontChoiceKey(family, style) {
+      return family + '\n' + (style || 'Regular');
+    }
+
+    function fontMetaFromPdfjs(font) {
+      if (!font || typeof font !== 'object') return null;
+      const inner = font.font && typeof font.font === 'object' ? font.font : font;
+      return {
+        isType3Font: !!(inner.isType3Font || inner.type === 'Type3'),
+        isInvalidPDFjsFont: !!inner.isInvalidPDFjsFont,
+        composite: inner.composite === true || /Type0|CID/i.test(String(inner.type || '')),
+        encoding: inner.cidEncoding || (typeof inner.encoding === 'string' ? inner.encoding : '') || '',
+        type: inner.type || '',
+        name: inner.name || '',
+      };
+    }
+
+    function pdfjsFontPostScriptName(font, style, item) {
+      const meta = fontMetaFromPdfjs(font);
+      return (meta && meta.name)
+        || (style && style.fontFamily)
+        || (item && item.fontName)
+        || '';
+    }
+
+    function mergedFontMeta(parsed, pdfjsFont) {
+      const fromJs = fontMetaFromPdfjs(pdfjsFont) || {};
+      const fromDict = importFontDicts.get(String(parsed.family || '').toLowerCase()) || {};
+      return {
+        isType3Font: !!(fromJs.isType3Font || fromDict.isType3Font),
+        isInvalidPDFjsFont: !!fromJs.isInvalidPDFjsFont,
+        composite: !!(fromJs.composite || fromDict.composite),
+        encoding: fromDict.encoding || fromJs.encoding || '',
+        hasToUnicode: fromDict.hasToUnicode,
+        type: fromJs.type || fromDict.subtype || '',
+        subtype: fromDict.subtype || '',
+      };
+    }
+
+    function resolveImportTextFont(parsed, sample, run) {
+      const key = fontChoiceKey(parsed.family, parsed.style);
+      const choice = importFontChoices[key];
+      if (choice) {
+        if (choice.keep || !choice.family) return null;
+        return { family: choice.family, style: choice.style || parsed.style };
+      }
+      const desc = pdfFontDescriptor(parsed, sample || '');
+      const resolved = resolvePdfFont(desc, availableImportFonts, {
+        kind: pdfContentKind(desc, run || { characters: sample, fontSize: parsed.fontSize }),
+        override: importFontOverrides[key],
+      });
+      if (!resolved.family || resolved.confidence === 'low') return null;
+      return { family: resolved.family, style: resolved.style };
+    }
+
+    async function loadPageTextItems(page, viewport) {
+      const content = await page.getTextContent();
+      const styles = content.styles || {};
+      const items = (content.items || []).filter((item) => item && String(item.str || '').trim());
+      const fontCache = new Map();
+      const rows = [];
+      for (let i = 0; i < items.length; i++) {
+        const item = items[i];
+        if (item.dir === 'ttb') continue;
+        const style = styles[item.fontName] || {};
+        if (!fontCache.has(item.fontName)) {
+          fontCache.set(item.fontName, await waitForPdfObj(page.commonObjs, item.fontName, 2000));
+        }
+        const pdfjsFont = fontCache.get(item.fontName);
+        const parsed = parsePdfFontIdentity(
+          pdfjsFontPostScriptName(pdfjsFont, style, item),
+          pdfjsFontBytes(pdfjsFont)
+        );
+        rows.push({
+          item,
+          parsed,
+          layout: pdfTextLayout(item, viewport, style),
+          reliable: isReliableTextExtract(item.str, mergedFontMeta(parsed, pdfjsFont)),
+          embeddedBytes: parsed.bytes,
+        });
+      }
+      return rows;
+    }
+
+    async function extractEditablePdfPage(page, pageNumber, pdfjs, qualityPreset) {
+      const viewport = page.getViewport({ scale: 1 });
+      const fallback = await renderPdfPageToFallback(page, pageNumber, qualityPreset);
+      const verifyScale = Math.min(2, importRenderScale(page, qualityPreset));
+      let paint;
+      try {
+        paint = analyzePdfPaint(await page.getOperatorList(), viewport, pdfjs.OPS);
+      } catch (_error) {
+        importLog('page ' + pageNumber, { mode: 'raster', reason: 'unsupported paint', hook: fallback.stats && fallback.stats.hookRevision, hookHits: fallback.stats && fallback.stats.hookHits });
+        return rasterPagePayload(pageNumber, viewport, fallback, 'unsupported paint');
+      }
+
+      const leftoverBoxes = [];
+      let decodedCount = 0;
+      let uncertainCount = 0;
+      let leftoverCount = 0;
+      let colorsUnusable = false;
+      const skipReasons = [];
+      const unmatched = [];
+      const pdfFonts = [];
+      const fragments = [];
+      try {
+        if (paint.textOpCount > 0) {
+          const rows = await loadPageTextItems(page, viewport);
+          const reliable = rows.filter((row) => row.reliable);
+          decodedCount = reliable.length;
+          uncertainCount = rows.length - reliable.length;
+          if (uncertainCount) skipReasons.push(uncertainCount + ' uncertain extracts stayed in the page image');
+          rows.forEach((row) => {
+            const label = row.parsed.family + ' ' + row.parsed.style + (row.parsed.bytes ? ' · ' + row.parsed.bytes + 'b' : '');
+            if (pdfFonts.indexOf(label) < 0) pdfFonts.push(label);
+            fragments.push({
+              characters: row.item.str,
+              str: row.item.str,
+              layout: row.layout,
+              parsed: row.parsed,
+              reliable: row.reliable,
+            });
+            if (!row.reliable) leftoverBoxes.push(textRunPaintBox(row.layout));
+          });
+        }
+      } catch (_error) {
+        decodedCount = 0;
+        leftoverCount = 0;
+      }
+
+      const collectScale = importRenderScale(page, qualityPreset);
+      if (paint.textOpCount > 0 && !(fallback.stats && fallback.stats.hookHits > 0)) {
+        throw new Error('PDF Pilot renderer hook did not execute during page ' + pageNumber + ' render.');
+      }
+
+      const collected = (fallback.stats && fallback.stats.occurrences) || [];
+      const occMatches = matchOccurrencesToFragments(collected, fragments, collectScale);
+      const usedFrags = [];
+      occMatches.forEach((match) => {
+        match.fragments.forEach((frag) => { usedFrags.push(frag); });
+      });
+      fragments.forEach((frag) => {
+        if (!frag.reliable) return;
+        if (usedFrags.indexOf(frag) >= 0) return;
+        leftoverCount += 1;
+        leftoverBoxes.push(textRunPaintBox(frag.layout));
+      });
+      if (fragments.filter((frag) => frag.reliable).length - usedFrags.length > 0) {
+        skipReasons.push((fragments.filter((frag) => frag.reliable).length - usedFrags.length) + ' fragments had no renderer occurrence');
+      }
+
+      const candidateRuns = [];
+      occMatches.forEach((match) => {
+        const occ = match.occ;
+        const frags = match.fragments;
+        const first = frags[0];
+        const label = first.parsed.family + ' ' + first.parsed.style + (first.parsed.bytes ? ' · ' + first.parsed.bytes + 'b' : '');
+        const font = resolveImportTextFont(first.parsed, first.item && first.item.str, { characters: occ.unicode, fontSize: first.layout.fontSize });
+        const x = Math.min.apply(null, frags.map((frag) => frag.layout.x));
+        const y = Math.min.apply(null, frags.map((frag) => frag.layout.y));
+        const right = Math.max.apply(null, frags.map((frag) => frag.layout.x + frag.layout.width));
+        const layout = {
+          x,
+          y,
+          baseline: first.layout.baseline,
+          width: Math.max(1, right - x),
+          fontSize: first.layout.fontSize,
+          angle: first.layout.angle,
+        };
+        if (!gateTextGeometry(layout, viewport)) {
+          leftoverCount += 1;
+          leftoverBoxes.push(textRunPaintBox(layout));
+          return;
+        }
+        if (!font) {
+          leftoverCount += 1;
+          leftoverBoxes.push(textRunPaintBox(layout));
+          if (unmatched.indexOf(label) < 0) {
+            unmatched.push(label);
+            skipReasons.push(label + ' kept original appearance');
+          }
+          return;
+        }
+        const fill = occ.fill || paint.textOpColors[0] || { r: 0, g: 0, b: 0 };
+        candidateRuns.push({
+          characters: occ.unicode,
+          x,
+          y,
+          baseline: layout.baseline,
+          width: layout.width,
+          fontSize: layout.fontSize,
+          fontFamily: font.family,
+          fontStyle: font.style,
+          angle: layout.angle,
+          color: normalizePdfRgb(fill.r, fill.g, fill.b),
+          occurrenceId: occ.id,
+        });
+      });
+
+      let textRuns = candidateRuns.slice();
+      const matched = occMatches;
+
+      const coveredIdx = coveredTextRunIndices(
+        textRuns.map((run) => Object.assign(textRunPaintBox(run), { seq: occurrenceSeq(run.occurrenceId) })),
+        paint.laterRects || []
+      );
+      if (coveredIdx.length) skipReasons.push(coveredIdx.length + ' covered runs kept in the page image');
+      const coveredSet = {};
+      coveredIdx.forEach((i) => { coveredSet[i] = true; });
+      textRuns = textRuns.filter((run, index) => {
+        if (!coveredSet[index]) return true;
+        leftoverCount += 1;
+        leftoverBoxes.push(textRunPaintBox(run));
+        return false;
+      });
+
+      let gatedCount = textRuns.length;
+      const baseSignals = {
+        complex: paint.complex,
+        textRenderModeNonFill: paint.textRenderModeNonFill,
+        visibleTextCount: decodedCount,
+        gatedCount,
+        unpromotedVisibleCount: leftoverCount + uncertainCount,
+        colorsUnusable,
+        paintAfterText: false,
+        clipUsed: paint.clipUsed,
+        complexPath: paint.complexPath,
+        simplePathCount: paint.simplePathCount,
+        pathSegs: paint.pathSegs,
+        imageCount: paint.imageCount,
+        fontTextUnpromoted: paint.textOpCount > 0 && gatedCount === 0,
+        suppressionOk: false,
+      };
+      const firstChoice = chooseEditableMode(baseSignals);
+      const maybeText = gatedCount > 0 && !colorsUnusable && !paint.textRenderModeNonFill;
+      let suppressionOk = false;
+      let suppressionStats = null;
+      let fullAtVerify = null;
+      let suppressedPngBase64 = null;
+      if ((firstChoice.mode === 'raster' || leftoverCount + uncertainCount > 0) && maybeText) {
+        const ids = new Set(textRuns.map((run) => run.occurrenceId));
+        fullAtVerify = await renderPdfPageCanvas(page, verifyScale, { collect: true });
+        if (paint.textOpCount > 0 && fullAtVerify.stats.hookHits < 1) {
+          throw new Error('PDF Pilot renderer hook did not execute during page ' + pageNumber + ' verify render.');
+        }
+        const suppressedAtVerify = await renderPdfPageCanvas(page, verifyScale, { suppressIds: ids });
+        suppressedPngBase64 = dataUrlToBase64(suppressedAtVerify.canvas.toDataURL('image/png'));
+        const fullData = fullAtVerify.context.getImageData(0, 0, fullAtVerify.canvas.width, fullAtVerify.canvas.height).data;
+        const suppressedData = suppressedAtVerify.context.getImageData(0, 0, suppressedAtVerify.canvas.width, suppressedAtVerify.canvas.height).data;
+        const kept = [];
+        textRuns.forEach((run) => {
+          if (promotedRunRemoved(fullData, suppressedData, fullAtVerify.canvas.width, fullAtVerify.canvas.height, run, verifyScale)) {
+            kept.push(run);
+          } else {
+            leftoverCount += 1;
+            leftoverBoxes.push(textRunPaintBox(run));
+          }
+        });
+        if (kept.length !== textRuns.length) {
+          skipReasons.push((textRuns.length - kept.length) + ' runs still painted after renderer suppress');
+        }
+        textRuns = kept;
+        gatedCount = textRuns.length;
+        baseSignals.gatedCount = gatedCount;
+        baseSignals.unpromotedVisibleCount = leftoverCount + uncertainCount;
+        suppressionOk = gatedCount > 0 && kept.length > 0;
+        suppressionStats = Object.assign({
+          expected: ids.size,
+          removed: kept.length,
+        }, suppressedAtVerify.stats);
+        if (!suppressionOk) skipReasons.push('could not hide promoted glyphs without also dropping leftover text');
+      }
+
+      const decision = chooseEditableMode({ ...baseSignals, suppressionOk });
+      const counts = { decoded: decodedCount, uncertain: uncertainCount, gated: gatedCount, leftover: leftoverCount };
+      const reason = formatEditableReason(decision, paint, counts, suppressionOk);
+      const rasterKind = editableRasterKind(decodedCount, paint.textOpCount);
+      importLog('page ' + pageNumber, {
+        stage: 'extracted',
+        mode: decision.mode,
+        reason: decision.reason,
+        userLabel: decision.mode === 'raster' && rasterKind === 'unsafe-text' ? EDITABLE_UNSAFE_TEXT_LABEL : '',
+        decoded: decodedCount,
+        uncertain: uncertainCount,
+        gated: gatedCount,
+        leftover: leftoverCount,
+        covered: coveredIdx.length,
+        complex: paint.complex,
+        clip: paint.clipUsed,
+        path: paint.complexPath,
+        images: paint.imageCount,
+        segs: paint.pathSegs,
+        trmode: paint.textRenderModeNonFill,
+        suppress: suppressionOk,
+        engine: fallback.stats && fallback.stats.engine,
+        hook: fallback.stats && fallback.stats.hookRevision,
+        hookHits: fallback.stats && fallback.stats.hookHits,
+        occ: collected.length,
+        matched: matched.length,
+        canvas: {
+          hookHits: fallback.stats && fallback.stats.hookHits,
+          hookRevision: fallback.stats && fallback.stats.hookRevision,
+          engine: fallback.stats && fallback.stats.engine,
+          suppress: fallback.stats && fallback.stats.suppress,
+        },
+        hide: suppressionStats && {
+          expected: suppressionStats.expected,
+          removed: suppressionStats.removed,
+          hookHits: suppressionStats.hookHits,
+        },
+        pdfFonts,
+        unmatched,
+        skipped: skipReasons.slice(0, 8),
+      });
+      if (decision.mode === 'raster') {
+        return rasterPagePayload(pageNumber, viewport, fallback, reason, rasterKind);
+      }
+
+      const elements = textRuns.map((line) => ({
+        type: 'text',
+        characters: line.characters,
+        x: line.x,
+        y: line.y,
+        fontSize: line.fontSize,
+        fontFamily: line.fontFamily,
+        fontStyle: line.fontStyle,
+        color: line.color,
+        occurrenceId: line.occurrenceId || '',
+      }));
+
+      let svg = null;
+      let backgroundImageBase64 = null;
+      if (decision.mode === 'svg') {
+        const pngCache = new Map();
+        const nodes = [];
+        for (let i = 0; i < paint.draws.length; i++) {
+          const draw = paint.draws[i];
+          if (draw.type === 'path') {
+            nodes.push(draw);
+            continue;
+          }
+          const cacheKey = typeof draw.key === 'string' ? draw.key : '';
+          let imageBase64 = cacheKey ? pngCache.get(cacheKey) : null;
+          if (!imageBase64) {
+            imageBase64 = await pdfImageObjToBase64(await resolvePdfImage(page, draw.key));
+            if (cacheKey && imageBase64) pngCache.set(cacheKey, imageBase64);
+          }
+          if (!imageBase64) return rasterPagePayload(pageNumber, viewport, fallback, reason + ' · image decode failed', rasterKind);
+          nodes.push({ type: 'image', imageBase64, x: draw.x, y: draw.y, w: draw.w, h: draw.h });
+        }
+        svg = buildSvgMarkup(viewport.width, viewport.height, nodes);
+        if (svg.length > 1500000) return rasterPagePayload(pageNumber, viewport, fallback, reason + ' · svg too large', rasterKind);
+      } else {
+        const importScale = importRenderScale(page, qualityPreset);
+        const ids = new Set(textRuns.map((run) => run.occurrenceId).filter(Boolean));
+        const suppressed = await renderPdfPageCanvas(page, importScale, { suppressIds: ids });
+        backgroundImageBase64 = dataUrlToBase64(suppressed.canvas.toDataURL('image/png'));
+      }
+
+      if (!fullAtVerify) fullAtVerify = await renderPdfPageCanvas(page, verifyScale, false);
+      const referencePngBase64 = dataUrlToBase64(fullAtVerify.canvas.toDataURL('image/png'));
+      if (decision.mode === 'text' && !suppressedPngBase64) {
+        const ids = new Set(textRuns.map((run) => run.occurrenceId).filter(Boolean));
+        const suppressedAtVerify = await renderPdfPageCanvas(page, verifyScale, { suppressIds: ids });
+        suppressedPngBase64 = dataUrlToBase64(suppressedAtVerify.canvas.toDataURL('image/png'));
+      }
+
+      return {
+        pageNumber,
+        width: viewport.width,
+        height: viewport.height,
+        mode: decision.mode,
+        elements,
+        fallbackImageBase64: fallback.imageBase64,
+        backgroundImageBase64,
+        svg,
+        referencePngBase64,
+        suppressedPngBase64,
+        verifyScale,
+        reason,
+        userLabel: '',
+        rasterKind: '',
+      };
+    }
+
+    let importPlaceWaiter = null;
+
+    function waitForImportMessage(expectedType) {
+      const types = Array.isArray(expectedType) ? expectedType : [expectedType];
+      return new Promise((resolve, reject) => {
+        importPlaceWaiter = { types, resolve, reject };
+      });
+    }
+
+    function loadPng(base64) {
+      return new Promise((resolve, reject) => {
+        const image = new Image();
+        image.onload = () => resolve(image);
+        image.onerror = () => reject(new Error('Could not decode PNG.'));
+        image.src = 'data:image/png;base64,' + base64;
+      });
+    }
+
+    async function pngPixels(base64) {
+      const image = await loadPng(base64);
+      const canvas = document.createElement('canvas');
+      canvas.width = image.width;
+      canvas.height = image.height;
+      const context = canvas.getContext('2d');
+      if (!context) return null;
+      context.drawImage(image, 0, 0);
+      return {
+        data: context.getImageData(0, 0, canvas.width, canvas.height).data,
+        width: canvas.width,
+        height: canvas.height,
+      };
+    }
+
+    async function compareImportCandidate(model, placed) {
+      if (!placed || !placed.backgroundPngBase64 || !placed.candidatePngBase64) {
+        return { pass: false, mean: 1, worstGraphics: 0, worstText: 1, reason: 'missing Figma export pair', failedRuns: [], acceptedIds: [], rejected: [], moves: [] };
+      }
+      const background = await pngPixels(placed.backgroundPngBase64);
+      const candidate = await pngPixels(placed.candidatePngBase64);
+      if (!background || !candidate) {
+        return { pass: false, mean: 1, worstGraphics: 0, worstText: 1, reason: 'no canvas', failedRuns: [], acceptedIds: [], rejected: [], moves: [] };
+      }
+      if (background.width !== candidate.width || background.height !== candidate.height) {
+        return { pass: false, mean: 1, worstGraphics: 0, worstText: 1, reason: 'Figma export size mismatch', failedRuns: [], acceptedIds: [], rejected: [], moves: [] };
+      }
+      const runs = (model.elements || []).filter((element) => element.type === 'text');
+      const actualBounds = placed.actualTextBounds || [];
+      if (runs.length && (!model.referencePngBase64 || !model.suppressedPngBase64)) {
+        return { pass: false, mean: 1, worstGraphics: 0, worstText: 1, reason: 'missing pdf.js compare images', failedRuns: [], acceptedIds: [], rejected: [], moves: [] };
+      }
+      const full = runs.length ? await pngPixels(model.referencePngBase64) : background;
+      const suppressed = runs.length ? await pngPixels(model.suppressedPngBase64) : background;
+      if (!full || !suppressed) {
+        return { pass: false, mean: 1, worstGraphics: 0, worstText: 1, reason: 'missing pdf.js compare images', failedRuns: [], acceptedIds: [], rejected: [], moves: [] };
+      }
+      return verifyImportCandidate({
+        full: full.data,
+        suppressed: suppressed.data,
+        pdfWidth: full.width,
+        pdfHeight: full.height,
+        background: background.data,
+        candidate: candidate.data,
+        figWidth: background.width,
+        figHeight: background.height,
+        runs,
+        actualBounds,
+        scale: model.verifyScale || 1,
+        figmaScale: background.width / (model.width || background.width),
+      });
+    }
+
+    async function renderPdfFileToPages(pdf) {
       const pageNumbers = parseImportPageRange(importPageRangeInput?.value, pdf.numPages);
       const qualityPreset = getImportQualityPreset();
       const pages = [];
 
       for (let index = 0; index < pageNumbers.length; index++) {
         if (importCancelRequested) throw new Error('Import canceled.');
-
         const pageNumber = pageNumbers[index];
         setImportBusy(true, `Rendering page ${index + 1} of ${pageNumbers.length}`);
         const page = await pdf.getPage(pageNumber);
-        const baseViewport = page.getViewport({ scale: 1 });
-        const requestedScale = qualityPreset.scale;
-        const requestedViewport = page.getViewport({ scale: requestedScale });
-        const requestedPixels = requestedViewport.width * requestedViewport.height;
-        const scale = requestedPixels > IMPORT_RENDER_MAX_PIXELS
-          ? Math.sqrt(IMPORT_RENDER_MAX_PIXELS / (baseViewport.width * baseViewport.height))
-          : requestedScale;
-        const viewport = page.getViewport({ scale });
-        const canvas = document.createElement('canvas');
-        const context = canvas.getContext('2d');
-        if (!context) throw new Error('Canvas rendering is not available in this Figma plugin window.');
-
-        canvas.width = Math.ceil(viewport.width);
-        canvas.height = Math.ceil(viewport.height);
-        context.fillStyle = '#ffffff';
-        context.fillRect(0, 0, canvas.width, canvas.height);
-        activeImportRenderTask = page.render({ canvasContext: context, viewport });
-        try {
-          await activeImportRenderTask.promise;
-        } catch (error) {
-          if (importCancelRequested) throw new Error('Import canceled.');
-          throw error;
-        }
-        activeImportRenderTask = null;
-
-        if (importCancelRequested) throw new Error('Import canceled.');
-
-        pages.push({
-          pageNumber,
-          width: baseViewport.width,
-          height: baseViewport.height,
-          imageBase64: dataUrlToBase64(canvas.toDataURL(qualityPreset.mimeType, qualityPreset.encoderQuality)),
-        });
+        pages.push(await renderPdfPageToFallback(page, pageNumber, qualityPreset));
       }
 
       return pages;
+    }
+
+    async function ensureImportFonts() {
+      if (availableImportFonts.length > 0) return;
+      parent.postMessage({ pluginMessage: { type: 'get-import-settings' } }, '*');
+      await waitForImportMessage('import-settings-loaded');
+    }
+
+    async function ensureImportFontDicts() {
+      if (importFontDicts.size > 0 || !selectedImportPdfFile) return;
+      // ponytail: whole-file scan for Type0 /Encoding / ToUnicode, not descendant dicts. Re-parse object streams if CID with ToUnicode on the descendant is missed.
+      const bytes = new Uint8Array(await selectedImportPdfFile.arrayBuffer());
+      importFontDicts = indexPdfFontDicts(bytes);
+    }
+
+    function uniqueImportFontFamilies() {
+      const names = [];
+      const seen = {};
+      for (let i = 0; i < availableImportFonts.length; i++) {
+        const family = availableImportFonts[i].family;
+        if (seen[family]) continue;
+        seen[family] = true;
+        names.push(family);
+      }
+      names.sort((a, b) => a.localeCompare(b));
+      return names;
+    }
+
+    function stylesForImportFamily(family) {
+      const styles = [];
+      const seen = {};
+      for (let i = 0; i < availableImportFonts.length; i++) {
+        const font = availableImportFonts[i];
+        if (font.family !== family || seen[font.style]) continue;
+        seen[font.style] = true;
+        styles.push(font.style);
+      }
+      return styles;
+    }
+
+    function hideImportFontMap() {
+      importFontMap?.classList.add('hidden');
+      importDropzone?.classList.remove('hidden');
+      if (importFontMapList) importFontMapList.innerHTML = '';
+      importFontMapChange?.classList.add('hidden');
+    }
+
+    function escapeImportFontLabel(value) {
+      return String(value || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;');
+    }
+
+    function showFontReport() {
+      if (!importFontMap || !importFontMapList || !importFontReport.length) return;
+      importFontMap.classList.remove('hidden');
+      importFontMapList.innerHTML = importFontReport.map((row) => {
+        const right = row.preserved
+          ? 'preserved as artwork'
+          : escapeImportFontLabel(row.figma);
+        const err = !row.preserved && row.widthError != null
+          ? ' · width error ' + (row.widthError * 100).toFixed(1) + '%'
+          : '';
+        return '<div class="import-font-map-row"><div class="import-font-map-name">'
+          + escapeImportFontLabel(row.pdf) + ' → ' + right
+          + '</div><div class="import-font-map-samples">'
+          + (row.lines || 0) + (row.preserved ? ' runs' : ' lines')
+          + (row.confidence && !row.preserved ? ' · ' + row.confidence + ' confidence' : '')
+          + err
+          + '</div></div>';
+      }).join('');
+      importFontMapChange?.classList.remove('hidden');
+    }
+
+    function showFontChangeMapping() {
+      if (!importFontMapList) return;
+      importFontMapList.innerHTML = importFontReport.map((row, index) => {
+        const families = uniqueImportFontFamilies();
+        const currentFamily = row.figmaFamily || '';
+        const currentStyle = row.figmaStyle || 'Regular';
+        const familyOptions = ['<option value="">Keep as artwork</option>'].concat(families.map((family) => {
+          const selected = family === currentFamily ? ' selected' : '';
+          return '<option value="' + escapeImportFontLabel(family) + '"' + selected + '>' + escapeImportFontLabel(family) + '</option>';
+        }));
+        const styleOptions = (currentFamily ? stylesForImportFamily(currentFamily) : ['Regular']).map((style) => {
+          const selected = style === currentStyle ? ' selected' : '';
+          return '<option value="' + escapeImportFontLabel(style) + '"' + selected + '>' + escapeImportFontLabel(style) + '</option>';
+        });
+        return '<div class="import-font-map-row"><div class="import-font-map-name">'
+          + escapeImportFontLabel(row.pdf) + '</div>'
+          + '<select id="import-font-family-' + index + '">' + familyOptions.join('') + '</select>'
+          + '<select id="import-font-style-' + index + '"' + (currentFamily ? '' : ' disabled') + '>' + styleOptions.join('') + '</select></div>';
+      }).join('');
+      importFontReport.forEach((row, index) => {
+        const familyEl = document.getElementById('import-font-family-' + index);
+        const styleEl = document.getElementById('import-font-style-' + index);
+        familyEl?.addEventListener('change', () => {
+          const styles = stylesForImportFamily(familyEl.value);
+          styleEl.disabled = !familyEl.value;
+          styleEl.innerHTML = styles.map((style) => '<option value="' + escapeImportFontLabel(style) + '">' + escapeImportFontLabel(style) + '</option>').join('');
+          saveFontOverride(row, familyEl.value, styleEl.value);
+        });
+        styleEl?.addEventListener('change', () => saveFontOverride(row, familyEl.value, styleEl.value));
+      });
+      if (importFontMapHelp) importFontMapHelp.textContent = 'Re-import to apply the new mapping.';
+    }
+
+    function saveFontOverride(row, family, style) {
+      if (!row.key) return;
+      if (!family) delete importFontOverrides[row.key];
+      else importFontOverrides[row.key] = { family, style: style || 'Regular' };
+      parent.postMessage({
+        pluginMessage: { type: 'save-import-font-overrides', overrides: importFontOverrides },
+      }, '*');
+    }
+
+    async function collectImportFonts(pdf, pageNumbers) {
+      const found = new Map();
+      for (let index = 0; index < pageNumbers.length; index++) {
+        if (importCancelRequested) throw new Error('Import canceled.');
+        const pageNumber = pageNumbers[index];
+        setImportBusy(true, `Checking fonts ${index + 1} of ${pageNumbers.length}`);
+        const page = await pdf.getPage(pageNumber);
+        const viewport = page.getViewport({ scale: 1 });
+        await page.getOperatorList();
+        const rows = await loadPageTextItems(page, viewport);
+        for (let i = 0; i < rows.length; i++) {
+          const row = rows[i];
+          if (!row.reliable || !gateTextGeometry(row.layout, viewport)) continue;
+          const key = fontChoiceKey(row.parsed.family, row.parsed.style);
+          const entry = found.get(key) || {
+            key,
+            parsed: row.parsed,
+            family: row.parsed.family,
+            style: row.parsed.style,
+            samples: [],
+            pages: [],
+            fontSize: row.layout.fontSize,
+            width: row.layout.width,
+            lines: 0,
+          };
+          const sample = String(row.item.str).replace(/\s+/g, ' ').trim();
+          if (sample && entry.samples.indexOf(sample) < 0 && entry.samples.length < 3) {
+            entry.samples.push(sample.length > 48 ? sample.slice(0, 47) + '…' : sample);
+          }
+          if (entry.pages.indexOf(pageNumber) < 0) entry.pages.push(pageNumber);
+          if ((row.layout.fontSize || 0) > (entry.fontSize || 0)) {
+            entry.fontSize = row.layout.fontSize;
+            entry.width = row.layout.width;
+          }
+          entry.lines += 1;
+          found.set(key, entry);
+        }
+      }
+      return Array.from(found.values());
+    }
+
+    async function autoResolveImportFonts(rows) {
+      importFontChoices = {};
+      importFontReport = [];
+      if (!rows.length) return;
+      const jobs = rows.map((row) => {
+        const desc = pdfFontDescriptor(row.parsed, row.samples[0] || '');
+        const kind = pdfContentKind(desc, { characters: row.samples[0], fontSize: row.fontSize });
+        return {
+          key: row.key,
+          sample: row.samples[0] || 'Hg',
+          fontSize: row.fontSize || 12,
+          pdfWidth: row.width || 0,
+          pdfHeight: (row.fontSize || 12) * 1.2,
+          desc,
+          kind,
+          pdfLabel: desc.family + ' ' + desc.style,
+          lines: row.lines || 0,
+          candidates: collectFontCandidates(desc, availableImportFonts, 20),
+        };
+      });
+      setImportBusy(true, 'Matching fonts');
+      const measuredPromise = waitForImportMessage('import-fonts-measured');
+      parent.postMessage({
+        pluginMessage: {
+          type: 'measure-import-fonts',
+          jobs: jobs.map((job) => ({
+            key: job.key,
+            sample: job.sample,
+            fontSize: job.fontSize,
+            candidates: job.candidates,
+          })),
+        },
+      }, '*');
+      let measured = { results: [] };
+      try {
+        measured = await measuredPromise;
+      } catch (_error) {
+        measured = { results: [] };
+      }
+      const byKey = {};
+      (measured.results || []).forEach((result) => { byKey[result.key] = result.measures || []; });
+      jobs.forEach((job) => {
+        const measures = {};
+        (byKey[job.key] || []).forEach((item) => {
+          measures[item.family + '::' + item.style] = item;
+        });
+        const resolved = resolvePdfFont(job.desc, availableImportFonts, {
+          kind: job.kind,
+          measures,
+          pdfWidth: job.pdfWidth,
+          pdfHeight: job.pdfHeight,
+          override: importFontOverrides[job.key],
+        });
+        if (!resolved.family || resolved.confidence === 'low') {
+          importFontChoices[job.key] = { keep: true };
+          importFontReport.push({
+            key: job.key,
+            pdf: job.pdfLabel,
+            figma: '',
+            lines: job.lines,
+            confidence: 'low',
+            widthError: resolved.widthError,
+            preserved: true,
+          });
+          importLog('font-map PDF="' + job.pdfLabel + '" -> RASTER, runs=' + job.lines + ', reason=' + (resolved.reason || 'low-confidence'));
+          return;
+        }
+        importFontChoices[job.key] = {
+          keep: false,
+          family: resolved.family,
+          style: resolved.style,
+          widthError: resolved.widthError,
+          confidence: resolved.confidence,
+        };
+        importFontReport.push({
+          key: job.key,
+          pdf: job.pdfLabel,
+          figma: resolved.family + ' ' + resolved.style,
+          figmaFamily: resolved.family,
+          figmaStyle: resolved.style,
+          lines: job.lines,
+          confidence: resolved.confidence,
+          widthError: resolved.widthError,
+          preserved: false,
+        });
+        importLog('font-map PDF="' + job.pdfLabel + '" -> FIGMA="' + resolved.family + ' ' + resolved.style + '" widthError=' + Number(resolved.widthError || 0).toFixed(3) + ' confidence=' + resolved.confidence);
+      });
+    }
+
+    async function startEditablePdfImport(pdf, fileName) {
+      await ensureImportFonts();
+      await ensureImportFontDicts();
+      const pdfjs = configurePdfJs();
+      const pageNumbers = parseImportPageRange(importPageRangeInput?.value, pdf.numPages);
+      if (pageNumbers.length === 0) throw new Error('No pages were found in this PDF.');
+      const qualityPreset = getImportQualityPreset();
+      hideImportFontMap();
+      importFontChoices = {};
+      importFontReport = [];
+      await autoResolveImportFonts(await collectImportFonts(pdf, pageNumbers));
+      if (importCancelRequested) throw new Error('Import canceled.');
+      let began = false;
+      try {
+        parent.postMessage({
+          pluginMessage: {
+            type: 'import-pdf-editable-begin',
+            fileName,
+            total: pageNumbers.length,
+          }
+        }, '*');
+        began = true;
+        for (let index = 0; index < pageNumbers.length; index++) {
+          if (importCancelRequested) break;
+          const pageNumber = pageNumbers[index];
+          setImportBusy(true, `Extracting page ${index + 1} of ${pageNumbers.length}`);
+          setImportMeta(`Editable import · page ${pageNumber}`);
+          const page = await pdf.getPage(pageNumber);
+          const model = await extractEditablePdfPage(page, pageNumber, pdfjs, qualityPreset);
+          if (importCancelRequested) break;
+          setImportBusy(true, `Placing page ${index + 1} of ${pageNumbers.length}`);
+          parent.postMessage({
+            pluginMessage: {
+              type: 'import-pdf-editable-page',
+              page: Object.assign({}, model, { referencePngBase64: undefined, suppressedPngBase64: undefined }),
+            }
+          }, '*');
+          let adjustPass = 0;
+          while (true) {
+            const placed = await waitForImportMessage(['import-pdf-page-placed', 'import-pdf-candidate-export']);
+            if (placed.type !== 'import-pdf-candidate-export') break;
+            let verified = { pass: false, mean: 1, worstGraphics: 0, worstText: 1, reason: 'not compared', failedRuns: [], acceptedIds: [], rejected: [], moves: [] };
+            try {
+              if (!importCancelRequested) verified = await compareImportCandidate(model, placed);
+            } catch (_error) {
+              verified = { pass: false, mean: 1, worstGraphics: 0, worstText: 1, reason: 'compare failed', failedRuns: [], acceptedIds: [], rejected: [], moves: [] };
+            }
+            if (importCancelRequested) break;
+            const acceptedIds = verified.acceptedIds || [];
+            const rejected = (verified.rejected || []).map((row) => ({
+              occurrenceId: row.occurrenceId || '',
+              reason: row.reason || '',
+              characters: row.characters || '',
+            }));
+            const moves = verified.moves || [];
+            const failedRun = rejected[0]
+              ? rejected[0].reason + ' · "' + rejected[0].characters + '"'
+              : (verified.reason || '');
+            importLog('page ' + model.pageNumber + ' verify', {
+              stage: moves.length && adjustPass < 2 ? 'align' : (acceptedIds.length ? 'accepted' : 'verification-rejected'),
+              mode: acceptedIds.length ? model.mode : 'raster',
+              mean: verified.mean,
+              worstText: verified.worstText,
+              reason: failedRun || (acceptedIds.length ? model.reason : 'verification-rejected'),
+              failedRun,
+              acceptedIds,
+              rejected,
+              moves,
+              adjustPass,
+              figmaBackground: {
+                width: placed.exportWidth,
+                height: placed.exportHeight,
+                bytes: placed.backgroundPngBase64 ? placed.backgroundPngBase64.length : 0,
+              },
+              figmaCandidate: {
+                width: placed.exportWidth,
+                height: placed.exportHeight,
+                bytes: placed.candidatePngBase64 ? placed.candidatePngBase64.length : 0,
+              },
+              actualTextBounds: placed.actualTextBounds || [],
+            });
+            if (moves.length && adjustPass < 2) {
+              adjustPass += 1;
+              parent.postMessage({
+                pluginMessage: {
+                  type: 'import-pdf-verify',
+                  action: 'adjust',
+                  pageNumber: model.pageNumber,
+                  moves,
+                }
+              }, '*');
+              continue;
+            }
+            const candidateIds = (model.elements || [])
+              .filter((element) => element.type === 'text' && element.occurrenceId)
+              .map((element) => element.occurrenceId);
+            if (!acceptedIds.length) {
+              parent.postMessage({
+                pluginMessage: {
+                  type: 'import-pdf-verify',
+                  action: 'reject',
+                  pageNumber: model.pageNumber,
+                  mean: verified.mean,
+                  worstText: verified.worstText,
+                  failedRun,
+                  acceptedIds,
+                  rejected,
+                }
+              }, '*');
+              continue;
+            }
+            let backgroundImageBase64;
+            if (acceptedIds.length !== candidateIds.length) {
+              const importScale = importRenderScale(page, qualityPreset);
+              const suppressed = await renderPdfPageCanvas(page, importScale, { suppressIds: new Set(acceptedIds) });
+              backgroundImageBase64 = dataUrlToBase64(suppressed.canvas.toDataURL('image/png'));
+            }
+            parent.postMessage({
+              pluginMessage: {
+                type: 'import-pdf-verify',
+                action: 'commit',
+                pageNumber: model.pageNumber,
+                mean: verified.mean,
+                worstText: verified.worstText,
+                failedRun,
+                acceptedIds,
+                rejected,
+                backgroundImageBase64,
+              }
+            }, '*');
+          }
+        }
+      } finally {
+        if (began) {
+          parent.postMessage({
+            pluginMessage: {
+              type: 'import-pdf-editable-finish',
+              canceled: importCancelRequested === true,
+            }
+          }, '*');
+        }
+      }
     }
 
     async function startPdfImport() {
@@ -4383,7 +7526,12 @@ ${JSON.stringify(batch.map(t => ({ mappingKey: t.mappingKey, text: t.text, charB
         importCancelRequested = false;
         setImportBusy(true, 'Reading PDF');
         setImportMeta('Preparing PDF pages...');
-        const pages = await renderPdfFileToPages(selectedImportPdfFile);
+        const pdf = await ensureImportPdf(selectedImportPdfFile);
+        if (getImportModeValue() === 'editable') {
+          await startEditablePdfImport(pdf, selectedImportPdfFile.name);
+          return;
+        }
+        const pages = await renderPdfFileToPages(pdf);
         if (pages.length === 0) throw new Error('No pages were found in this PDF.');
         if (importCancelRequested) throw new Error('Import canceled.');
         setImportBusy(true, 'Placing pages in Figma');
@@ -4397,8 +7545,10 @@ ${JSON.stringify(batch.map(t => ({ mappingKey: t.mappingKey, text: t.text, charB
         }, '*');
       } catch (error) {
         activeImportRenderTask = null;
+        importPlaceWaiter = null;
         setImportBusy(false);
         setImportMeta(getErrorMessage(error), 'error');
+        hideImportFontMap();
         uiError('PDF import failed before placement', { error: getErrorMessage(error) });
       }
     }
@@ -5047,14 +8197,35 @@ ${JSON.stringify(batch.map(t => ({ mappingKey: t.mappingKey, text: t.text, charB
         const total = Math.max(1, Number(msg.total) || 1);
         const completed = Math.min(total, Math.max(0, Number(msg.completed) || 0));
         setImportBusy(true, `Placing page ${Math.min(total, completed + 1)} of ${total}`);
+      } else if (importPlaceWaiter && importPlaceWaiter.types && importPlaceWaiter.types.indexOf(msg.type) >= 0) {
+        const resolve = importPlaceWaiter.resolve;
+        importPlaceWaiter = null;
+        resolve(msg);
       } else if (msg.type === 'import-pdf-complete') {
         const pageCount = Math.max(0, Number(msg.pageCount) || 0);
+        const layerCount = Math.max(0, Number(msg.layerCount) || 0);
+        const rasterCount = Math.max(0, Number(msg.rasterCount) || 0);
+        const unsafeTextCount = Math.max(0, Number(msg.unsafeTextCount) || 0);
         setImportBusy(false);
-        setImportMeta(`Imported ${pageCount} page${pageCount === 1 ? '' : 's'} to the Figma canvas.`, 'success');
+        const parts = [`Imported ${pageCount} page${pageCount === 1 ? '' : 's'} to the Figma canvas`];
+        if (layerCount) parts.push(`${layerCount} editable`);
+        if (unsafeTextCount) {
+          parts.push(`${unsafeTextCount} preserved as images because their text could not be safely separated from artwork`);
+        }
+        const otherRaster = Math.max(0, rasterCount - unsafeTextCount);
+        if (otherRaster) parts.push(`${otherRaster} as images`);
+        setImportMeta(parts.join('. ') + '.', 'success');
+        showFontReport();
       } else if (msg.type === 'import-pdf-error') {
         const errorText = typeof msg.error === 'string' ? msg.error : 'Unknown import error';
+        if (importPlaceWaiter) {
+          const reject = importPlaceWaiter.reject;
+          importPlaceWaiter = null;
+          reject(new Error(errorText));
+        }
         setImportBusy(false);
         setImportMeta(errorText, 'error');
+        hideImportFontMap();
         uiError('PDF import failed', { error: errorText });
       } else if (msg.type === 'settings-loaded') {
         currentSettings = normalizeSettings(msg.settings);
@@ -5064,6 +8235,11 @@ ${JSON.stringify(batch.map(t => ({ mappingKey: t.mappingKey, text: t.text, charB
         applySavedExportSettings(msg.settings);
       } else if (msg.type === 'import-settings-loaded') {
         applySavedImportSettings(msg.settings);
+        if (importPlaceWaiter && importPlaceWaiter.types && importPlaceWaiter.types.indexOf(msg.type) >= 0) {
+          const resolve = importPlaceWaiter.resolve;
+          importPlaceWaiter = null;
+          resolve(msg);
+        }
       } else if (msg.type === 'settings-saved') {
         setDashboardSaveStatus('saved');
         renderDashboardSettingsMeta();
@@ -5153,10 +8329,25 @@ ${JSON.stringify(batch.map(t => ({ mappingKey: t.mappingKey, text: t.text, charB
     };
 
     // ── Import PDF ──
-    importDropzone?.addEventListener('click', () => {
-      if (!isImportingPdf) importPdfInput?.click();
+    importDropzone?.addEventListener('click', (event) => {
+      if (isImportingPdf) return;
+      if (event.target.closest('#importThumbsRow')) return;
+      importPdfInput?.click();
+    });
+    importThumbs?.addEventListener('click', (event) => event.stopPropagation());
+    importThumbs?.addEventListener('scroll', updateImportThumbArrows, { passive: true });
+    importThumbsPrev?.addEventListener('click', (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      scrollImportThumbs(-1);
+    });
+    importThumbsNext?.addEventListener('click', (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      scrollImportThumbs(1);
     });
     importDropzone?.addEventListener('keydown', (event) => {
+      if (event.target.closest('#importThumbsRow')) return;
       if (event.key === 'Enter' || event.key === ' ') {
         event.preventDefault();
         if (!isImportingPdf) importPdfInput?.click();
@@ -5172,7 +8363,7 @@ ${JSON.stringify(batch.map(t => ({ mappingKey: t.mappingKey, text: t.text, charB
     importDropzone?.addEventListener('drop', (event) => {
       event.preventDefault();
       importDropzone.classList.remove('drag-over');
-      acceptImportPdfFile(event.dataTransfer?.files?.[0]);
+      if (!isImportingPdf) acceptImportPdfFile(event.dataTransfer?.files?.[0]);
     });
     importPdfInput?.addEventListener('change', () => {
       acceptImportPdfFile(importPdfInput.files?.[0]);
@@ -5182,16 +8373,42 @@ ${JSON.stringify(batch.map(t => ({ mappingKey: t.mappingKey, text: t.text, charB
       saveImportSettings();
       updateImportUI();
     });
+    document.querySelectorAll('.import-mode-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        if (isImportingPdf) return;
+        setImportModeValue(btn.dataset.importMode);
+        saveImportSettings();
+        updateImportUI();
+      });
+    });
     importPageRangeInput?.addEventListener('input', () => {
-      if (selectedImportPdfFile) updateImportUI();
+      if (!selectedImportPdfFile) return;
+      try {
+        if (importPageCount > 0) parseImportPageRange(importPageRangeInput.value, importPageCount);
+      } catch (error) {
+        setImportMeta(getErrorMessage(error), 'error');
+        syncImportThumbSelection();
+        if (!isImportingPdf) setImportBusy(false);
+        return;
+      }
+      syncImportThumbSelection();
+      if (!isImportingPdf) updateImportUI();
     });
     importCancelBtn?.addEventListener('click', () => {
       importCancelRequested = true;
       if (activeImportRenderTask && typeof activeImportRenderTask.cancel === 'function') {
         activeImportRenderTask.cancel();
       }
+      if (importPlaceWaiter) {
+        const reject = importPlaceWaiter.reject;
+        importPlaceWaiter = null;
+        reject(new Error('Import canceled.'));
+      }
       setImportBusy(true, 'Canceling import');
       setImportMeta('Canceling import...');
+    });
+    importFontMapChange?.addEventListener('click', () => {
+      showFontChangeMapping();
     });
     importPdfBtn?.addEventListener('click', startPdfImport);
     updateImportUI();
