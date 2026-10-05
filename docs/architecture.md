@@ -1,6 +1,6 @@
 # Architecture
 
-Last Updated: 2026-07-19
+Last Updated: 2026-10-05
 
 ## System Overview
 
@@ -46,7 +46,9 @@ Export scale supports `1`, `1.5`, `2`, `3`, `4`, `5`, and `6`. All presets use J
 5. The UI sends validated `{ pageNumber, width, height, imageBase64 }` payloads through `import-pdf-pages`.
 6. `code.ts` creates one page frame and image-filled rectangle per page, groups them in a parent frame, and wraps after 20 pages per row.
 
-Import is intentionally raster-only. Text remains visible inside the page image but is not editable.
+Import is intentionally raster-only.
+
+Text remains visible inside the page image but is not editable.
 
 ## Translation Flow
 

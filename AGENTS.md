@@ -1,5 +1,5 @@
 # Project: pdf-pilot
-Last Updated: 2026-07-19
+Last Updated: 2026-10-05
 Updated By: Codex
 
 ## What This Project Does
@@ -73,3 +73,27 @@ Before any non-trivial design, architecture, or coding task in this repo, run an
 **Depth is adaptive.** Scale to the stakes: a few sharp questions for a small change, several rounds of deeper extraction for a large design or architecture decision. Keep surfacing assumptions as the work proceeds, not only at the start.
 
 **Skip** for trivial edits, pure lookups, and mechanical one-line changes.
+
+## Plain-English Writing
+
+Use ASD-STE100-inspired plain English for explanations, documentation, comments,
+and technical UI copy. This is practical writing guidance, not strict standard
+compliance.
+
+- Lead user-facing explanations with what the reader does, sees, and gains.
+  Add implementation detail when useful or requested.
+- Prefer familiar words, short complete sentences, and active voice. Explain
+  necessary jargon when the intended reader may not know it.
+- Use consistent terms. Give one instruction per sentence and use numbered
+  steps for sequences.
+- Preserve facts, conditions, exceptions, warnings, and uncertainty. Clarity
+  must not reduce accuracy or remove detail the reader needs.
+- Keep code, identifiers, commands, paths, API names, and direct quotes exact.
+  Respect repository-specific terminology, brand voice, and creative or legal
+  copy requirements.
+
+For existing documentation, clarify only the sections already being changed
+for the task. Do not rewrite whole files or expand the task for style alone.
+Keep historical records, generated files, and approved wording intact unless
+the task explicitly requires changes. Flag unclear or conflicting facts rather
+than guessing their meaning.
