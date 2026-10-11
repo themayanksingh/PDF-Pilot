@@ -1,6 +1,6 @@
 # Project: pdf-pilot
-Last Updated: 2026-09-20
-Updated By: Cursor Grok
+Last Updated: 2026-10-05
+Updated By: Codex
 
 ## What This Project Does
 PDF Pilot is a Figma plugin that exports selected frames/components to PDF, imports PDF pages as image-backed frames, and translates selected designs with AI while preserving the originals.
@@ -96,3 +96,27 @@ Before any non-trivial design, architecture, or coding task in this repo, run an
 - 2026-09-19 — Cursor Grok was the previous recorded updater. Codex refreshed session status and the Editable import architecture proposal; existing agent instructions are preserved.
 
 - 2026-09-19 — Codex traced the supplied all-raster logs and reproduced the whole-run/per-glyph suppression mismatch; recorded inactive Figma verification. Previous updater: Cursor Grok. Existing instructions are preserved.
+
+## Plain-English Writing
+
+Use ASD-STE100-inspired plain English for explanations, documentation, comments,
+and technical UI copy. This is practical writing guidance, not strict standard
+compliance.
+
+- Lead user-facing explanations with what the reader does, sees, and gains.
+  Add implementation detail when useful or requested.
+- Prefer familiar words, short complete sentences, and active voice. Explain
+  necessary jargon when the intended reader may not know it.
+- Use consistent terms. Give one instruction per sentence and use numbered
+  steps for sequences.
+- Preserve facts, conditions, exceptions, warnings, and uncertainty. Clarity
+  must not reduce accuracy or remove detail the reader needs.
+- Keep code, identifiers, commands, paths, API names, and direct quotes exact.
+  Respect repository-specific terminology, brand voice, and creative or legal
+  copy requirements.
+
+For existing documentation, clarify only the sections already being changed
+for the task. Do not rewrite whole files or expand the task for style alone.
+Keep historical records, generated files, and approved wording intact unless
+the task explicitly requires changes. Flag unclear or conflicting facts rather
+than guessing their meaning.

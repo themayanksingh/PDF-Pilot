@@ -1,6 +1,6 @@
 # Architecture
 
-Last Updated: 2026-09-20
+Last Updated: 2026-10-05
 
 ## System Overview
 
@@ -40,18 +40,39 @@ Export scale supports `1`, `1.5`, `2`, `3`, `4`, `5`, and `6`. All presets use J
 
 ## Import Flow
 
-1. `pnpm build` patches `vendor/pdfjs/pdf.js` if needed, inlines that renderer plus its worker into `ui.bundle.html`, and compiles `code.ts`. Figma loads `manifest.json` → `ui.bundle.html` (`figma.showUI(__html__)` cannot fetch `vendor/`). The running engine is pdf.js **3.11.174** (`ce8716743`) with PDF Pilot hook **revision 2**, `isEvalSupported: false`. CMaps and standard fonts still come from jsDelivr. Choosing a PDF opens it immediately for page count and a low-res thumbnail strip. The same pdf.js document is reused when import starts. If the hook is missing, import throws a renderer/build error instead of silently treating the file as unsupported.
-2. The user chooses Image or Editable import. `code.ts` sends `listAvailableFontsAsync()` with import settings so Editable can match real Figma fonts.
-3. Image mode validates the page range and renders each page to canvas. Low, Medium, and High map to 1.5×, 2×, and 4× JPEG rendering, capped at 16 million pixels and 4096 pixels per edge (Figma `createImage` limit). Files above 25 MB trigger a warning. The UI sends `{ pageNumber, width, height, imageBase64 }` through `import-pdf-pages`. `code.ts` creates one page frame and image-filled rectangle per page.
-4. Editable mode always keeps those same JPEG bytes as the fallback. The UI walks the operator list (save/restore/transform, Form begin/end, images, simple paths, text paint), classifies `getTextContent()` runs, and chooses:
-   - **svg:** simple solid paths and Form-aware images via `createNodeFromSvg`, plus gated Text nodes, only when nothing must remain in a page image
-   - **text:** a renderer-suppressed PNG plus gated Text nodes, only for ordinary **fill** `showText` occurrences. Ownership is the renderer occurrence: adjacent `getTextContent` fragments may concatenate (including hyphen joins) onto one occurrence. Suppress that ID only. Leftover/rejected text stays in the image. Verification is per occurrence: pdf.js full vs suppressed (source gone), Figma candidate vs Figma background (live ink appeared), visible colour, centroid alignment, reasonable ink, no leftover duplicate. Do not use Figma-vs-Figma pixels outside TextNode bounds as a graphics gate. Do not compare pdf.js pixels to Figma exports for graphics.
-   - **raster:** the Image-mode JPEG — including hidden/invisible searchable overlays, Type3, clipping text, and lettering that exists only as path artwork
-5. `getDocument` keeps `fontExtraProperties` so embedded OpenType bytes stay on the pdf.js font object. Import reads that file plus `name` / `OS/2` / `post` tables for family, weight, width, italic, PANOSE, and pitch. `resolvePdfFont()` picks an installed Figma font (exact → equivalent style → aliases → measured same-class match → script-safe fallback). Low-confidence or handwriting/symbol misses stay in the page image. No blocking font dialog. A non-blocking report lists substitutions after import; Change mapping stores an override for the next import. Finding a similar font does not skip suppression: original glyphs must still be removed before the TextNode is kept. Unreliable extracts (PUA/FFFD, Type3, Identity-H CID without ToUnicode) never become Text layers. Invisible `showText` (render mode 3) is not suppressible.
-6. Candidate pages export two Figma PNGs from the same frame (background-only with TextNodes hidden, then the candidate). `occurrenceId` is carried renderer → PageModel → TextNode pluginData `pdf-pilot-occurrence` → verify. Source glyph removal is pdf.js full vs suppressed. Added ink is Figma vs Figma, matched by occurrenceId. Figma TextNode `y` is the line-box top, not the PDF baseline; displaced runs are moved by centroid dx/dy (at most two passes) instead of rolling the page back. A failed run is omitted and the background is re-rendered with only accepted IDs suppressed. Whole-page JPEG rollback happens only when no run is accepted. Extraction rejection, text placement failure, and candidate export failure are separate terminal stages. Diagnostics stay in pluginData `pdf-pilot-reason`. The UI also sends `import-pdf-log` so `code.ts` prints `[PDF Pilot]` lines including `font-map PDF="…" -> FIGMA="…"` or `RASTER, runs=N`. Quality stays an Image-mode control; Editable hides it and reuses the last saved scale for fallback bytes.
-7. Both modes group pages in a parent frame and wrap after 20 pages per row.
+1. Build the plugin with `pnpm build`.
+   - The build patches `vendor/pdfjs/pdf.js` when needed, inlines the renderer and worker into `ui.bundle.html`, and compiles `code.ts`.
+   - Figma loads `manifest.json` and then `ui.bundle.html`. `figma.showUI(__html__)` cannot fetch files from `vendor/`.
+   - The running engine is pdf.js **3.11.174** (`ce8716743`) with PDF Pilot hook revision 2 and `isEvalSupported: false`.
+   - CMaps and standard fonts still load from jsDelivr.
+2. When the user selects a PDF, open it to read the page count and create a low-resolution thumbnail strip. Reuse the same pdf.js document when import starts. If the hook is missing, report a renderer or build error. Do not silently treat the file as unsupported.
+3. The user chooses Image or Editable import. `code.ts` sends `listAvailableFontsAsync()` with the import settings so Editable mode can match installed Figma fonts.
+4. In Image mode, validate the page range and render each page to a canvas.
+   - Low, Medium, and High use 1.5×, 2×, and 4× JPEG rendering.
+   - Cap output at 16 million pixels and 4096 pixels per edge. This is Figma's `createImage` limit.
+   - Warn when a file is larger than 25 MB.
+   - Send `{ pageNumber, width, height, imageBase64 }` through `import-pdf-pages`.
+   - `code.ts` creates one page frame and one image-filled rectangle for each page.
+5. Editable mode keeps the same JPEG bytes as its fallback. The UI reads the operator list (save/restore/transform, Form begin/end, images, simple paths, and text paint). It classifies `getTextContent()` runs and chooses one of three paths:
+   - **svg:** Use `createNodeFromSvg` for simple solid paths and Form-aware images. Add gated Text nodes only when no content must remain in the page image.
+   - **text:** Render a PNG with accepted source text suppressed, then add gated Text nodes. Promote only ordinary fill `showText` occurrences. The renderer occurrence owns the text. Adjacent `getTextContent` fragments may join one occurrence, including hyphen joins. Suppress only that occurrence ID. Keep leftover and rejected text in the page image.
+   - Verify each occurrence. Confirm that pdf.js full and suppressed renders show source glyph removal. Confirm that the Figma candidate and background show the new ink. Check visible colour, centroid alignment, reasonable ink, and duplicate text. Do not compare Figma pixels outside TextNode bounds as a graphics gate. Do not compare pdf.js pixels with Figma exports for graphics.
+   - **raster:** Use the Image-mode JPEG for hidden or invisible searchable overlays, Type3 text, clipping text, and lettering made only from path artwork.
+6. Keep `fontExtraProperties` in `getDocument` so embedded OpenType bytes remain on the pdf.js font object. Read that file and its `name`, `OS/2`, and `post` tables to find family, weight, width, italic, PANOSE, and pitch. `resolvePdfFont()` checks, in order: exact match, equivalent style, aliases, measured same-class match, and script-safe fallback.
+   - Keep low-confidence matches and handwriting or symbol misses in the page image. Do not show a blocking font dialog.
+   - Show a non-blocking substitution report after import. **Change mapping** saves an override for the next import.
+   - Finding a similar font does not skip suppression. Remove the original glyphs before keeping a Text node.
+   - Do not promote unreliable extracts (PUA/FFFD, Type3, or Identity-H CID without ToUnicode) to Text layers. Invisible `showText` in render mode 3 cannot be suppressed.
+7. For candidate pages, export two Figma PNGs from the same frame: one with Text nodes hidden, then one with them visible. Carry `occurrenceId` from the renderer through PageModel to Text node plugin data `pdf-pilot-occurrence` and verification.
+   - Verify source glyph removal with pdf.js full and suppressed renders. Verify added ink by comparing the Figma images and matching `occurrenceId`.
+   - Figma Text node `y` is the line-box top, not the PDF baseline. Move displaced runs by centroid dx/dy, for at most two passes. Do not roll back the whole page.
+   - Omit a failed run. Re-render the background with only accepted IDs suppressed. Roll back to the whole-page JPEG only when no run is accepted.
+   - Keep extraction rejection, text placement failure, and candidate export failure as separate terminal stages. Store diagnostics in plugin data as `pdf-pilot-reason`.
+   - The UI also sends `import-pdf-log`. `code.ts` prints `[PDF Pilot]` entries such as `font-map PDF="…" -> FIGMA="…"` or `RASTER, runs=N`.
+   - Keep quality as an Image-mode control. Editable mode hides it and reuses the last saved scale for fallback bytes.
+8. Both modes group pages in a parent frame. Wrap after 20 pages per row.
 
-Image mode’s bitmap point remains `page.render()` in `ui.html` immediately before JPEG encoding. Editable may add a second suppressed render; it must not show native text over glyphs that remain in a page image.
+Image mode renders the bitmap with `page.render()` in `ui.html` immediately before JPEG encoding. Editable mode may render again with accepted text suppressed. It must not show native text over glyphs that remain in a page image.
 
 ### Editable Import
 
